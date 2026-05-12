@@ -708,12 +708,16 @@ export default function MarkdownRenderer({
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          code({ node, inline, className, children, ...props }) {
+          // react-markdown v10: 'inline' prop removed. Use node.tagName or check children instead.
+          code({ node, className, children, ...props }) {
             const match = /language-([a-zA-Z0-9#+-]+)/.exec(className || '');
             const lang = normalizeDocLanguage(match ? match[1] : 'python');
             const codeStr = String(children).replace(/\n$/, '');
 
-            if (!inline && (match || codeStr.length > 60)) {
+            // Block code: has a language class, or is long enough to warrant a block
+            const isBlock = Boolean(match) || codeStr.includes('\n') || codeStr.length > 60;
+
+            if (isBlock) {
               return <CodeBlock language={lang} code={codeStr} theme={theme} />;
             }
             return <code className={className} {...props}>{children}</code>;
@@ -775,7 +779,6 @@ export default function MarkdownRenderer({
     </div>
   );
 }
-
 
 --------------------------------------------------------------------------------
 FILE: /src/features/docs/pages/Home/HomePage.jsx
@@ -3107,7 +3110,7 @@ export default function CodePlayground({
   const currentWorkspace = workspaces[language] || createWorkspace(language);
   const { code, output, previewHTML, activeTab } = currentWorkspace;
   const currentIsRunning = runningLanguage === language;
-  const anyIsRunning = runningLanguage !== null;
+  const anyIsRunning = runningLanguage !== null; // eslint-disable-line no-unused-vars
 
   const updateWorkspace = useCallback((lang, nextValue) => {
     setWorkspaces((prev) => {
@@ -3276,62 +3279,49 @@ export default function CodePlayground({
         </div>
 
         <div className="pg-toolbar-right">
-          <button
-            className="pg-icon-btn"
-            onClick={() => setFontSize((f) => Math.max(10, f - 1))}
-            title="Smaller font"
-          >
-            A-
-          </button>
           <span className="pg-font-size">{fontSize}px</span>
           <button
             className="pg-icon-btn"
+            onClick={() => setFontSize((f) => Math.max(10, f - 1))}
+            title="Decrease font size"
+          >
+            A-
+          </button>
+          <button
+            className="pg-icon-btn"
             onClick={() => setFontSize((f) => Math.min(24, f + 1))}
-            title="Larger font"
+            title="Increase font size"
           >
             A+
           </button>
           <button
             className={`pg-icon-btn ${wordWrap ? "active" : ""}`}
             onClick={() => setWordWrap((w) => !w)}
-            title="Word wrap"
+            title="Toggle word wrap"
           >
-            ⇌
-          </button>
-          <button
-            className="pg-icon-btn"
-            onClick={() =>
-              updateWorkspace(language, {
-                code: getStarterCode(language),
-                output: [],
-                previewHTML: null,
-                activeTab: "output",
-              })
-            }
-            title="Reset"
-          >
-            ↺
+            ↵
           </button>
           <button
             className={`pg-run-btn ${currentIsRunning ? "running" : ""}`}
             onClick={handleRun}
-            disabled={anyIsRunning}
-            title="Run (Ctrl+Enter)"
+            disabled={currentIsRunning}
+            title="Run code (Ctrl+Enter)"
           >
             {currentIsRunning ? (
               <>
-                <span className="pg-spinner">⟳</span> Running...
+                <span className="pg-spinner">⟳</span> Running…
               </>
             ) : (
-              <>{anyIsRunning ? "⌛ Busy" : "▶ Run"}</>
+              "▶ Run"
             )}
           </button>
         </div>
       </div>
 
+      {/* ── Workspace strip ── */}
       <div className="pg-workspace-strip">
         {LANG_GROUPS.map((group) => (
-          <div className="pg-workspace-group" key={group.label}>
+          <div key={group.label} className="pg-workspace-group">
             <span className="pg-workspace-label">{group.label}</span>
             <div className="pg-workspace-list">
               {group.langs.map((lang) => {
@@ -3402,7 +3392,7 @@ export default function CodePlayground({
           </div>
         </div>
 
-        {/* Output / Preview — RIGHT side */}
+        {/* Output / Preview */}
         <div className="pg-output-pane">
           <div className="pg-pane-header">
             <div className="pg-output-tabs">
@@ -3484,7 +3474,6 @@ export default function CodePlayground({
     </div>
   );
 }
-
 
 --------------------------------------------------------------------------------
 FILE: /src/features/playground/components/IDE.css
@@ -4192,7 +4181,9 @@ end
 
 puts "Fibonacci: #{(0..9).map { |i| fib(i) }}"`,
 
-  kotlin: `fun fibonacci(n: Int): List<Int> {
+  // FIX: The ${fibonacci(10)} inside this string was parsed by ESLint as
+  // a JS template expression, causing a no-undef error. Escaped to a raw string.
+  kotlin: String.raw`fun fibonacci(n: Int): List<Int> {
     val result = mutableListOf<Int>()
     var a = 0; var b = 1
     repeat(n) {
@@ -4204,7 +4195,7 @@ puts "Fibonacci: #{(0..9).map { |i| fib(i) }}"`,
 fun main() {
     println("Hello from Kotlin! 🎯")
     println("Fibonacci: " + fibonacci(10))
-} `,
+}`,
 
   swift: `import Foundation
 
@@ -4374,7 +4365,6 @@ print "Fibonacci: @fibs\\n";`,
   println(s"Fibonacci: \${fibonacci(10)}")
 }`,
 };
-
 
 --------------------------------------------------------------------------------
 FILE: /src/features/playground/context/PlaygroundContext.js

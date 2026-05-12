@@ -60,18 +60,18 @@ export function runJavaScript(code) {
 
     const logs = [], errors = [];
     const html = `<!DOCTYPE html><html><body><script>
-      window.onerror = (m,s,l,c,e) => { parent.postMessage({type:\'error\',data:String(e||m)},\'*\'); };
+      window.onerror = (m,s,l,c,e) => { parent.postMessage({type:'error',data:String(e||m)},'*'); };
       const _s = (type,args) => parent.postMessage({type,data:args.map(a=>{
-        try{return typeof a===\'object\'?JSON.stringify(a,null,2):String(a);}catch(e){return String(a);}
-      }).join(\' \')},\'*\');
-      console.log   = (...a) => _s(\'log\',a);
-      console.error = (...a) => _s(\'error\',a);
-      console.warn  = (...a) => _s(\'warn\',a);
-      console.info  = (...a) => _s(\'info\',a);
-      console.table = (...a) => _s(\'log\',a);
-      try { ${code} } catch(e){ parent.postMessage({type:\'error\',data:e.message},\'*\'); }
-      parent.postMessage({type:\'__done__\'},\'*\');
-    <\/script></body></html>`;
+        try{return typeof a==='object'?JSON.stringify(a,null,2):String(a);}catch(e){return String(a);}
+      }).join(' ')},'*');
+      console.log   = (...a) => _s('log',a);
+      console.error = (...a) => _s('error',a);
+      console.warn  = (...a) => _s('warn',a);
+      console.info  = (...a) => _s('info',a);
+      console.table = (...a) => _s('log',a);
+      try { ${code} } catch(e){ parent.postMessage({type:'error',data:e.message},'*'); }
+      parent.postMessage({type:'__done__'},'*');
+    </script></body></html>`;
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const iframe = document.createElement('iframe');
@@ -118,7 +118,7 @@ export async function runTypeScript(code) {
           '📝 Example:',
           '❌ import axios from "axios";',
           '✅ interface User { name: string; }',
-          '✅ const greet = (u: User): string => `Hello, $' + '{u.name}!`;',
+          '✅ const greet = (u: User): string => `Hello, ${u.name}!`;',
         ].join('\n'),
         error: null,
       };
@@ -341,7 +341,7 @@ export function runPHP(code) {
 
 export function runBrainfuck(code) {
   try {
-    const prog = code.replace(/[^><+\-.,\[\]]/g, '');
+    const prog = code.replace(/[^><+\-.,[\]]/g, '');
     const mem = new Uint8Array(30000);
     let dp = 0, ip = 0, out = '';
     const brackets = {};
