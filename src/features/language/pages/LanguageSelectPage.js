@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getLanguages } from '../../docs/services/api';
 
 const languageMeta = {
   javascript: { icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/javascript/javascript-original.svg', color: '#f7df1e' },
@@ -21,6 +22,24 @@ const languageMeta = {
   'c#': { icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg', color: '#239120' },
 };
 
+const fallbackLanguages = [
+  'Batchfile',
+  'C',
+  'C#',
+  'C++',
+  'Go',
+  'Java',
+  'JavaScript',
+  'PHP',
+  'Powershell',
+  'Python',
+  'Q#',
+  'R',
+  'Ruby',
+  'Rust',
+  'SQL',
+];
+
 export default function LanguageSelectPage({ onLanguageSelect, continueLanguage }) {
   const [languages, setLanguages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,14 +49,16 @@ export default function LanguageSelectPage({ onLanguageSelect, continueLanguage 
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/documents/languages`)
-        .then(res => res.json())
-        .then(data => {
-          setLanguages(data.languages || []);
+      getLanguages()
+        .then(({ data }) => {
+          const apiLanguages = Array.isArray(data.languages) ? data.languages : [];
+          setLanguages(apiLanguages.length > 0 ? apiLanguages : fallbackLanguages);
         })
         .catch(err => {
-          console.error('Error loading languages:', err);
-          setLanguages([]);
+          const status = err.response?.status;
+          const detail = err.response?.data?.error || err.message;
+          console.error('Error loading languages:', status ? `${status}: ${detail}` : detail);
+          setLanguages(fallbackLanguages);
         })
         .finally(() => setLoading(false));
     }, 500);
