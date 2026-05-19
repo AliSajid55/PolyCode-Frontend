@@ -19,6 +19,12 @@ frontend/
 │   └── robots.txt
 ├── src/
 │   ├── features/
+│   │   ├── auth/
+│   │   │   ├── context/
+│   │   │   │   └── AuthContext.js
+│   │   │   └── pages/
+│   │   │       ├── LoginPage.js
+│   │   │       └── SignupPage.js
 │   │   ├── docs/
 │   │   │   ├── components/
 │   │   │   │   ├── CodeBlock.js
@@ -56,6 +62,9 @@ frontend/
 │   │       │   └── PlaygroundPage.js
 │   │       └── services/
 │   │           └── BrowserExecutor.js
+│   ├── pages/
+│   │   ├── DailyChallenges.css
+│   │   └── DailyChallenges.js
 │   ├── shared/
 │   │   ├── assets/
 │   │   │   └── .gitkeep
@@ -66,6 +75,10 @@ frontend/
 │   │   └── utils/
 │   │       ├── categories.js
 │   │       └── format.js
+│   ├── styles/
+│   │   ├── responsive.css
+│   │   ├── stack-picker-dark.css
+│   │   └── theme-light.css
 │   ├── tests/
 │   │   └── app/
 │   │       └── App.test.js
@@ -84,7 +97,7 @@ frontend/
 ├── package.json
 └── README.md
 
-Total files: 48
+Total files: 56
 
 ================================================================================
 FILE CONTENTS
@@ -184,6 +197,358 @@ FILE: /public/robots.txt
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Disallow:
+
+
+--------------------------------------------------------------------------------
+FILE: /src/features/auth/context/AuthContext.js
+--------------------------------------------------------------------------------
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+
+const AuthContext = createContext(null);
+
+const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const [loading, setLoading] = useState(true);
+
+  /** Fetch current user from the backend using the stored token */
+  const fetchMe = useCallback(async (storedToken) => {
+    if (!storedToken) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+      } else {
+        // Token invalid / expired
+        localStorage.removeItem("token");
+        setToken(null);
+      }
+    } catch {
+      // Network error — keep token but clear user
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMe(token);
+  }, [fetchMe, token]);
+
+  const login = useCallback(async (email, password) => {
+    const res = await fetch(`${API}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Login failed");
+    localStorage.setItem("token", data.token);
+    setToken(data.token);
+    setUser(data.user);
+    return data.user;
+  }, []);
+
+  const register = useCallback(
+    async ({ email, username, password, firstName, lastName }) => {
+      const res = await fetch(`${API}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          username,
+          password,
+          firstName,
+          lastName,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Registration failed");
+      localStorage.setItem("token", data.token);
+      setToken(data.token);
+      setUser(data.user);
+      return data.user;
+    },
+    [],
+  );
+
+  const logout = useCallback(() => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setUser(null);
+  }, []);
+
+  return (
+    <AuthContext.Provider
+      value={{ user, token, loading, login, register, logout }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
+  return ctx;
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /src/features/auth/pages/LoginPage.js
+--------------------------------------------------------------------------------
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function LoginPage() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await login(email, password);
+      navigate("/");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="auth-page">
+      <div className="auth-card fade-up">
+        {/* Brand */}
+        <div className="auth-brand">
+          <img src="/logo.png" alt="PolyCode" className="auth-logo" />
+          <span className="auth-brand-name">PolyCode</span>
+        </div>
+
+        <h1 className="auth-title">Welcome back</h1>
+        <p className="auth-subtitle">Sign in to continue your learning journey</p>
+
+        {error && <div className="auth-error">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+              autoComplete="email"
+            />
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              autoComplete="current-password"
+            />
+          </div>
+
+          <button type="submit" className="btn-primary auth-submit" disabled={loading}>
+            {loading ? "Signing in…" : "Sign In →"}
+          </button>
+        </form>
+
+        <p className="auth-switch">
+          Don't have an account?{" "}
+          <Link to="/signup" className="auth-link">
+            Create one
+          </Link>
+        </p>
+
+        <p className="auth-skip">
+          <Link to="/hub" className="auth-link-muted">
+            Continue without signing in →
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /src/features/auth/pages/SignupPage.js
+--------------------------------------------------------------------------------
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function SignupPage() {
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    email: "",
+    username: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  function handleChange(e) {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await register(form);
+      navigate("/");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="auth-page">
+      <div className="auth-card fade-up">
+        {/* Brand */}
+        <div className="auth-brand">
+          <img src="/logo.png" alt="PolyCode" className="auth-logo" />
+          <span className="auth-brand-name">PolyCode</span>
+        </div>
+
+        <h1 className="auth-title">Create account</h1>
+        <p className="auth-subtitle">Start mastering programming today</p>
+
+        {error && <div className="auth-error">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field-row">
+            <div className="auth-field">
+              <label htmlFor="firstName">First name</label>
+              <input
+                id="firstName"
+                name="firstName"
+                type="text"
+                value={form.firstName}
+                onChange={handleChange}
+                placeholder="Ada"
+              />
+            </div>
+            <div className="auth-field">
+              <label htmlFor="lastName">Last name</label>
+              <input
+                id="lastName"
+                name="lastName"
+                type="text"
+                value={form.lastName}
+                onChange={handleChange}
+                placeholder="Lovelace"
+              />
+            </div>
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="username">Username</label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              value={form.username}
+              onChange={handleChange}
+              placeholder="ada_lovelace"
+              required
+              minLength={3}
+              maxLength={30}
+            />
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="you@example.com"
+              required
+              autoComplete="email"
+            />
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Min. 6 characters"
+              required
+              minLength={6}
+              autoComplete="new-password"
+            />
+          </div>
+
+          <button type="submit" className="btn-primary auth-submit" disabled={loading}>
+            {loading ? "Creating account…" : "Create Account →"}
+          </button>
+        </form>
+
+        <p className="auth-switch">
+          Already have an account?{" "}
+          <Link to="/login" className="auth-link">
+            Sign in
+          </Link>
+        </p>
+
+        <p className="auth-skip">
+          <Link to="/hub" className="auth-link-muted">
+            Continue without signing in →
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
 
 
 --------------------------------------------------------------------------------
@@ -733,19 +1098,9 @@ export default function MarkdownRenderer({
 
       {relatedCode && relatedCode.length > 0 && (
         <div className="related-code-section">
-          <div style={{ textAlign: 'left', marginBottom: '40px', paddingLeft: '20px', borderLeft: '4px solid var(--accent)' }}>
-            <span style={{
-              fontSize: '0.75rem',
-              color: 'var(--text-muted)',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              display: 'block',
-              marginBottom: '8px'
-            }}>
-              Core Implementation
-            </span>
-            <h2 style={{ fontSize: '1.6rem', margin: 0, fontWeight: 800 }}>
+          <div className="related-code-intro">
+            <span className="related-code-label">Core Implementation</span>
+            <h2>
               {relatedCode.length === 1 ? 'Source Code Reference' : 'Integrated Logic Modules'}
             </h2>
           </div>
@@ -756,13 +1111,8 @@ export default function MarkdownRenderer({
               const codeLang = normalizeDocLanguage(rawLang);
               const ext = extensionFromLanguage(codeLang);
               return (
-                <div key={index} className="related-code-item" style={{ marginBottom: '32px' }}>
-                  <div style={{
-                    background: 'rgba(5, 8, 16, 0.5)',
-                    border: '1px solid var(--border)',
-                    padding: '0',
-                    borderRadius: 'var(--radius)'
-                  }}>
+                <div key={index} className="related-code-item">
+                  <div className="related-code-wrap">
                     <CodeBlock
                       language={codeLang}
                       code={codeDoc.content}
@@ -1015,24 +1365,11 @@ export default function CategoryPage({ selectedLanguage }) {
         <span className="active-path">{formatCategory(category)}</span>
       </nav>
 
-      <div style={{ marginBottom: "64px" }}>
-        <h1
-          className="page-title"
-          style={{
-            fontSize: "clamp(3rem, 6vw, 5rem)",
-            fontWeight: 800,
-            letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-            color: "#fff",
-            marginBottom: "8px",
-          }}
-        >
+      <div className="page-header-block">
+        <h1 className="page-title page-title-hero">
           {formatCategory(category)}
         </h1>
-        <p
-          className="page-subtitle"
-          style={{ fontSize: "0.9rem", color: "var(--txt-2)" }}
-        >
+        <p className="page-subtitle" style={{ marginBottom: 0 }}>
           {total > 0 ? `${total} technical archives in this domain` : "\u00A0"}
         </p>
       </div>
@@ -1052,35 +1389,16 @@ export default function CategoryPage({ selectedLanguage }) {
 
           {/* Pagination */}
           {total > LIMIT && (
-            <div
-              style={{
-                display: "flex",
-                gap: "8px",
-                justifyContent: "center",
-                marginTop: "32px",
-              }}
-            >
+            <div className="search-pagination" style={{ marginTop: "32px" }}>
               {Array.from(
                 { length: Math.ceil(total / LIMIT) },
                 (_, i) => i + 1,
               ).map((p) => (
                 <button
                   key={p}
+                  type="button"
+                  className={`page-btn-num ${p === page ? "active" : ""}`}
                   onClick={() => setPage(p)}
-                  style={{
-                    padding: "8px 14px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    border:
-                      p === page
-                        ? "1px solid var(--accent)"
-                        : "1px solid var(--border)",
-                    background:
-                      p === page ? "rgba(0,212,255,0.1)" : "var(--bg-card)",
-                    color:
-                      p === page ? "var(--accent)" : "var(--text-secondary)",
-                    fontFamily: "Sora, sans-serif",
-                  }}
                 >
                   {p}
                 </button>
@@ -1248,81 +1566,42 @@ export default function SearchPage({ selectedLanguage }) {
     setSearchParams(query ? { q: query } : {});
   };
 
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+
   return (
     <div>
       <nav className="breadcrumb">
-        <Link to="/">home</Link>
+        <Link to="/hub">home</Link>
         <span className="sep">/</span>
         <span className="active-path">search</span>
       </nav>
 
-      <div style={{ marginBottom: "64px" }}>
-        <h1
-          className="page-title"
-          style={{
-            fontSize: "clamp(3rem, 6vw, 5rem)",
-            fontWeight: 800,
-            letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-            color: "#fff",
-            marginBottom: "8px",
-          }}
-        >
-          Search Hub
-        </h1>
-        <p
-          className="page-subtitle"
-          style={{ fontSize: "0.9rem", color: "var(--txt-2)" }}
-        >
+      <div className="page-header-block">
+        <h1 className="page-title page-title-hero">Search Hub</h1>
+        <p className="page-subtitle" style={{ marginBottom: 0 }}>
           Scan the entire technical repository in real-time
         </p>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: "flex", gap: "16px", marginBottom: "64px" }}
-      >
+      <form onSubmit={handleSubmit} className="search-page-form">
         <input
           type="text"
+          className="search-page-input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Query topics, functions, snippets…"
-          style={{
-            flex: 1,
-            padding: "16px 24px",
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid var(--border)",
-            borderRadius: "12px",
-            color: "#fff",
-            fontFamily: "var(--font-body)",
-            fontSize: "1rem",
-            outline: "none",
-          }}
           autoFocus
         />
         <select
+          className="search-page-select"
           value={fileType}
           onChange={(e) => setFileType(e.target.value)}
-          style={{
-            padding: "16px 24px",
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid var(--border)",
-            borderRadius: "12px",
-            color: "#fff",
-            fontFamily: "var(--font-mono)",
-            outline: "none",
-            cursor: "pointer",
-          }}
         >
           <option value="">All</option>
           <option value="md">.md</option>
           <option value="py">.py</option>
         </select>
-        <button
-          type="submit"
-          className="btn-primary"
-          style={{ borderRadius: "12px" }}
-        >
+        <button type="submit" className="btn-primary search-page-btn-round">
           Execute Search
         </button>
       </form>
@@ -1335,20 +1614,12 @@ export default function SearchPage({ selectedLanguage }) {
 
       {!loading && searched && (
         <>
-          <div
-            style={{
-              marginBottom: "20px",
-              color: "var(--text-muted)",
-              fontSize: "0.9rem",
-            }}
-          >
-            Found <strong style={{ color: "var(--accent)" }}>{total}</strong>{" "}
-            result{total !== 1 ? "s" : ""}
+          <div className="search-page-meta">
+            Found <strong>{total}</strong> result{total !== 1 ? "s" : ""}
             {query && (
               <>
                 {" "}
-                for "
-                <span style={{ color: "var(--text-primary)" }}>{query}</span>"
+                for "<span className="query-text">{query}</span>"
               </>
             )}
           </div>
@@ -1361,51 +1632,30 @@ export default function SearchPage({ selectedLanguage }) {
               </div>
 
               {total > 40 && (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: "8px",
-                    marginTop: "64px",
-                  }}
-                >
-                  {Array.from({ length: Math.ceil(total / 40) }).map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        const page = i + 1;
-                        const q = searchParams.get("q") || "";
-                        const ft = searchParams.get("fileType") || "";
-                        doSearch(q, ft, page);
-                        window.scrollTo(0, 0);
-                      }}
-                      className="btn-primary"
-                      style={{
-                        padding: "10px 18px",
-                        background:
-                          parseInt(searchParams.get("page") || "1") === i + 1
-                            ? "#fff"
-                            : "rgba(255,255,255,0.05)",
-                        color:
-                          parseInt(searchParams.get("page") || "1") === i + 1
-                            ? "#000"
-                            : "#fff",
-                      }}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
+                <div className="search-pagination">
+                  {Array.from({ length: Math.ceil(total / 40) }).map((_, i) => {
+                    const page = i + 1;
+                    return (
+                      <button
+                        key={page}
+                        type="button"
+                        className={`page-btn-num ${currentPage === page ? "active" : ""}`}
+                        onClick={() => {
+                          const q = searchParams.get("q") || "";
+                          const ft = searchParams.get("fileType") || "";
+                          doSearch(q, ft, page);
+                          window.scrollTo(0, 0);
+                        }}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </>
           ) : (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "60px",
-                color: "var(--text-muted)",
-              }}
-            >
+            <div className="search-page-empty">
               <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🔎</div>
               <p>No documents found. Try a different search term.</p>
             </div>
@@ -1414,13 +1664,7 @@ export default function SearchPage({ selectedLanguage }) {
       )}
 
       {!searched && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "60px",
-            color: "var(--text-muted)",
-          }}
-        >
+        <div className="search-page-empty">
           <div style={{ fontSize: "3rem", marginBottom: "16px" }}>⌨️</div>
           <p>Type something to search across all documents.</p>
         </div>
@@ -1778,7 +2022,7 @@ const languageMeta = {
   'c#': { icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg', color: '#239120' },
 };
 
-export default function LanguageSelectPage({ onLanguageSelect }) {
+export default function LanguageSelectPage({ onLanguageSelect, continueLanguage }) {
   const [languages, setLanguages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hoveredLanguage, setHoveredLanguage] = useState(null);
@@ -1807,7 +2051,7 @@ export default function LanguageSelectPage({ onLanguageSelect }) {
     
     setTimeout(() => {
       onLanguageSelect(language);
-      navigate('/');
+      navigate('/hub');
     }, 300);
   };
 
@@ -1842,12 +2086,23 @@ export default function LanguageSelectPage({ onLanguageSelect }) {
           Explore an extensive collection of Go, Python, JavaScript, Java, C++, Rust,
           and more. Choose your language to begin exploration.
         </p>
+
+        {continueLanguage && (
+          <button
+            type="button"
+            className="btn-secondary continue-stack-btn"
+            onClick={() => navigate('/hub')}
+            style={{ margin: '0 auto 24px', display: 'block' }}
+          >
+            Continue with {continueLanguage} →
+          </button>
+        )}
       </section>
 
       {/* ── Language Selection Grid ── */}
       <section>
         <div className="section-header" style={{ justifyContent: 'center', marginBottom: '30px' }}>
-          <span className="section-title" style={{ fontSize: '1.2rem', color: 'var(--txt-1)' }}>Choose Your Stack</span>
+          <span className="section-title stack-picker-section-title" style={{ fontSize: '1.2rem' }}>Choose Your Stack</span>
         </div>
 
         <div className="lang-grid">
@@ -1920,29 +2175,43 @@ function hexToRgba(hex, alpha) {
 --------------------------------------------------------------------------------
 FILE: /src/features/navigation/components/Navbar.js
 --------------------------------------------------------------------------------
-import React, { useState, useRef, useEffect } from 'react';
-import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from "react";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../auth/context/AuthContext";
 
 export default function Navbar({
   toggleSidebar,
   theme = "dark",
   onToggleTheme,
+  onGoToStackPicker,
 }) {
-  const [query, setQuery] = useState('');
+  const { user, logout } = useAuth();
+  const [query, setQuery] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
 
-  // Keyboard shortcut: Cmd/Ctrl + K
   useEffect(() => {
     const handler = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         inputRef.current?.focus();
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const handleSearch = (e) => {
@@ -1950,53 +2219,92 @@ export default function Navbar({
     if (query.trim()) navigate(`/search?q=${encodeURIComponent(query.trim())}`);
   };
 
-  const isActive = (path) => location.pathname === path ? 'active' : '';
+  const isActive = (path) => (location.pathname === path ? "active" : "");
+
+  const handleLogout = () => {
+    logout();
+    setDropdownOpen(false);
+    navigate("/login");
+  };
 
   return (
     <nav className="navbar">
-      {/* ── Hamburger / sidebar toggle ── */}
-      <button className="mobile-menu-toggle" onClick={toggleSidebar} aria-label="Toggle sidebar">
-        <span></span>
-        <span></span>
-        <span></span>
+      <button
+        type="button"
+        className="mobile-menu-toggle"
+        onClick={toggleSidebar}
+        aria-label="Toggle sidebar menu"
+      >
+        <span />
+        <span />
+        <span />
       </button>
 
-      {/* ── Brand ── */}
-      <Link to="/hub" className="navbar-brand">
+      <button
+        type="button"
+        className="navbar-brand"
+        onClick={onGoToStackPicker}
+        title="Back to all languages"
+      >
         <img src="/logo.png" alt="PolyCode Logo" className="navbar-logo" />
         <div className="navbar-brand-text">
           <span className="logo-text">PolyCode</span>
           <span className="logo-sub">v2.0 docs</span>
         </div>
-      </Link>
+      </button>
 
-      {/* ── Search ── */}
       <form className="navbar-search" onSubmit={handleSearch}>
-        <span className="search-icon-left">⌕</span>
+        <span className="search-icon-left" aria-hidden="true">
+          ⌕
+        </span>
         <input
           ref={inputRef}
-          type="text"
+          type="search"
           placeholder="Search docs, topics, code…"
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
           aria-label="Search"
         />
-        <span className="search-kbd">⌘K</span>
+        <span className="search-kbd" aria-hidden="true">
+          ⌘K
+        </span>
       </form>
 
-      {/* ── Links ── */}
       <div className="navbar-links">
-        <Link to="/hub" className={isActive('/hub')}>Home</Link>
-        <Link to="/search" className={isActive('/search')}>Search</Link>
-        {/* Playground link */}
+        <button
+          type="button"
+          className={`navbar-link-btn ${location.pathname === "/select-language" ? "active" : ""}`}
+          onClick={onGoToStackPicker}
+          title="Choose a programming language"
+        >
+          Home
+        </button>
+        <Link to="/hub" className={isActive("/hub")}>
+          Docs hub
+        </Link>
+        <Link to="/search" className={isActive("/search")}>
+          Search
+        </Link>
         <NavLink
           to="/playground"
           className={({ isActive: a }) =>
-            `navbar-playground-link ${a ? 'active' : ''}`
+            `navbar-playground-link ${a ? "active" : ""}`
           }
         >
           ▶ Playground
         </NavLink>
+      </div>
+
+      <div className="navbar-actions">
+        <Link
+          to="/search"
+          className={`navbar-icon-btn navbar-mobile-search ${isActive("/search")}`}
+          aria-label="Search"
+          title="Search"
+        >
+          ⌕
+        </Link>
+
         <button
           type="button"
           className="theme-toggle-btn"
@@ -2004,12 +2312,63 @@ export default function Navbar({
           aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
           title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
         >
-          {theme === "dark" ? "☀ Light" : "🌙 Dark"}
+          <span className="theme-toggle-icon" aria-hidden="true">
+            {theme === "dark" ? "☀" : "🌙"}
+          </span>
+          <span className="theme-toggle-label">
+            {theme === "dark" ? "Light" : "Dark"}
+          </span>
         </button>
+
+        {user ? (
+          <div className="navbar-user" ref={dropdownRef}>
+            <button
+              type="button"
+              className="navbar-avatar-btn"
+              onClick={() => setDropdownOpen((o) => !o)}
+              aria-label="User menu"
+              title={user.username}
+            >
+              <span className="navbar-avatar-initials">
+                {(
+                  user.firstName?.[0] ||
+                  user.username?.[0] ||
+                  "?"
+                ).toUpperCase()}
+              </span>
+            </button>
+
+            {dropdownOpen && (
+              <div className="navbar-dropdown">
+                <div className="navbar-dropdown-header">
+                  <strong>{user.username}</strong>
+                  <span>{user.email}</span>
+                </div>
+                <button
+                  type="button"
+                  className="navbar-dropdown-item navbar-dropdown-logout"
+                  onClick={handleLogout}
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="navbar-auth-btns">
+            <Link to="/login" className="navbar-login-btn navbar-login-btn--compact">
+              Sign in
+            </Link>
+            <Link to="/signup" className="navbar-signup-btn navbar-signup-btn--compact">
+              Sign up
+            </Link>
+          </div>
+        )}
       </div>
     </nav>
   );
 }
+
 
 --------------------------------------------------------------------------------
 FILE: /src/features/navigation/components/Sidebar.js
@@ -2019,49 +2378,22 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getTree, getLanguages } from "../../docs/services/api";
 import { formatName } from "../../../shared/utils/format";
 
-// ── Icons (defined once, memoized automatically as module-level constants) ───
+// ── Icons ────────────────────────────────────────────────────────────────────
 const FolderIcon = ({ color = "currentColor" }) => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
   </svg>
 );
 
 const FileIcon = ({ color = "currentColor" }) => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
     <polyline points="13 2 13 9 20 9" />
   </svg>
 );
 
 const DocIcon = ({ color = "currentColor" }) => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
     <polyline points="14 2 14 8 20 8" />
     <line x1="16" y1="13" x2="8" y2="13" />
@@ -2071,73 +2403,41 @@ const DocIcon = ({ color = "currentColor" }) => (
 );
 
 const languageLogos = {
-  javascript:
-    "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/javascript/javascript-original.svg",
-  python:
-    "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg",
+  javascript: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/javascript/javascript-original.svg",
+  python: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg",
   java: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/java/java-original.svg",
   cpp: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/cplusplus/cplusplus-original.svg",
-  "c++":
-    "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/cplusplus/cplusplus-original.svg",
+  "c++": "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/cplusplus/cplusplus-original.svg",
   c: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/c/c-original.svg",
   rust: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/rust/rust-original.svg",
   go: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/go/go-original.svg",
   php: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/php/php-original.svg",
   ruby: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/ruby/ruby-original.svg",
   sql: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/postgresql/postgresql-original.svg",
-  powershell:
-    "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/powershell/powershell-original.svg",
+  powershell: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/powershell/powershell-original.svg",
   r: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/r/r-original.svg",
-  csharp:
-    "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg",
+  csharp: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg",
   "c#": "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg",
 };
 
-// ── Pure function – no state, safe to call outside render ────────────────────
 function getFileIcon(ext) {
   const e = ext.toLowerCase();
   const logoMap = {
-    ".py": "python",
-    ".go": "go",
-    ".js": "javascript",
-    ".jsx": "javascript",
-    ".java": "java",
-    ".rs": "rust",
-    ".cpp": "cpp",
-    ".c++": "cpp",
-    ".c": "c",
-    ".php": "php",
-    ".rb": "ruby",
-    ".sql": "sql",
-    ".cs": "csharp",
+    ".py": "python", ".go": "go", ".js": "javascript", ".jsx": "javascript",
+    ".java": "java", ".rs": "rust", ".cpp": "cpp", ".c++": "cpp",
+    ".c": "c", ".php": "php", ".rb": "ruby", ".sql": "sql", ".cs": "csharp",
   };
   const logoKey = logoMap[e];
-  if (logoKey)
-    return (
-      <img src={languageLogos[logoKey]} alt="" className="tree-logo-icon" />
-    );
-  if (e === ".md")
-    return (
-      <span className="tree-icon">
-        <DocIcon color="var(--cyan)" />
-      </span>
-    );
+  if (logoKey) return <img src={languageLogos[logoKey]} alt="" className="tree-logo-icon" />;
+  if (e === ".md") return <span className="tree-icon"><DocIcon color="var(--cyan)" /></span>;
   if (e === ".html") return <span className="tree-icon">🌐</span>;
   if (e === ".css") return <span className="tree-icon">🎨</span>;
-  return (
-    <span className="tree-icon">
-      <FileIcon color="var(--txt-3)" />
-    </span>
-  );
+  return <span className="tree-icon"><FileIcon color="var(--txt-3)" /></span>;
 }
 
-// ── Tree node – memoized so re-renders only happen when props change ──────────
+// ── Tree node ─────────────────────────────────────────────────────────────────
 const SidebarTreeNode = memo(function SidebarTreeNode({
-  node,
-  depth = 0,
-  selectedLanguage,
-  onItemClick,
-  activePath,
+  node, depth = 0, selectedLanguage, onItemClick, activePath,
 }) {
   const [expanded, setExpanded] = useState(depth === 0);
 
@@ -2151,9 +2451,7 @@ const SidebarTreeNode = memo(function SidebarTreeNode({
           onClick={() => setExpanded((e) => !e)}
         >
           <span className="tree-caret">{expanded ? "▾" : "▸"}</span>
-          <span className="tree-icon">
-            <FolderIcon color="var(--violet)" />
-          </span>
+          <span className="tree-icon"><FolderIcon color="var(--violet)" /></span>
           <span className="tree-label">{formatName(node.name)}</span>
         </button>
         {expanded && hasChildren && (
@@ -2190,11 +2488,13 @@ const SidebarTreeNode = memo(function SidebarTreeNode({
   );
 });
 
+// ── Sidebar ───────────────────────────────────────────────────────────────────
 export default function Sidebar({
   isOpen,
   onClose,
   selectedLanguage,
   onLanguageSelect,
+  onGoToStackPicker,
 }) {
   const [tree, setTree] = useState([]);
   const [languages, setLanguages] = useState([]);
@@ -2214,8 +2514,7 @@ export default function Sidebar({
 
     getLanguages()
       .then((r) => {
-        if (r.data && Array.isArray(r.data.languages))
-          setLanguages(r.data.languages);
+        if (r.data && Array.isArray(r.data.languages)) setLanguages(r.data.languages);
         else if (r.data && Array.isArray(r.data)) setLanguages(r.data);
       })
       .catch(() => setLanguages([]));
@@ -2237,23 +2536,10 @@ export default function Sidebar({
   const isActive = (p) => location.pathname === p;
 
   return (
-    <aside className={`sidebar ${isOpen ? "open" : ""}`}>
+    <aside className={`sidebar ${isOpen ? "active" : ""}`}>
       {/* Close button */}
-      <button
-        className="sidebar-close"
-        onClick={onClose}
-        aria-label="Close sidebar"
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+      <button className="sidebar-close" onClick={onClose} aria-label="Close sidebar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
@@ -2263,14 +2549,9 @@ export default function Sidebar({
       <div className="sidebar-section">
         <div className="sidebar-section-title">Current Stack</div>
         <div className="sidebar-language-box">
-          <button
-            className="language-display-btn"
-            onClick={() => setShowLangMenu((v) => !v)}
-          >
+          <button className="language-display-btn" onClick={() => setShowLangMenu((v) => !v)}>
             <div className="current-lang-info">
-              {currentLogo && (
-                <img src={currentLogo} alt="" className="lang-icon-mini" />
-              )}
+              {currentLogo && <img src={currentLogo} alt="" className="lang-icon-mini" />}
               <span className="current-language-name">{selectedLanguage}</span>
             </div>
             <span className="chevron">{showLangMenu ? "▴" : "▾"}</span>
@@ -2287,19 +2568,29 @@ export default function Sidebar({
                       className={`lang-option ${lang === selectedLanguage ? "active" : ""}`}
                       onClick={() => handleSelectLanguage(lang)}
                     >
-                      {logo && (
-                        <img src={logo} alt="" className="lang-icon-tiny" />
-                      )}
+                      {logo && <img src={logo} alt="" className="lang-icon-tiny" />}
                       <span>{lang}</span>
                     </button>
                   );
                 })
               ) : (
-                <div className="lang-option" style={{ opacity: 0.5 }}>
-                  No languages found
-                </div>
+                <div className="lang-option" style={{ opacity: 0.5 }}>No languages found</div>
               )}
             </div>
+          )}
+
+          {onGoToStackPicker && (
+            <button
+              type="button"
+              className="change-stack-btn"
+              onClick={() => {
+                setShowLangMenu(false);
+                onGoToStackPicker();
+                onClose();
+              }}
+            >
+              View all stacks
+            </button>
           )}
         </div>
       </div>
@@ -2309,29 +2600,32 @@ export default function Sidebar({
       {/* Quick nav */}
       <div className="sidebar-section">
         <div className="sidebar-section-title">Navigate</div>
-        <Link
-          to="/hub"
-          className={`sidebar-item ${isActive("/hub") ? "active" : ""}`}
-          onClick={handleItemClick}
+        <button
+          type="button"
+          className={`sidebar-item sidebar-item-btn ${location.pathname === "/select-language" ? "active" : ""}`}
+          onClick={() => {
+            onGoToStackPicker?.();
+            onClose();
+          }}
         >
+          <span className="icon">⊞</span>
+          <span className="sidebar-text">All stacks</span>
+        </button>
+        <Link to="/hub" className={`sidebar-item ${isActive("/hub") ? "active" : ""}`} onClick={handleItemClick}>
           <span className="icon">⌂</span>
-          <span className="sidebar-text">Home</span>
+          <span className="sidebar-text">Docs hub</span>
         </Link>
-        <Link
-          to="/search"
-          className={`sidebar-item ${isActive("/search") ? "active" : ""}`}
-          onClick={handleItemClick}
-        >
+        <Link to="/search" className={`sidebar-item ${isActive("/search") ? "active" : ""}`} onClick={handleItemClick}>
           <span className="icon">⌕</span>
           <span className="sidebar-text">Search</span>
         </Link>
-        <Link
-          to="/playground"
-          className={`sidebar-item ${isActive("/playground") ? "active" : ""}`}
-          onClick={handleItemClick}
-        >
+        <Link to="/playground" className={`sidebar-item ${isActive("/playground") ? "active" : ""}`} onClick={handleItemClick}>
           <span className="icon">▶</span>
           <span className="sidebar-text">Playground</span>
+        </Link>
+        <Link to="/daily-challenge" className={`sidebar-item ${isActive("/daily-challenge") ? "active" : ""}`} onClick={handleItemClick}>
+          <span className="icon">🏆</span>
+          <span className="sidebar-text">Daily Challenge</span>
         </Link>
       </div>
 
@@ -2362,7 +2656,6 @@ export default function Sidebar({
     </aside>
   );
 }
-
 
 --------------------------------------------------------------------------------
 FILE: /src/features/playground/components/CodePlayground.css
@@ -4033,7 +4326,7 @@ print(greet("World"))
 >+.
 >.`,
 
-  regex: `/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  regex: `/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/
 ---
 test@example.com
 invalid-email
@@ -4763,18 +5056,18 @@ export function runJavaScript(code) {
 
     const logs = [], errors = [];
     const html = `<!DOCTYPE html><html><body><script>
-      window.onerror = (m,s,l,c,e) => { parent.postMessage({type:\'error\',data:String(e||m)},\'*\'); };
+      window.onerror = (m,s,l,c,e) => { parent.postMessage({type:'error',data:String(e||m)},'*'); };
       const _s = (type,args) => parent.postMessage({type,data:args.map(a=>{
-        try{return typeof a===\'object\'?JSON.stringify(a,null,2):String(a);}catch(e){return String(a);}
-      }).join(\' \')},\'*\');
-      console.log   = (...a) => _s(\'log\',a);
-      console.error = (...a) => _s(\'error\',a);
-      console.warn  = (...a) => _s(\'warn\',a);
-      console.info  = (...a) => _s(\'info\',a);
-      console.table = (...a) => _s(\'log\',a);
-      try { ${code} } catch(e){ parent.postMessage({type:\'error\',data:e.message},\'*\'); }
-      parent.postMessage({type:\'__done__\'},\'*\');
-    <\/script></body></html>`;
+        try{return typeof a==='object'?JSON.stringify(a,null,2):String(a);}catch(e){return String(a);}
+      }).join(' ')},'*');
+      console.log   = (...a) => _s('log',a);
+      console.error = (...a) => _s('error',a);
+      console.warn  = (...a) => _s('warn',a);
+      console.info  = (...a) => _s('info',a);
+      console.table = (...a) => _s('log',a);
+      try { ${code} } catch(e){ parent.postMessage({type:'error',data:e.message},'*'); }
+      parent.postMessage({type:'__done__'},'*');
+    </script></body></html>`;
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const iframe = document.createElement('iframe');
@@ -4821,7 +5114,7 @@ export async function runTypeScript(code) {
           '📝 Example:',
           '❌ import axios from "axios";',
           '✅ interface User { name: string; }',
-          '✅ const greet = (u: User): string => `Hello, $' + '{u.name}!`;',
+          '✅ const greet = (u: User): string => `Hello, {u.name}!`;',
         ].join('\n'),
         error: null,
       };
@@ -5044,7 +5337,7 @@ export function runPHP(code) {
 
 export function runBrainfuck(code) {
   try {
-    const prog = code.replace(/[^><+\-.,\[\]]/g, '');
+    const prog = code.replace(/[^><+\-.,[\]]/g, '');
     const mem = new Uint8Array(30000);
     let dp = 0, ip = 0, out = '';
     const brackets = {};
@@ -5360,6 +5653,776 @@ export async function executeCode(code, language, stdin = '') {
   }
 }
 
+--------------------------------------------------------------------------------
+FILE: /src/pages/DailyChallenges.css
+--------------------------------------------------------------------------------
+.daily-challenges-container {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 24px;
+  height: calc(100vh - var(--nav-h) - 100px);
+  max-width: 1600px;
+  margin: 0 auto;
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Left Pane: Challenge Info ── */
+.challenge-info-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  padding-right: 12px;
+}
+
+.challenge-info-pane::-webkit-scrollbar {
+  width: 4px;
+}
+
+.challenge-info-pane::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.challenge-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.challenge-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--acid), var(--cyan));
+}
+
+.challenge-title-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.challenge-title-area h1 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--txt-0);
+  margin: 0;
+}
+
+.badge-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.streak-badge {
+  background: linear-gradient(135deg, #ff4d00, #ff9000);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  box-shadow: 0 4px 15px rgba(255, 77, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+}
+
+.difficulty-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: var(--font-mono);
+}
+
+.difficulty-badge.easy { background: rgba(16, 185, 129, 0.1); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.2); }
+.difficulty-badge.medium { background: rgba(245, 158, 11, 0.1); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.2); }
+.difficulty-badge.hard { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+.challenge-description {
+  color: var(--txt-1);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.challenge-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--txt-2);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.example-box {
+  background: var(--ink-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.example-box pre {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--txt-0);
+  margin: 8px 0;
+  white-space: pre-wrap;
+}
+
+.example-explanation {
+  font-size: 0.85rem;
+  color: var(--txt-2);
+  font-style: italic;
+}
+
+/* ── Right Pane: Editor ── */
+.editor-pane {
+  display: flex;
+  flex-direction: column;
+  background: var(--ink-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--ink-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.lang-selector-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.premium-select {
+  background: var(--ink-4);
+  border: 1px solid var(--border);
+  color: var(--txt-0);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.premium-select:hover {
+  border-color: var(--txt-3);
+}
+
+.submit-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--acid);
+  color: #000;
+  border: none;
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: var(--glow-acid);
+}
+
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editor-container {
+  flex: 1;
+  min-height: 0;
+}
+
+.result-area-detailed {
+  padding: 24px;
+  background: var(--ink-3);
+  border-top: 1px solid var(--border);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.status-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-main h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.status-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--txt-2);
+  background: var(--ink-4);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.accepted .status-main { color: var(--green); }
+.wrong-answer .status-main { color: var(--red); }
+.runtime-error .status-main { color: var(--red); }
+.pending { color: var(--violet); }
+
+.test-cases-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.test-case-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  position: relative;
+  cursor: help;
+}
+
+.test-case-chip.passed {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--green);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.test-case-chip.failed {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--red);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.test-case-tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  width: 280px;
+  font-size: 0.8rem;
+  display: none;
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+  border-left: 3px solid var(--red);
+  color: #ffffff;
+}
+
+.expected-val { color: var(--green); }
+.actual-val { color: var(--red); }
+
+.test-case-tooltip div {
+  margin-bottom: 8px;
+}
+
+.test-case-tooltip code {
+  display: block;
+  background: var(--ink-4);
+  padding: 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  color: var(--txt-0);
+  border: 1px solid var(--border);
+}
+
+.test-case-chip:hover .test-case-tooltip {
+  display: block;
+}
+
+.success-feedback {
+  background: var(--acid-dim);
+  color: var(--acid);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--acid);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.spin-slow {
+  animation: spin 2s linear infinite;
+}
+
+.error-log-container {
+  margin-top: 20px;
+  background: #1a1010;
+  border: 1px solid #442222;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.error-log-header {
+  background: #2a1515;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ff8080;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #442222;
+}
+
+.error-log-body {
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: #ffcccc;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Mobile Responsive ── */
+@media (max-width: 1100px) {
+  .daily-challenges-container {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+  }
+  
+  .editor-pane {
+    height: 600px;
+  }
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  gap: 20px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--acid);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.example-header {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--txt-3);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.constraints-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 12px;
+}
+
+.constraints-list li {
+  font-size: 0.85rem;
+  color: var(--txt-1);
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.constraints-list li::before {
+  content: '→';
+  color: var(--acid);
+  font-weight: bold;
+}
+
+.spinner-mini {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,0.1);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.random-tag {
+  font-size: 0.6rem;
+  padding: 1px 4px;
+  background: var(--violet);
+  color: #fff;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-weight: 800;
+  margin-left: 8px;
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /src/pages/DailyChallenges.js
+--------------------------------------------------------------------------------
+import React, { useState, useEffect } from 'react';
+import Editor from "@monaco-editor/react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+    Trophy, 
+    Code2, 
+    Play, 
+    CheckCircle2, 
+    AlertCircle, 
+    Lightbulb,
+    ChevronRight,
+    Terminal,
+    Timer,
+    Activity,
+    Check,
+    X
+} from "lucide-react";
+import "./DailyChallenges.css";
+
+export default function DailyChallenge({ theme }) {
+    const [challenge, setChallenge] = useState(null);
+    const [code, setCode] = useState('');
+    const [language, setLanguage] = useState('python');
+    const [resultData, setResultData] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [streak, setStreak] = useState(0);
+
+    useEffect(() => {
+        fetch(`${process.env.REACT_APP_API_URL}/challenges/today`)
+            .then(r => r.json())
+            .then(data => {
+                if (data && !data.message) {
+                    setChallenge(data);
+                    setCode(data.starterCode?.[language] || '');
+                }
+            })
+            .catch(err => console.error("Failed to fetch challenge:", err));
+    }, []);
+
+    // Update code when language changes
+    useEffect(() => {
+        if (challenge && challenge.starterCode) {
+            setCode(challenge.starterCode[language] || '');
+        }
+    }, [language, challenge]);
+
+    const handleSubmit = async () => {
+        if (!challenge) return;
+        setIsSubmitting(true);
+        setResultData({ status: 'PENDING' });
+
+        const userId = localStorage.getItem('userId') || crypto.randomUUID();
+        localStorage.setItem('userId', userId);
+
+        try {
+            const res = await fetch(`${process.env.REACT_APP_API_URL}/challenges/${challenge._id}/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, language, code })
+            });
+            const data = await res.json();
+            setResultData(data);
+            if (data.streak !== undefined) setStreak(data.streak);
+        } catch (err) {
+            console.error("Submission failed:", err);
+            setResultData({ status: 'ERROR', message: err.message });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (!challenge) {
+        return (
+            <div className="loading-state">
+                <div className="spinner"></div>
+                <p>Retrieving today's technical challenge...</p>
+            </div>
+        );
+    }
+
+    return (
+        <motion.div 
+            className="daily-challenges-container"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+        >
+            {/* ── Left Pane: Challenge Details ── */}
+            <div className="challenge-info-pane">
+                <div className="challenge-card">
+                    <div className="challenge-title-area">
+                        <motion.h1
+                            initial={{ x: -20 }}
+                            animate={{ x: 0 }}
+                        >
+                            {challenge.title}
+                        </motion.h1>
+                        <div className="badge-group">
+                            <span className={`difficulty-badge ${challenge.difficulty.toLowerCase()}`}>
+                                {challenge.difficulty}
+                            </span>
+                            {streak > 0 && (
+                                <motion.div 
+                                    className="streak-badge"
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    whileHover={{ scale: 1.1 }}
+                                >
+                                    🔥 {streak} Day Streak
+                                </motion.div>
+                            )}
+                        </div>
+                    </div>
+
+                    <p className="challenge-description">{challenge.description}</p>
+
+                    <div className="challenge-section-title">
+                        <Lightbulb size={16} /> Examples
+                    </div>
+                    {challenge.examples?.map((ex, i) => (
+                        <motion.div 
+                            key={i} 
+                            className="example-box"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.2 + (i * 0.1) }}
+                        >
+                            <div className="example-header">
+                                <span>Example {i + 1}</span>
+                            </div>
+                            <pre>
+                                <strong>Input:</strong> {ex.input}{'\n'}
+                                <strong>Output:</strong> {ex.output}
+                            </pre>
+                            {ex.explanation && (
+                                <p className="example-explanation">
+                                    <ChevronRight size={12} style={{ display: 'inline' }} /> {ex.explanation}
+                                </p>
+                            )}
+                        </motion.div>
+                    ))}
+
+                    {challenge.constraints && challenge.constraints.length > 0 && (
+                        <>
+                            <div className="challenge-section-title">
+                                <AlertCircle size={16} /> Constraints
+                            </div>
+                            <ul className="constraints-list">
+                                {challenge.constraints.map((c, i) => (
+                                    <li key={i}>{c}</li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* ── Right Pane: Editor ── */}
+            <div className="editor-pane">
+                <div className="editor-header">
+                    <div className="lang-selector-wrapper">
+                        <Terminal size={18} className="text-muted" />
+                        <select 
+                            className="premium-select"
+                            value={language} 
+                            onChange={e => setLanguage(e.target.value)}
+                        >
+                            <option value="python">Python</option>
+                            <option value="javascript">JavaScript</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
+                    </div>
+
+                    <button 
+                        className="submit-btn" 
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? <div className="spinner-mini" /> : <Play size={16} fill="currentColor" />}
+                        Submit Solution
+                    </button>
+                </div>
+
+                <div className="editor-container">
+                    <Editor
+                        height="100%"
+                        language={language === 'cpp' ? 'cpp' : language}
+                        value={code}
+                        onChange={v => setCode(v || '')}
+                        theme={theme === 'light' ? 'vs' : 'vs-dark'}
+                        options={{
+                            fontSize: 14,
+                            fontFamily: "'Space Mono', monospace",
+                            minimap: { enabled: false },
+                            scrollBeyondLastLine: false,
+                            automaticLayout: true,
+                            padding: { top: 20 },
+                            lineNumbers: "on",
+                            glyphMargin: false,
+                            folding: true,
+                            lineDecorationsWidth: 0,
+                            lineNumbersMinChars: 3,
+                            wordWrap: "on"
+                        }}
+                    />
+                </div>
+
+                <AnimatePresence>
+                    {resultData && (
+                        <motion.div 
+                            className="result-area-detailed"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                        >
+                            {resultData.status === 'PENDING' ? (
+                                <div className="status-card pending">
+                                    <Activity size={20} className="spin-slow" />
+                                    <span>Running test cases against your code...</span>
+                                </div>
+                            ) : (
+                                <div className="detailed-results">
+                                    <div className={`status-header ${resultData.status.toLowerCase().replace(' ', '-')}`}>
+                                        <div className="status-main">
+                                            {resultData.status === 'Accepted' ? <Trophy size={24} /> : <AlertCircle size={24} />}
+                                            <h2>{resultData.status}</h2>
+                                        </div>
+                                        <div className="status-stats">
+                                            <div className="stat-item">
+                                                <CheckCircle2 size={14} />
+                                                <span>{resultData.passedCount} / {resultData.totalCount} Passed</span>
+                                            </div>
+                                            {resultData.executionTime && (
+                                                <div className="stat-item">
+                                                    <Timer size={14} />
+                                                    <span>{resultData.executionTime}ms</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="test-cases-grid">
+                                        {resultData.results?.map((res, i) => (
+                                            <div key={i} className={`test-case-chip ${res.passed ? 'passed' : 'failed'}`}>
+                                                {res.passed ? <Check size={14} /> : <X size={14} />}
+                                                <span>Test {i + 1} {res.isRandom && <span className="random-tag">Random</span>}</span>
+                                                {!res.passed && !res.isHidden && (
+                                                    <div className="test-case-tooltip">
+                                                        <div>Expected: <code className="expected-val">{res.expected}</code></div>
+                                                        <div>Actual: <code className="actual-val">{res.actual}</code></div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    
+                                    {resultData.status === 'Accepted' && (
+                                        <motion.div 
+                                            className="success-feedback"
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                        >
+                                            🎉 Excellent work! Your solution is efficient and correct.
+                                        </motion.div>
+                                    )}
+
+                                    {resultData.results?.some(r => r.error) && (
+                                        <div className="error-log-container">
+                                            <div className="error-log-header">
+                                                <AlertCircle size={14} />
+                                                <span>Runtime Error Output</span>
+                                            </div>
+                                            <pre className="error-log-body">
+                                                {resultData.results.find(r => r.error).error}
+                                            </pre>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </motion.div>
+    );
+}
 
 --------------------------------------------------------------------------------
 FILE: /src/shared/assets/.gitkeep
@@ -5727,6 +6790,1034 @@ export const formatName = (name) => {
 
 
 --------------------------------------------------------------------------------
+FILE: /src/styles/responsive.css
+--------------------------------------------------------------------------------
+/**
+ * Responsive layout — mobile, tablet, desktop
+ * Loaded after App.css to resolve duplicate/conflicting breakpoints.
+ */
+
+/* ── Navbar: actions always visible (theme, auth, mobile search) ── */
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.navbar-icon-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--txt-1);
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: all 0.15s;
+}
+
+.navbar-icon-btn:hover,
+.navbar-icon-btn.active {
+  color: var(--txt-0);
+  border-color: var(--border-2);
+  background: var(--glass-2);
+}
+
+.navbar-mobile-search {
+  display: none;
+}
+
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.theme-toggle-icon {
+  line-height: 1;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .main-content {
+    padding: calc(var(--nav-h) + 20px) 28px 48px;
+  }
+
+  .doc-header h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+  }
+
+  .page-title-hero {
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+  }
+}
+
+/* Mobile + small tablet: drawer sidebar, full-width content */
+@media (max-width: 900px) {
+  .navbar {
+    padding: 0 12px !important;
+    gap: 10px;
+    justify-content: flex-start;
+  }
+
+  .mobile-menu-toggle {
+    display: flex;
+    order: 0;
+    flex-shrink: 0;
+  }
+
+  .navbar-brand {
+    order: 1;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .navbar-brand .logo-sub {
+    display: none;
+  }
+
+  .navbar-search {
+    display: none !important;
+  }
+
+  .navbar-links {
+    display: none !important;
+  }
+
+  .navbar-actions {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .navbar-mobile-search {
+    display: inline-flex;
+  }
+
+  .theme-toggle-label {
+    display: none;
+  }
+
+  .theme-toggle-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .navbar-signup-btn--compact {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+  }
+
+  .navbar-login-btn--compact {
+    display: none;
+  }
+
+  .sidebar {
+    top: 0 !important;
+    left: 0 !important;
+    width: min(300px, 88vw) !important;
+    height: 100vh !important;
+    padding-top: calc(var(--nav-h) + 12px);
+    transform: translateX(-100%);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 1200;
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.45);
+  }
+
+  .sidebar.active {
+    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .sidebar-close {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--glass-heavy);
+    border: 1px solid var(--border);
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    max-width: 100% !important;
+    width: 100%;
+    padding: calc(var(--nav-h) + 16px) 16px 40px !important;
+    overflow-x: hidden;
+  }
+
+  .layout {
+    min-width: 0;
+  }
+
+  .doc-container {
+    max-width: 100%;
+    padding-bottom: 48px;
+  }
+
+  .doc-header {
+    margin-bottom: 28px;
+  }
+
+  .doc-header h1 {
+    font-size: clamp(1.75rem, 7vw, 2.5rem);
+  }
+
+  .doc-badge-row {
+    flex-wrap: wrap;
+  }
+
+  .breadcrumb {
+    font-size: 0.7rem;
+    gap: 4px;
+    margin-bottom: 20px;
+  }
+
+  .page-header-block {
+    margin-bottom: 32px;
+  }
+
+  .page-title-hero {
+    font-size: clamp(1.85rem, 8vw, 2.75rem);
+  }
+
+  .search-page-form {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .search-page-input,
+  .search-page-select,
+  .search-page-form .btn-primary {
+    width: 100%;
+  }
+
+  .related-code-section {
+    padding: 20px 16px;
+    margin-top: 32px;
+  }
+
+  .grid-2,
+  .grid-3,
+  .cat-grid,
+  .lang-grid,
+  .grid-bento {
+    grid-template-columns: 1fr !important;
+  }
+
+  .grid-bento > .premium-doc-card {
+    grid-column: span 1 !important;
+  }
+
+  .language-select-page-wrapper {
+    padding: calc(var(--nav-h) + 24px) 16px 48px;
+    justify-content: flex-start;
+  }
+
+  .hero {
+    padding: 24px 0 32px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .navbar-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .navbar-brand .logo-text {
+    font-size: 1rem;
+  }
+
+  .doc-header h1 {
+    font-size: 1.65rem;
+    letter-spacing: -0.03em;
+  }
+
+  .doc-stats {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .cat-pill,
+  .type-pill {
+    font-size: 0.65rem;
+    padding: 5px 12px;
+  }
+
+  .code-block,
+  .code-block.ide-enhanced {
+    margin-left: -16px;
+    margin-right: -16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .doc-body pre {
+    margin-left: -16px;
+    margin-right: -16px;
+    border-radius: 0;
+  }
+
+  .page-btn-num {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+
+  .auth-page {
+    padding: 24px 16px;
+  }
+
+  .auth-card {
+    padding: 28px 20px;
+  }
+}
+
+/* Touch-friendly targets */
+@media (max-width: 900px) {
+  .sidebar-item,
+  .tree-folder-btn,
+  .tree-file {
+    min-height: 44px;
+  }
+
+  .lang-card {
+    padding: 28px 20px;
+  }
+}
+
+/* Prevent horizontal scroll on code */
+.doc-body,
+.doc-content-wrapper,
+.ide-code-panel {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.doc-body table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app.theme-light .navbar-icon-btn.active {
+  color: #047857;
+  border-color: rgba(4, 120, 87, 0.35);
+  background: rgba(4, 120, 87, 0.1);
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /src/styles/stack-picker-dark.css
+--------------------------------------------------------------------------------
+/**
+ * Language stack picker — always dark (independent of global light/dark toggle).
+ */
+.stack-picker-dark {
+  --ink: #03050a;
+  --ink-2: #05070f;
+  --ink-3: #080a14;
+  --ink-4: #0a0d1a;
+  --glass: rgba(255, 255, 255, 0.02);
+  --glass-heavy: rgba(255, 255, 255, 0.04);
+  --glass-2: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-2: rgba(255, 255, 255, 0.12);
+  --txt-0: #ffffff;
+  --txt-1: #e0e0e8;
+  --txt-2: #a0a0b8;
+  --txt-3: #60607a;
+  --acid: #ccff00;
+  --accent: #ccff00;
+  --acid-glow: rgba(204, 255, 0, 0.25);
+  --acid-dim: rgba(204, 255, 0, 0.12);
+  --cyan: #00f2ff;
+  --cyan-dim: rgba(0, 242, 255, 0.12);
+  --violet: #8b5cf6;
+  --bg-card: #080a14;
+
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  color: var(--txt-0);
+  background-color: #03050a;
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 100% 0%, rgba(0, 242, 255, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(204, 255, 0, 0.03) 0%, transparent 50%);
+}
+
+.stack-picker-dark::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.stack-picker-dark .language-select-page-wrapper {
+  color: var(--txt-0);
+}
+
+.stack-picker-dark .hero h1 {
+  color: #ffffff !important;
+}
+
+.stack-picker-dark .hero h1 .gradient-text {
+  background: linear-gradient(135deg, var(--acid) 0%, var(--cyan) 60%, var(--violet) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stack-picker-dark .hero p,
+.stack-picker-dark .language-select-page-wrapper p {
+  color: var(--txt-1) !important;
+}
+
+.stack-picker-dark .hero-eyebrow {
+  color: var(--acid) !important;
+  background: var(--acid-dim) !important;
+  border-color: rgba(204, 255, 0, 0.2) !important;
+}
+
+.stack-picker-dark .section-title,
+.stack-picker-dark .stack-picker-section-title {
+  color: #ffffff !important;
+}
+
+.stack-picker-dark .lang-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.stack-picker-dark .lang-card:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.stack-picker-dark .lang-card .lang-name {
+  color: #ffffff !important;
+}
+
+.stack-picker-dark .lang-explorer {
+  color: var(--txt-3) !important;
+}
+
+.stack-picker-dark .btn-secondary,
+.stack-picker-dark .continue-stack-btn {
+  color: var(--txt-1) !important;
+  border-color: var(--border-2) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+.stack-picker-dark .btn-secondary:hover,
+.stack-picker-dark .continue-stack-btn:hover {
+  color: var(--txt-0) !important;
+  background: var(--glass-2) !important;
+}
+
+.stack-picker-dark .loading {
+  background: rgba(3, 5, 10, 0.85) !important;
+}
+
+.stack-picker-dark .loading p {
+  color: #ffffff !important;
+}
+
+/* Keep picker dark even if global theme is light */
+html[data-theme='light'] body:has(.stack-picker-dark),
+html[data-theme='light']:has(.stack-picker-dark) {
+  background-color: #03050a !important;
+}
+
+html[data-theme='light'] .stack-picker-dark {
+  background-color: #03050a !important;
+  color: #ffffff !important;
+}
+
+html[data-theme='light'] .stack-picker-dark .hero h1,
+html[data-theme='light'] .stack-picker-dark .section-title,
+html[data-theme='light'] .stack-picker-dark .stack-picker-section-title {
+  color: #ffffff !important;
+}
+
+html[data-theme='light'] .stack-picker-dark .hero p,
+html[data-theme='light'] .stack-picker-dark .language-select-page-wrapper p {
+  color: #e0e0e8 !important;
+}
+
+html[data-theme='light'] .stack-picker-dark .lang-card .lang-name {
+  color: #ffffff !important;
+}
+
+html[data-theme='light'] .stack-picker-dark .btn-secondary,
+html[data-theme='light'] .stack-picker-dark .continue-stack-btn {
+  color: #e0e0e8 !important;
+}
+
+html[data-theme='light'] .stack-picker-dark,
+html[data-theme='light'] .stack-picker-dark * {
+  color-scheme: dark;
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /src/styles/theme-light.css
+--------------------------------------------------------------------------------
+/**
+ * Global light-theme overrides for all PolyCode pages.
+ * Scoped under .app.theme-light (set on root app div).
+ */
+
+/* ── Auth (login / signup) ── */
+.app.theme-light .auth-page {
+  background: var(--ink);
+}
+
+.app.theme-light .auth-card {
+  background: var(--ink-2);
+  border-color: var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.app.theme-light .auth-title,
+.app.theme-light .auth-brand-name {
+  color: var(--txt-0);
+}
+
+.app.theme-light .auth-field input {
+  background: #ffffff;
+  border-color: var(--border);
+  color: var(--txt-0);
+}
+
+.app.theme-light .auth-field input:focus {
+  border-color: #047857;
+  box-shadow: 0 0 0 3px var(--acid-dim);
+}
+
+.app.theme-light .auth-link {
+  color: #047857;
+}
+
+.app.theme-light .auth-submit.btn-primary {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+/* ── Language select page ── */
+/* lang-card light rules only apply inside themed app, not stack-picker-dark */
+.app.theme-light:not(.stack-picker-dark) .lang-card {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow: var(--shadow-sm);
+}
+
+.app.theme-light:not(.stack-picker-dark) .lang-card .lang-name {
+  color: #0f172a;
+}
+
+/* ── Docs: search, category, document ── */
+.app.theme-light .page-title,
+.app.theme-light .page-title-hero,
+.app.theme-light .doc-header h1,
+.app.theme-light .breadcrumb .active-path {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  color: #0f172a !important;
+}
+
+.app.theme-light .doc-stats {
+  color: #64748b;
+}
+
+.app.theme-light .doc-header {
+  border-bottom-color: rgba(15, 23, 42, 0.1);
+}
+
+.app.theme-light .cat-pill {
+  background: rgba(4, 120, 87, 0.08);
+  border-color: rgba(4, 120, 87, 0.22);
+  color: #047857;
+}
+
+.app.theme-light .type-pill {
+  background: #f1f5f9;
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #475569;
+}
+
+.app.theme-light .breadcrumb .sep {
+  color: #cbd5e1;
+}
+
+.app.theme-light .search-page-input,
+.app.theme-light .search-page-select {
+  background: #ffffff;
+  color: var(--txt-0);
+  border-color: var(--border);
+}
+
+.app.theme-light .search-page-input::placeholder {
+  color: var(--txt-3);
+}
+
+.app.theme-light .search-page-meta,
+.app.theme-light .search-page-empty,
+.app.theme-light .breadcrumb,
+.app.theme-light .breadcrumb a {
+  color: var(--txt-2);
+}
+
+.app.theme-light .search-page-meta .query-text {
+  color: var(--txt-0);
+}
+
+.app.theme-light .search-page-meta strong {
+  color: #047857;
+}
+
+.app.theme-light .breadcrumb a:hover {
+  color: #047857;
+}
+
+.app.theme-light .doc-body h1,
+.app.theme-light .doc-body h2,
+.app.theme-light .doc-body h3,
+.app.theme-light .doc-body h4 {
+  color: var(--txt-0);
+}
+
+.app.theme-light .doc-body a {
+  color: #047857;
+}
+
+.app.theme-light .doc-body blockquote {
+  background: #f8fafc;
+  border-left-color: #047857;
+  color: var(--txt-1);
+}
+
+.app.theme-light .doc-body th {
+  background: #f1f5f9;
+  color: var(--txt-0);
+}
+
+.app.theme-light .doc-body tr:hover td {
+  background: #f8fafc;
+}
+
+.app.theme-light .search-btn {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.app.theme-light .page-btn {
+  background: #ffffff;
+  color: var(--txt-2);
+  border-color: var(--border);
+}
+
+.app.theme-light .page-btn:hover {
+  background: #f8fafc;
+  color: var(--txt-0);
+}
+
+.app.theme-light .page-btn.active {
+  background: var(--acid-dim);
+  color: #047857;
+  border-color: rgba(4, 120, 87, 0.35);
+}
+
+.app.theme-light .cat-card {
+  background: #ffffff;
+}
+
+.app.theme-light .cat-card:hover {
+  border-color: rgba(4, 120, 87, 0.3);
+  box-shadow: var(--shadow-md);
+}
+
+.app.theme-light .cat-card-name {
+  color: var(--txt-0);
+}
+
+/* ── Loading overlay ── */
+.app.theme-light .loading {
+  background: rgba(248, 250, 252, 0.88);
+}
+
+.app.theme-light .loading p {
+  color: var(--txt-1);
+}
+
+.app.theme-light .spinner {
+  border-color: rgba(15, 23, 42, 0.08);
+  border-top-color: #047857;
+  border-right-color: #0e7490;
+}
+
+.app.theme-light .spinner-inner {
+  border-color: rgba(15, 23, 42, 0.06);
+  border-bottom-color: #6d28d9;
+}
+
+.app.theme-light .backdrop {
+  background: rgba(15, 23, 42, 0.35);
+}
+
+/* ── Skeleton loaders ── */
+.app.theme-light .skeleton,
+.app.theme-light .skeleton-card,
+.app.theme-light .skeleton-doc-card,
+.app.theme-light .skeleton-list-item {
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.04) 25%,
+    rgba(15, 23, 42, 0.08) 50%,
+    rgba(15, 23, 42, 0.04) 75%
+  );
+  background-size: 200% 100%;
+  border-color: var(--border);
+}
+
+/* ── Playground page header (PlaygroundPage.css hardcoded dark text) ── */
+.app.theme-light .playground-page-header {
+  background: linear-gradient(to bottom, rgba(4, 120, 87, 0.06) 0%, transparent 100%);
+  border-bottom-color: var(--border);
+}
+
+.app.theme-light .playground-page-header h1 {
+  color: #0f172a;
+}
+
+.app.theme-light .pph-sub {
+  color: #64748b;
+}
+
+.app.theme-light .pph-section-title {
+  color: #64748b;
+}
+
+.app.theme-light .pph-pill {
+  color: #475569;
+  background: #ffffff;
+  border-color: var(--border);
+}
+
+.app.theme-light .pph-pill:hover {
+  color: #047857;
+  background: var(--acid-dim);
+  border-color: rgba(4, 120, 87, 0.25);
+}
+
+.app.theme-light .pph-pill.active {
+  color: #047857;
+  background: var(--acid-dim);
+  border-color: rgba(4, 120, 87, 0.35);
+}
+
+.app.theme-light .pph-note {
+  color: #94a3b8;
+  border-left-color: var(--border);
+}
+
+/* ── Daily challenge ── */
+.app.theme-light .challenge-card::before {
+  background: linear-gradient(90deg, #059669, #0e7490);
+}
+
+.app.theme-light .submit-btn {
+  background: #047857;
+  color: #ffffff;
+}
+
+.app.theme-light .submit-btn:hover:not(:disabled) {
+  background: #059669;
+  box-shadow: var(--glow-acid);
+}
+
+.app.theme-light .test-case-tooltip {
+  background: #ffffff;
+  color: var(--txt-0);
+  border-color: var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.app.theme-light .error-log-container {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.app.theme-light .error-log-header {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-bottom-color: #fecaca;
+}
+
+.app.theme-light .error-log-body {
+  color: #991b1b;
+}
+
+.app.theme-light .success-feedback {
+  background: var(--acid-dim);
+  color: #047857;
+  border-color: rgba(4, 120, 87, 0.35);
+}
+
+.app.theme-light .premium-select {
+  background: #ffffff;
+  color: var(--txt-0);
+}
+
+/* ── Navbar dropdown (user menu) ── */
+.app.theme-light .navbar-dropdown {
+  background: #ffffff;
+  border-color: var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.app.theme-light .navbar-dropdown-header strong {
+  color: var(--txt-0);
+}
+
+.app.theme-light .navbar-dropdown-header span {
+  color: var(--txt-2);
+}
+
+.app.theme-light .navbar-avatar-btn {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* ── Misc shared ── */
+.app.theme-light .view-all:hover {
+  color: #047857;
+}
+
+.app.theme-light .search-count {
+  color: var(--txt-2);
+}
+
+.app.theme-light .related-code-section h3 {
+  color: var(--txt-0);
+}
+
+.app.theme-light .related-code-section h2 {
+  color: #0f172a;
+}
+
+.app.theme-light .related-code-label {
+  color: #64748b;
+}
+
+.app.theme-light .related-code-section {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.app.theme-light .related-code-wrap {
+  background: transparent;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+/* IDE code blocks inside docs (override IDE.css dark defaults) */
+.app.theme-light .code-block.ide-enhanced {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: var(--shadow-sm);
+}
+
+.app.theme-light .code-block.ide-enhanced:hover {
+  border-color: rgba(4, 120, 87, 0.35);
+  box-shadow: var(--shadow-md);
+}
+
+.app.theme-light .code-block.ide-enhanced .code-block-header {
+  background: #eef2f7;
+  border-bottom-color: rgba(15, 23, 42, 0.1);
+}
+
+.app.theme-light .code-block.ide-enhanced .lang-label {
+  color: #475569;
+  opacity: 1;
+}
+
+.app.theme-light .code-block.ide-enhanced .ide-code-panel,
+.app.theme-light .code-block.ide-enhanced .ide-split-layout .ide-code-panel {
+  background: #ffffff;
+}
+
+.app.theme-light .code-block.ide-enhanced .ide-split-layout .ide-code-panel + .ide-output-panel {
+  border-left-color: rgba(15, 23, 42, 0.1);
+}
+
+.app.theme-light .code-block.ide-enhanced .ide-btn {
+  background: #ffffff;
+  color: #475569;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+.app.theme-light .code-block.ide-enhanced .ide-btn:hover {
+  color: #0f172a;
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.2);
+}
+
+.app.theme-light .code-block.ide-enhanced .ide-btn.active {
+  background: rgba(4, 120, 87, 0.12);
+  color: #047857;
+  border-color: rgba(4, 120, 87, 0.35);
+}
+
+.app.theme-light .code-block.ide-enhanced .ide-btn.run-btn {
+  background: rgba(4, 120, 87, 0.1);
+  color: #047857;
+  border-color: rgba(4, 120, 87, 0.3);
+}
+
+.app.theme-light .code-block.ide-enhanced .ide-btn.run-btn:hover:not(:disabled) {
+  background: rgba(4, 120, 87, 0.18);
+  color: #065f46;
+  border-color: #047857;
+  box-shadow: none;
+}
+
+.app.theme-light .code-block.ide-enhanced .ide-runtime-pill {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #b45309;
+}
+
+.app.theme-light .code-block.ide-enhanced .copy-trigger {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.app.theme-light .code-block.ide-enhanced .copy-trigger:hover {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.18);
+}
+
+.app.theme-light .code-block.ide-enhanced .copy-trigger.active {
+  background: rgba(4, 120, 87, 0.12);
+  border-color: rgba(4, 120, 87, 0.35);
+}
+
+.app.theme-light .code-block.ide-enhanced .copy-trigger.active .copy-label {
+  color: #047857;
+}
+
+.app.theme-light .ide-textarea {
+  color: #0f172a;
+  caret-color: #047857;
+}
+
+.app.theme-light .ide-textarea:focus {
+  background: rgba(4, 120, 87, 0.04);
+}
+
+.app.theme-light .ide-edit-hint {
+  background: rgba(4, 120, 87, 0.06);
+  border-top-color: rgba(4, 120, 87, 0.15);
+  color: #64748b;
+}
+
+.app.theme-light .ide-output-panel {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.app.theme-light .ide-output-header {
+  background: #eef2f7;
+  color: #64748b;
+  border-bottom-color: rgba(15, 23, 42, 0.1);
+}
+
+.app.theme-light .ide-clear-btn {
+  color: #94a3b8;
+}
+
+.app.theme-light .ide-clear-btn:hover {
+  color: #475569;
+}
+
+.app.theme-light .copy-btn,
+.app.theme-light .copy-trigger {
+  color: var(--txt-2);
+}
+
+.app.theme-light .navbar-search input {
+  background: #ffffff;
+}
+
+.app.theme-light .navbar-search input:focus {
+  border-color: rgba(4, 120, 87, 0.45);
+  box-shadow: 0 0 0 3px var(--acid-dim);
+}
+
+/* ── Playground IDE (CodePlayground.css dark defaults) ── */
+.app.theme-light .playground-root {
+  background: #f8fafc;
+  border-color: rgba(4, 120, 87, 0.2);
+}
+
+.app.theme-light .pg-toolbar {
+  background: #eef2f7;
+}
+
+.app.theme-light .pg-logo {
+  color: #047857;
+}
+
+.app.theme-light .pg-tab {
+  color: #64748b;
+  background: transparent;
+}
+
+.app.theme-light .pg-tab.active {
+  color: #047857;
+  background: #ffffff;
+  border-color: var(--border);
+}
+
+.app.theme-light .pg-lang-select,
+.app.theme-light .pg-workspace-chip {
+  background: #ffffff;
+  color: var(--txt-0);
+}
+
+.app.theme-light .pg-run-btn {
+  background: #047857;
+  color: #ffffff;
+}
+
+
+--------------------------------------------------------------------------------
 FILE: /src/tests/app/App.test.js
 --------------------------------------------------------------------------------
 import { render, screen } from "@testing-library/react";
@@ -5802,32 +7893,37 @@ FILE: /src/App.css
 }
 
 :root[data-theme='light'] {
-  --ink: #f4f7fb;
+  --bg: #f1f5f9;
+  --ink: #f1f5f9;
   --ink-2: #ffffff;
-  --ink-3: #edf2f8;
-  --ink-4: #dfe7f2;
+  --ink-3: #f8fafc;
+  --ink-4: #e2e8f0;
 
-  --glass: rgba(15, 23, 42, 0.03);
+  --glass: rgba(15, 23, 42, 0.04);
   --glass-heavy: rgba(15, 23, 42, 0.06);
   --glass-2: rgba(15, 23, 42, 0.08);
 
-  --border: rgba(15, 23, 42, 0.12);
-  --border-2: rgba(15, 23, 42, 0.2);
+  --border: rgba(15, 23, 42, 0.1);
+  --border-2: rgba(15, 23, 42, 0.16);
 
   --txt-0: #0f172a;
-  --txt-1: #1e293b;
+  --txt-1: #334155;
   --txt-2: #475569;
   --txt-3: #64748b;
 
-  --accent: #334155;
-  --acid-glow: rgba(148, 163, 184, 0.25);
-  --acid-dim: rgba(51, 65, 85, 0.12);
-  --cyan-dim: rgba(14, 116, 144, 0.12);
+  --acid: #047857;
+  --cyan: #0e7490;
+  --violet: #6d28d9;
+  --accent: #047857;
+  --acid-glow: rgba(4, 120, 87, 0.2);
+  --acid-dim: rgba(4, 120, 87, 0.1);
+  --cyan-dim: rgba(14, 116, 144, 0.1);
   --bg-card: #ffffff;
-  --ink-1: #f1f5f9;
-  --shadow-sm: 0 6px 18px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 12px 28px rgba(15, 23, 42, 0.09);
-  --shadow-lg: 0 22px 44px rgba(15, 23, 42, 0.12);
+  --ink-1: #f8fafc;
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 14px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 20px rgba(15, 23, 42, 0.08), 0 8px 24px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.1), 0 4px 12px rgba(15, 23, 42, 0.06);
+  --glow-acid: 0 0 20px rgba(4, 120, 87, 0.15);
 }
 
 /* ── Reset ── */
@@ -5917,6 +8013,48 @@ body {
   gap: 10px;
   text-decoration: none;
   flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.navbar-brand:hover .navbar-logo {
+  transform: scale(1.05);
+}
+
+.navbar-link-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: var(--txt-1);
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.navbar-link-btn:hover {
+  background: var(--glass-2);
+  color: var(--txt-0);
+}
+
+.navbar-link-btn.active {
+  background: var(--acid-dim);
+  color: var(--acid);
+}
+
+.sidebar-item-btn {
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
 }
 
 .navbar-logo {
@@ -6274,6 +8412,48 @@ body {
 .lang-option.active {
   background: var(--acid-dim);
   color: var(--acid);
+}
+
+.change-stack-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--txt-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.change-stack-btn:hover {
+  border-color: var(--acid);
+  color: var(--acid);
+  background: var(--acid-dim);
+}
+
+.navbar-change-stack-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--txt-1);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navbar-change-stack-btn:hover {
+  background: var(--acid-dim);
+  color: var(--acid);
+  border-color: var(--acid);
 }
 
 .current-lang-info {
@@ -7046,6 +9226,114 @@ body {
   font-weight: 300;
 }
 
+.page-title-hero {
+  font-size: clamp(3rem, 6vw, 5rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--txt-0);
+  margin-bottom: 8px;
+}
+
+.page-header-block {
+  margin-bottom: 64px;
+}
+
+.search-page-form {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 64px;
+  flex-wrap: wrap;
+}
+
+.search-page-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 16px 24px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--txt-0);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  outline: none;
+}
+
+.search-page-input:focus {
+  border-color: var(--acid);
+  box-shadow: 0 0 0 3px var(--acid-dim);
+}
+
+.search-page-input::placeholder {
+  color: var(--txt-3);
+}
+
+.search-page-select {
+  padding: 16px 24px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--txt-0);
+  font-family: var(--font-mono);
+  outline: none;
+  cursor: pointer;
+}
+
+.search-page-meta {
+  margin-bottom: 20px;
+  color: var(--txt-2);
+  font-size: 0.9rem;
+}
+
+.search-page-meta strong {
+  color: var(--acid);
+}
+
+.search-page-meta .query-text {
+  color: var(--txt-0);
+}
+
+.search-page-empty {
+  text-align: center;
+  padding: 60px;
+  color: var(--txt-2);
+}
+
+.search-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 64px;
+  flex-wrap: wrap;
+}
+
+.search-page-btn-round {
+  border-radius: 12px;
+}
+
+.page-btn-num {
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--txt-2);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+
+.page-btn-num:hover {
+  color: var(--txt-0);
+  border-color: var(--border-2);
+}
+
+.page-btn-num.active {
+  border-color: var(--acid);
+  background: var(--acid-dim);
+  color: var(--acid);
+}
+
 /* ══════════════════════════════════════════════
    DIVIDER
 ══════════════════════════════════════════════ */
@@ -7458,8 +9746,39 @@ body {
   border: 1px solid var(--border);
 }
 
+.related-code-intro {
+  text-align: left;
+  margin-bottom: 40px;
+  padding-left: 20px;
+  border-left: 4px solid var(--accent);
+}
+
+.related-code-label {
+  font-size: 0.75rem;
+  color: var(--txt-3);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.related-code-intro h2 {
+  font-size: 1.6rem;
+  margin: 0;
+  font-weight: 800;
+  color: var(--txt-0);
+}
+
+.related-code-wrap {
+  background: rgba(5, 8, 16, 0.5);
+  border: 1px solid var(--border);
+  padding: 0;
+  border-radius: var(--radius);
+}
+
 .related-code-item {
-  margin-bottom: 52px;
+  margin-bottom: 32px;
 }
 
 .related-code-item:last-child {
@@ -8048,10 +10367,16 @@ body {
   letter-spacing: -0.04em;
   line-height: 1.1;
   margin-bottom: 20px;
+  color: var(--txt-0);
+}
+
+/* Gradient title only in dark mode (light mode uses solid text) */
+.app:not(.theme-light) .doc-header h1 {
   background: linear-gradient(to bottom, #fff, #aaa);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .doc-badge-row {
@@ -8937,24 +11262,146 @@ body {
 /* ── Light theme (scoped UI + playground / IDE surfaces) ── */
 .app.theme-light::before {
   background-image:
-    linear-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(100, 116, 139, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 116, 139, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
 }
 
 .app.theme-light {
   background:
-    radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
-    radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.1) 0%, transparent 40%),
-    radial-gradient(circle at 50% 100%, rgba(148, 163, 184, 0.08) 0%, transparent 50%);
+    radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.06) 0%, transparent 42%),
+    radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.05) 0%, transparent 42%),
+    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 55%, #eef2f7 100%);
 }
 
 .app.theme-light::after {
-  opacity: 0.08;
+  opacity: 0.04;
 }
 
 .app.theme-light .navbar,
 .app.theme-light .sidebar {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+}
+
+.app.theme-light .navbar {
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+.app.theme-light .sidebar {
+  border-right: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.app.theme-light .hero h1 {
+  color: #0f172a;
+}
+
+.app.theme-light .hero-eyebrow {
+  color: #047857;
+  background: rgba(4, 120, 87, 0.08);
+  border-color: rgba(4, 120, 87, 0.22);
+}
+
+.app.theme-light .hero-eyebrow::before {
+  color: #10b981;
+}
+
+.app.theme-light .hero h1 .gradient-text {
+  background: linear-gradient(135deg, #059669 0%, #0e7490 48%, #6d28d9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.app.theme-light .hero p {
+  color: #475569;
+}
+
+.app.theme-light .navbar-links a.active,
+.app.theme-light .navbar-link-btn.active {
+  background: rgba(4, 120, 87, 0.12);
+  color: #047857;
+  font-weight: 600;
+}
+
+.app.theme-light .navbar-links a:hover,
+.app.theme-light .navbar-link-btn:hover {
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+}
+
+.app.theme-light .navbar-signup-btn {
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid #0f172a;
+}
+
+.app.theme-light .navbar-signup-btn:hover {
+  background: #1e293b;
+  opacity: 1;
+}
+
+.app.theme-light .navbar-login-btn {
+  color: #334155;
+  border-color: rgba(15, 23, 42, 0.14);
+  background: #ffffff;
+}
+
+.app.theme-light .navbar-login-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.2);
+}
+
+.app.theme-light .theme-toggle-btn,
+.app.theme-light .navbar-change-stack-btn {
+  background: #ffffff;
+  color: #334155;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.app.theme-light .theme-toggle-btn:hover,
+.app.theme-light .navbar-change-stack-btn:hover {
+  background: #f8fafc;
+  color: #047857;
+  border-color: rgba(4, 120, 87, 0.35);
+}
+
+.app.theme-light .change-stack-btn {
+  color: #475569;
+  border-color: rgba(15, 23, 42, 0.14);
+  background: #f8fafc;
+}
+
+.app.theme-light .change-stack-btn:hover {
+  color: #047857;
+  border-color: rgba(4, 120, 87, 0.4);
+  background: rgba(4, 120, 87, 0.08);
+}
+
+.app.theme-light .language-display-btn {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.app.theme-light .language-display-btn:hover {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.18);
+}
+
+.app.theme-light .language-dropdown-menu {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: var(--shadow-md);
+}
+
+.app.theme-light .section-title {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.app.theme-light .section-label {
+  color: #64748b;
 }
 
 .app.theme-light .hero h1,
@@ -8984,6 +11431,18 @@ body {
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
 }
 
+.app.theme-light .btn-secondary {
+  background: #ffffff;
+  color: #334155;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+.app.theme-light .btn-secondary:hover {
+  background: #f8fafc;
+  color: #047857;
+  border-color: rgba(4, 120, 87, 0.35);
+}
+
 .app.theme-light .premium-doc-card,
 .app.theme-light .lang-card,
 .app.theme-light .cat-card,
@@ -8994,8 +11453,43 @@ body {
 .app.theme-light .skeleton-list-item,
 .app.theme-light .related-code-section {
   background: var(--bg-card);
-  border-color: var(--border);
+  border: 1px solid rgba(15, 23, 42, 0.1);
   box-shadow: var(--shadow-sm);
+}
+
+.app.theme-light .premium-doc-card h3 {
+  color: #0f172a;
+}
+
+.app.theme-light .premium-doc-card:hover {
+  background: #ffffff;
+  border-color: rgba(4, 120, 87, 0.28);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+}
+
+.app.theme-light .premium-doc-card:hover h3 {
+  color: #047857;
+}
+
+.app.theme-light .premium-doc-card .doc-card-meta {
+  border-top-color: rgba(15, 23, 42, 0.08);
+}
+
+.app.theme-light .premium-doc-card:hover .cat-badge {
+  color: #ffffff;
+}
+
+.app.theme-light .lang-card {
+  background: #ffffff;
+}
+
+.app.theme-light .lang-card .lang-name {
+  color: #0f172a;
+}
+
+.app.theme-light .language-select-page-wrapper {
+  background: transparent;
 }
 
 .app.theme-light .cat-card-name,
@@ -9026,9 +11520,10 @@ body {
 .app.theme-light .sidebar-item.active,
 .app.theme-light .tree-file.active,
 .app.theme-light .lang-option.active {
-  background: rgba(51, 65, 85, 0.12);
-  border-color: rgba(51, 65, 85, 0.24);
-  color: var(--txt-0);
+  background: rgba(4, 120, 87, 0.1);
+  border-color: rgba(4, 120, 87, 0.2);
+  color: #047857;
+  font-weight: 600;
 }
 
 .app.theme-light .navbar-playground-link {
@@ -9245,13 +11740,18 @@ import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
+  useLocation,
 } from "react-router-dom";
 import Navbar from "./features/navigation/components/Navbar";
 import Sidebar from "./features/navigation/components/Sidebar";
 import { PlaygroundProvider } from "./features/playground/context/PlaygroundContext";
+import { AuthProvider } from "./features/auth/context/AuthContext";
 import "./App.css";
+import "./styles/theme-light.css";
+import "./styles/stack-picker-dark.css";
+import "./styles/responsive.css";
 
-// ── Lazy-load every page so their JS bundles are only downloaded when needed ──
 const LanguageSelectPage = lazy(
   () => import("./features/language/pages/LanguageSelectPage"),
 );
@@ -9262,8 +11762,10 @@ const SearchPage = lazy(() => import("./features/docs/pages/SearchPage"));
 const PlaygroundPage = lazy(
   () => import("./features/playground/pages/PlaygroundPage"),
 );
+const LoginPage = lazy(() => import("./features/auth/pages/LoginPage"));
+const SignupPage = lazy(() => import("./features/auth/pages/SignupPage"));
+const DailyChallenge = lazy(() => import("./pages/DailyChallenges"));
 
-// Minimal inline fallback – shown while the lazy chunk downloads
 const PageFallback = () => (
   <div className="loading">
     <div className="spinner-container">
@@ -9272,22 +11774,149 @@ const PageFallback = () => (
   </div>
 );
 
-function App() {
+function MainApp({
+  selectedLanguage,
+  onLanguageSelect,
+  onGoToStackPicker,
+  theme,
+  onToggleTheme,
+}) {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
-  const [selectedLanguage, setSelectedLanguage] = React.useState(
-    () => localStorage.getItem("selectedLanguage") || null,
+  const toggleSidebar = () => setIsSidebarOpen((o) => !o);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
+  React.useEffect(() => {
+    const mq = window.matchMedia("(max-width: 900px)");
+    const lock = isSidebarOpen && mq.matches;
+    document.body.classList.toggle("sidebar-open", lock);
+    document.body.style.overflow = lock ? "hidden" : "";
+    return () => {
+      document.body.classList.remove("sidebar-open");
+      document.body.style.overflow = "";
+    };
+  }, [isSidebarOpen]);
+
+  return (
+    <>
+      <Navbar
+        toggleSidebar={toggleSidebar}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        onGoToStackPicker={onGoToStackPicker}
+      />
+      <div className="layout">
+        {isSidebarOpen && (
+          <div className="backdrop" onClick={closeSidebar} />
+        )}
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={closeSidebar}
+          selectedLanguage={selectedLanguage}
+          onLanguageSelect={onLanguageSelect}
+          onGoToStackPicker={onGoToStackPicker}
+        />
+        <main className="main-content">
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/hub" replace />} />
+              <Route
+                path="/hub"
+                element={<HomePage selectedLanguage={selectedLanguage} />}
+              />
+              <Route
+                path="/doc/*"
+                element={
+                  <DocumentPage
+                    selectedLanguage={selectedLanguage}
+                    theme={theme}
+                  />
+                }
+              />
+              <Route
+                path="/category/*"
+                element={
+                  <CategoryPage selectedLanguage={selectedLanguage} />
+                }
+              />
+              <Route
+                path="/search"
+                element={<SearchPage selectedLanguage={selectedLanguage} />}
+              />
+              <Route
+                path="/playground"
+                element={
+                  <PlaygroundPage
+                    theme={theme}
+                    onToggleSidebar={toggleSidebar}
+                    sidebarOpen={isSidebarOpen}
+                  />
+                }
+              />
+              <Route
+                path="/daily-challenge"
+                element={<DailyChallenge theme={theme} />}
+              />
+              <Route path="*" element={<Navigate to="/hub" replace />} />
+            </Routes>
+          </Suspense>
+        </main>
+      </div>
+    </>
   );
+}
+
+function ThemedShell({ theme, children }) {
+  return (
+    <div className={`app ${theme === "light" ? "theme-light" : ""}`}>{children}</div>
+  );
+}
+
+/** Language picker is always dark — overrides global light theme on html/body */
+function StackPickerShell({ children, savedTheme }) {
+  React.useLayoutEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+
+    html.setAttribute("data-theme", "dark");
+    body.classList.remove("light-theme");
+    html.style.backgroundColor = "#03050a";
+    body.style.backgroundColor = "#03050a";
+
+    return () => {
+      html.style.backgroundColor = "";
+      body.style.backgroundColor = "";
+      html.setAttribute("data-theme", savedTheme);
+      body.classList.toggle("light-theme", savedTheme === "light");
+    };
+  }, [savedTheme]);
+
+  return <div className="app stack-picker-dark">{children}</div>;
+}
+
+function AppRoutes() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [selectedLanguage, setSelectedLanguage] = React.useState(null);
   const [theme, setTheme] = React.useState(
     () => localStorage.getItem("theme") || "dark",
   );
 
-  const toggleSidebar = () => setIsSidebarOpen((o) => !o);
-  const closeSidebar = () => setIsSidebarOpen(false);
+  React.useEffect(() => {
+    localStorage.removeItem("selectedLanguage");
+    sessionStorage.removeItem("selectedLanguage");
+  }, []);
 
-  const handleLanguageSelect = (language) => {
-    localStorage.setItem("selectedLanguage", language);
-    setSelectedLanguage(language);
-  };
+  const handleLanguageSelect = React.useCallback(
+    (language) => {
+      setSelectedLanguage(language);
+      navigate("/hub", { replace: true });
+    },
+    [navigate],
+  );
+
+  const goToStackPicker = React.useCallback(() => {
+    navigate("/select-language");
+  }, [navigate]);
 
   const toggleTheme = React.useCallback(() => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
@@ -9295,101 +11924,75 @@ function App() {
 
   React.useEffect(() => {
     localStorage.setItem("theme", theme);
+    if (location.pathname === "/select-language") {
+      return;
+    }
     document.documentElement.setAttribute("data-theme", theme);
     document.body.classList.toggle("light-theme", theme === "light");
-  }, [theme]);
+  }, [theme, location.pathname]);
 
   return (
-    <PlaygroundProvider>
-      <Router>
-        <div className={`app ${theme === "light" ? "theme-light" : ""}`}>
-          {selectedLanguage ? (
-            <>
-              <Navbar
-                toggleSidebar={toggleSidebar}
-                theme={theme}
-                onToggleTheme={toggleTheme}
+    <Suspense fallback={<PageFallback />}>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <ThemedShell theme={theme}>
+              <LoginPage />
+            </ThemedShell>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <ThemedShell theme={theme}>
+              <SignupPage />
+            </ThemedShell>
+          }
+        />
+        <Route
+          path="/select-language"
+          element={
+            <StackPickerShell savedTheme={theme}>
+              <LanguageSelectPage
+                onLanguageSelect={handleLanguageSelect}
+                continueLanguage={selectedLanguage}
               />
-              <div className="layout">
-                {isSidebarOpen && (
-                  <div className="backdrop" onClick={closeSidebar}></div>
-                )}
-                <Sidebar
-                  isOpen={isSidebarOpen}
-                  onClose={closeSidebar}
+            </StackPickerShell>
+          }
+        />
+        <Route
+          path="/*"
+          element={
+            <ThemedShell theme={theme}>
+              {selectedLanguage ? (
+                <MainApp
                   selectedLanguage={selectedLanguage}
                   onLanguageSelect={handleLanguageSelect}
+                  onGoToStackPicker={goToStackPicker}
+                  theme={theme}
+                  onToggleTheme={toggleTheme}
                 />
-                <main className="main-content">
-                  <Suspense fallback={<PageFallback />}>
-                    <Routes>
-                      <Route
-                        path="/"
-                        element={
-                          <HomePage selectedLanguage={selectedLanguage} />
-                        }
-                      />
-                      <Route
-                        path="/hub"
-                        element={
-                          <HomePage selectedLanguage={selectedLanguage} />
-                        }
-                      />
-                      <Route
-                        path="/doc/*"
-                        element={
-                          <DocumentPage
-                            selectedLanguage={selectedLanguage}
-                            theme={theme}
-                          />
-                        }
-                      />
-                      <Route
-                        path="/category/*"
-                        element={
-                          <CategoryPage selectedLanguage={selectedLanguage} />
-                        }
-                      />
-                      <Route
-                        path="/search"
-                        element={
-                          <SearchPage selectedLanguage={selectedLanguage} />
-                        }
-                      />
-                      <Route
-                        path="/playground"
-                        element={
-                          <PlaygroundPage
-                            theme={theme}
-                            onToggleSidebar={toggleSidebar}
-                            sidebarOpen={isSidebarOpen}
-                          />
-                        }
-                      />
-                      <Route path="*" element={<Navigate to="/" />} />
-                    </Routes>
-                  </Suspense>
-                </main>
-              </div>
-            </>
-          ) : (
-            <Suspense fallback={<PageFallback />}>
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <LanguageSelectPage
-                      onLanguageSelect={handleLanguageSelect}
-                    />
-                  }
-                />
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </Suspense>
-          )}
-        </div>
-      </Router>
-    </PlaygroundProvider>
+              ) : (
+                <Navigate to="/select-language" replace />
+              )}
+            </ThemedShell>
+          }
+        />
+      </Routes>
+    </Suspense>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <PlaygroundProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </PlaygroundProvider>
+    </AuthProvider>
   );
 }
 
@@ -9399,7 +12002,7 @@ export default App;
 --------------------------------------------------------------------------------
 FILE: /src/index.css
 --------------------------------------------------------------------------------
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Outfit:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Outfit:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
 
 /* Global reset + base — override CRA defaults */
 *,
@@ -9416,7 +12019,13 @@ html {
 
 body {
   margin: 0;
-  font-family: 'Inter', 'DM Sans', 'Outfit', system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    "DM Sans",
+    "Outfit",
+    system-ui,
+    -apple-system,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--ink);
@@ -9430,7 +12039,7 @@ code,
 pre,
 kbd,
 samp {
-  font-family: 'Space Mono', 'JetBrains Mono', 'Fira Code', monospace;
+  font-family: "Space Mono", "JetBrains Mono", "Fira Code", monospace;
 }
 
 a {
@@ -9457,10 +12066,19 @@ textarea {
   color: #f0f0ff;
 }
 
+:root[data-theme="light"] ::selection {
+  background: rgba(4, 120, 87, 0.2);
+  color: #0f172a;
+}
+
 /* Focus outline (accessibility) */
 :focus-visible {
   outline: 2px solid #b8ff00;
   outline-offset: 2px;
+}
+
+:root[data-theme="light"] :focus-visible {
+  outline-color: #047857;
 }
 
 /* Thin scrollbar */
@@ -9486,6 +12104,359 @@ textarea {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
+
+/* ══════════════════════════════════════════════
+   AUTH PAGES  (LoginPage / SignupPage)
+══════════════════════════════════════════════ */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg, #03050a);
+  padding: 40px 20px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--ink-2, #0d1117);
+  border: 1px solid var(--border, #1e2433);
+  border-radius: 16px;
+  padding: 40px 36px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.auth-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.auth-brand-name {
+  font-family: var(--font-display, "Sora", sans-serif);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--txt-0, #f0f0ff);
+  letter-spacing: -0.02em;
+}
+
+.auth-title {
+  font-family: var(--font-display, "Sora", sans-serif);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--txt-0, #f0f0ff);
+  margin-bottom: 6px;
+}
+
+.auth-subtitle {
+  font-size: 0.875rem;
+  color: var(--txt-2, #6e7891);
+  margin-bottom: 28px;
+}
+
+.auth-error {
+  background: rgba(255, 77, 109, 0.1);
+  border: 1px solid rgba(255, 77, 109, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: var(--red, #ff4d6d);
+  margin-bottom: 20px;
+  font-family: var(--font-mono);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.auth-field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--txt-1, #c0c8e0);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.auth-field input {
+  padding: 10px 14px;
+  background: var(--ink-3, #111827);
+  border: 1px solid var(--border, #1e2433);
+  border-radius: 8px;
+  color: var(--txt-0, #f0f0ff);
+  font-family: var(--font-body, "Sora", sans-serif);
+  font-size: 0.9rem;
+  outline: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.auth-field input:focus {
+  border-color: var(--acid, #b8ff00);
+  box-shadow: 0 0 0 3px var(--acid-dim, rgba(184, 255, 0, 0.1));
+}
+
+.auth-field input::placeholder {
+  color: var(--txt-3, #3a4260);
+}
+
+.auth-submit {
+  margin-top: 4px;
+  width: 100%;
+  justify-content: center;
+  padding: 12px;
+  font-size: 0.9rem;
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-switch {
+  text-align: center;
+  font-size: 0.84rem;
+  color: var(--txt-2, #6e7891);
+  margin-top: 20px;
+}
+
+.auth-skip {
+  text-align: center;
+  font-size: 0.8rem;
+  margin-top: 10px;
+}
+
+.auth-link {
+  color: var(--acid, #b8ff00);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+
+.auth-link:hover {
+  opacity: 0.8;
+}
+
+.auth-link-muted {
+  color: var(--txt-3, #3a4260);
+  text-decoration: none;
+  font-size: 0.78rem;
+  transition: color 0.15s;
+}
+
+.auth-link-muted:hover {
+  color: var(--txt-2, #6e7891);
+}
+
+/* ══════════════════════════════════════════════
+   NAVBAR — Auth buttons & user avatar
+══════════════════════════════════════════════ */
+
+.navbar-auth-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navbar-login-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--txt-1, #c0c8e0);
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border, #1e2433);
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.navbar-login-btn:hover {
+  border-color: var(--border-2, #2e3a55);
+  color: var(--txt-0, #f0f0ff);
+}
+
+.navbar-signup-btn {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink, #03050a);
+  background: var(--acid, #b8ff00);
+  padding: 5px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.navbar-signup-btn:hover {
+  opacity: 0.85;
+}
+
+:root[data-theme="light"] .navbar-signup-btn {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+:root[data-theme="light"] .navbar-signup-btn:hover {
+  background: #1e293b;
+  opacity: 1;
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.18);
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+:root[data-theme="light"] * {
+  scrollbar-color: rgba(15, 23, 42, 0.18) #f1f5f9;
+}
+
+:root[data-theme="light"] .auth-page {
+  background: var(--ink, #f1f5f9);
+}
+
+:root[data-theme="light"] .auth-card {
+  background: var(--ink-2, #ffffff);
+  border-color: var(--border, rgba(15, 23, 42, 0.1));
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme="light"] .auth-field input:focus {
+  border-color: #047857;
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.15);
+}
+
+:root[data-theme="light"] .auth-link {
+  color: #047857;
+}
+
+/* User avatar button */
+.navbar-user {
+  position: relative;
+}
+
+.navbar-avatar-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--acid-dim, rgba(184, 255, 0, 0.12));
+  border: 1px solid var(--acid, #b8ff00);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+}
+
+.navbar-avatar-btn:hover {
+  opacity: 0.8;
+}
+
+.navbar-avatar-initials {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--acid, #b8ff00);
+  font-family: var(--font-mono);
+}
+
+/* Dropdown */
+.navbar-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--ink-2, #0d1117);
+  border: 1px solid var(--border, #1e2433);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  z-index: 200;
+}
+
+.navbar-dropdown-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border, #1e2433);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navbar-dropdown-header strong {
+  font-size: 0.85rem;
+  color: var(--txt-0, #f0f0ff);
+}
+
+.navbar-dropdown-header span {
+  font-size: 0.75rem;
+  color: var(--txt-2, #6e7891);
+}
+
+.navbar-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 0.82rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--txt-1, #c0c8e0);
+  cursor: pointer;
+  transition: background 0.12s;
+  font-family: var(--font-body);
+}
+
+.navbar-dropdown-item:hover {
+  background: var(--glass, rgba(255, 255, 255, 0.04));
+}
+
+.navbar-dropdown-logout {
+  color: var(--red, #ff4d6d);
+}
+
+/* Light theme overrides */
+.app.theme-light .auth-page {
+  background: var(--bg, #f5f7fa);
+}
+
+.app.theme-light .auth-card {
+  background: #ffffff;
+  border-color: var(--border);
+}
+
+.app.theme-light .auth-field input {
+  background: #f1f5f9;
+  color: var(--txt-0);
+  border-color: var(--border);
+}
+
+.app.theme-light .navbar-dropdown {
+  background: #ffffff;
+}
+
 
 --------------------------------------------------------------------------------
 FILE: /src/index.js
@@ -9534,8 +12505,8 @@ import '@testing-library/jest-dom';
 --------------------------------------------------------------------------------
 FILE: /.env
 --------------------------------------------------------------------------------
-��R E A C T _ A P P _ A P I _ U R L = h t t p : / / l o c a l h o s t : 5 0 0 0 / a p i  
- 
+REACT_APP_API_URL=http://localhost:5000/api
+
 
 --------------------------------------------------------------------------------
 FILE: /.env.example
@@ -10224,7 +13195,7 @@ POLYCODE PPSLA v1.0 — 2025
 --------------------------------------------------------------------------------
 FILE: /package-lock.json
 --------------------------------------------------------------------------------
-[file too large: 723.6 KB – skipped]
+[file too large: 724.0 KB – skipped]
 
 --------------------------------------------------------------------------------
 FILE: /package.json
