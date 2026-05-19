@@ -28,4 +28,4 @@ yarn-error.log*
 # make-folder-txt
 .txtconfig
 .txtignore
-frontend.txt
+/frontend.txt
