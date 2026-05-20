@@ -179,19 +179,17 @@ function StackPickerShell({ children, savedTheme }) {
 function AppRoutes() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedLanguage, setSelectedLanguage] = React.useState(null);
+  const [selectedLanguage, setSelectedLanguage] = React.useState(
+    () => localStorage.getItem("selectedLanguage") || null,
+  );
   const [theme, setTheme] = React.useState(
     () => localStorage.getItem("theme") || "dark",
   );
 
-  React.useEffect(() => {
-    localStorage.removeItem("selectedLanguage");
-    sessionStorage.removeItem("selectedLanguage");
-  }, []);
-
   const handleLanguageSelect = React.useCallback(
     (language) => {
       setSelectedLanguage(language);
+      localStorage.setItem("selectedLanguage", language);
       navigate("/hub", { replace: true });
     },
     [navigate],
