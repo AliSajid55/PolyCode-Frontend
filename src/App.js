@@ -55,6 +55,27 @@ const PageFallback = () => (
   </div>
 );
 
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+
+  React.useLayoutEffect(() => {
+    const html = document.documentElement;
+    const previousScrollBehavior = html.style.scrollBehavior;
+
+    html.style.scrollBehavior = "auto";
+    window.scrollTo(0, 0);
+    document.querySelectorAll(".main-content, .learn-content").forEach((node) => {
+      node.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+
+    return () => {
+      html.style.scrollBehavior = previousScrollBehavior;
+    };
+  }, [pathname, search]);
+
+  return null;
+}
+
 function MainApp({
   selectedLanguage,
   onLanguageSelect,
@@ -414,6 +435,7 @@ function App() {
       <PlaygroundProvider>
         <Router>
           <SelectionPins />
+          <ScrollToTop />
           <AppRoutes />
         </Router>
       </PlaygroundProvider>
