@@ -30,15 +30,18 @@ function buildActivityDays(dayCount, ...progressMaps) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayKey = today.toISOString().slice(0, 10);
+  const start = new Date(today.getTime() - (dayCount - 1) * DAY_MS);
+  const startKey = start.toISOString().slice(0, 10);
 
   progressMaps.forEach((progress) => {
     Object.values(progress).forEach((item) => {
-      const key = toDateKey(item?.at || item?.completedAt || item) || todayKey;
+      let key = toDateKey(item?.at || item?.completedAt || item);
+      if (!key || key < startKey || key > todayKey) {
+        key = todayKey;
+      }
       counts.set(key, (counts.get(key) || 0) + 1);
     });
   });
-
-  const start = new Date(today.getTime() - (dayCount - 1) * DAY_MS);
 
   return Array.from({ length: dayCount }, (_, index) => {
     const date = new Date(start.getTime() + index * DAY_MS);
@@ -84,7 +87,9 @@ function ActivityGraph({ days }) {
           <span>Progress Graph</span>
           <h2>Learning activity</h2>
         </div>
-        <strong>{totalCompletions} completions</strong>
+        <strong>
+          {totalCompletions} completion{totalCompletions === 1 ? "" : "s"}
+        </strong>
       </div>
       <div className="profile-activity-grid" aria-label="Learning activity graph">
         {days.map((day) => (
