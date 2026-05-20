@@ -928,6 +928,15 @@ export default function CodeChallenge({
     return output;
   }
 
+  function resolveIndexedKey(token, values) {
+    return token.replace(/\[([^\]]+)\]/g, (match, expression) => {
+      const numericValue = evaluateNumericExpression(expression, values);
+      if (Number.isFinite(numericValue)) return `[${Math.trunc(numericValue)}]`;
+      const name = expression.trim();
+      return `[${values.get(name) ?? name}]`;
+    });
+  }
+
   function collectKnownValues(source) {
     const values = new Map();
     const arrays = new Map();
@@ -949,6 +958,8 @@ export default function CodeChallenge({
       /(^|[^\w*])([A-Za-z_]\w*)\s*=\s*&\s*([A-Za-z_]\w*)/gm;
     const memberAssignments =
       /\b([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*=\s*("[^"]*"|'[^']*'|[-+]?\d+(?:\.\d+)?|true|false)/g;
+    const indexedAssignments =
+      /\b([A-Za-z_]\w*(?:\s*\[[^\]]+\])+)\s*=\s*("[^"]*"|'[^']*'|[-+]?\d+(?:\.\d+)?|true|false)/g;
     const assignments =
       /\b([A-Za-z_]\w*)\s*=\s*("[^"]*"|'[^']*'|[-+]?\d+(?:\.\d+)?|true|false)/g;
 
@@ -1016,6 +1027,9 @@ export default function CodeChallenge({
     for (const match of source.matchAll(memberAssignments)) {
       values.set(`${match[1]}.${match[2]}`, cleanLiteral(match[3]));
     }
+    for (const match of source.matchAll(indexedAssignments)) {
+      values.set(resolveIndexedKey(match[1].replace(/\s+/g, ""), values), cleanLiteral(match[2]));
+    }
     for (const match of source.matchAll(assignments)) {
       if (!values.has(match[1])) values.set(match[1], cleanLiteral(match[2]));
     }
@@ -1045,10 +1059,7 @@ export default function CodeChallenge({
       const arrayValue = values.get(`${arrayName}[${index}]`);
       if (arrayValue !== undefined) return arrayValue;
     }
-    const resolvedIndexedToken = token.replace(
-      /\[([A-Za-z_]\w*)\]/g,
-      (match, name) => `[${values.get(name) ?? name}]`,
-    );
+    const resolvedIndexedToken = resolveIndexedKey(token, values);
     const functionValue = evaluateFunctionCall(token, values, functionDefs);
     if (functionValue !== "") return functionValue;
     if (values.has(resolvedIndexedToken)) return values.get(resolvedIndexedToken);

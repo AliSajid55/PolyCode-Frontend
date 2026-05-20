@@ -696,6 +696,108 @@ int main() {
         },
       },
       {
+        id: "ptr-own-arr-1",
+        title: "Dynamic 1D Arrays with new[]",
+        xp: 20,
+        theory: [
+          {
+            type: "text",
+            content:
+              "A **dynamic array** is an array whose size can be chosen while the program is running. Use `new int[size]` to create it on the heap, and use `delete[]` when you are done.",
+          },
+          {
+            type: "callout",
+            variant: "info",
+            content:
+              "Use square brackets as a pair: `new[]` must be cleaned with `delete[]`. Plain `delete` is for one object, not an array.",
+          },
+          {
+            type: "stepthrough",
+            title: "Dynamic 1D array lifecycle",
+            steps: [
+              {
+                label: "Choose size",
+                code: "int size = 5;",
+                desc: "The size can come from input, a calculation, or another variable.",
+              },
+              {
+                label: "Create array",
+                code: "int* nums = new int[size];",
+                desc: "`nums` points at the first item of the heap array.",
+              },
+              {
+                label: "Use indexes",
+                code: "nums[0] = 10;\ncout << nums[0];",
+                desc: "A dynamic array can be indexed like a normal array.",
+              },
+              {
+                label: "Release array",
+                code: "delete[] nums;\nnums = nullptr;",
+                desc: "Free the whole array and clear the pointer.",
+              },
+            ],
+          },
+          {
+            type: "code",
+            lang: "cpp",
+            label: "Heap array basics",
+            content: `int size = 3;
+int* scores = new int[size];
+
+scores[0] = 80;
+scores[1] = 90;
+scores[2] = 100;
+
+cout << scores[1] << endl;
+
+delete[] scores;
+scores = nullptr;`,
+          },
+          {
+            type: "quiz",
+            question: "Which delete form matches `new int[size]`?",
+            options: ["delete nums", "delete[] nums", "free(nums)", "nums--"],
+            answer: 1,
+            explanation:
+              "`new[]` creates an array, so `delete[]` must release the array.",
+          },
+        ],
+        challenge: {
+          title: "Build a Dynamic Score List",
+          description:
+            "Create a dynamic array of 3 ints using `new int[size]`. Store 10, 20, and 30, print the middle value, then release the array with `delete[]` and set the pointer to `nullptr`.",
+          starterCode: `#include <iostream>
+using namespace std;
+
+int main() {
+    int size = 3;
+    // TODO: create dynamic array, fill it, print the middle value, then clean up
+    return 0;
+}`,
+          solutionCode: `#include <iostream>
+using namespace std;
+
+int main() {
+    int size = 3;
+    int* scores = new int[size];
+    scores[0] = 10;
+    scores[1] = 20;
+    scores[2] = 30;
+    cout << scores[1] << endl;
+    delete[] scores;
+    scores = nullptr;
+    return 0;
+}`,
+          tests: [
+            { id: 1, label: "Dynamic array is created with new[]", keywords: ["new int[size]"] },
+            { id: 2, label: "Values are stored by index", keywords: ["[0]", "[1]", "[2]"] },
+            { id: 3, label: "Middle value is printed", keywords: ["cout", "[1]"] },
+            { id: 4, label: "Array is released with delete[]", keywords: ["delete[]"] },
+            { id: 5, label: "Pointer is reset to nullptr", keywords: ["nullptr"] },
+          ],
+        },
+      },
+      {
         id: "ptr-own-2",
         title: "Smart Pointers: unique_ptr and shared_ptr",
         xp: 20,
@@ -1001,6 +1103,225 @@ int main() {
               keywords: [{ pattern: "for\\s*\\([^;]*;\\s*[A-Za-z_]\\w*\\s*<\\s*3" }],
             },
             { id: 4, label: "printGrid is called", keywords: ["printGrid(grid, 2)"] },
+          ],
+        },
+      },
+      {
+        id: "ptr-2d-3",
+        title: "Dynamic 2D Array as One Flat Block",
+        xp: 25,
+        theory: [
+          {
+            type: "text",
+            content:
+              "A simple way to make a dynamic 2D array is to create **one big 1D array** and treat it like rows and columns. This keeps all values beside each other in memory.",
+          },
+          {
+            type: "callout",
+            variant: "tip",
+            content:
+              "Use this formula: `index = row * cols + col`. It means: skip full rows first, then move to the column.",
+          },
+          {
+            type: "diagram",
+            title: "Flat storage for a 2D shape",
+            nodes: [
+              {
+                id: "shape",
+                label: "2 rows x 3 cols",
+                color: "#00d4ff",
+                items: ["Looks like a grid", "Still stored as one line"],
+              },
+              {
+                id: "flat",
+                label: "data[6]",
+                color: "#b8ff00",
+                items: ["0 1 2 | 3 4 5", "Each row has 3 values"],
+              },
+              {
+                id: "formula",
+                label: "r * cols + c",
+                color: "#f59e0b",
+                items: ["row 1, col 2 -> 1 * 3 + 2", "Index 5"],
+              },
+            ],
+          },
+          {
+            type: "code",
+            lang: "cpp",
+            label: "Flat dynamic matrix",
+            content: `int rows = 2;
+int cols = 3;
+int* grid = new int[rows * cols];
+
+grid[0 * cols + 0] = 10;
+grid[0 * cols + 1] = 20;
+grid[0 * cols + 2] = 30;
+grid[1 * cols + 0] = 40;
+grid[1 * cols + 1] = 50;
+grid[1 * cols + 2] = 60;
+
+cout << grid[1 * cols + 2] << endl;
+
+delete[] grid;`,
+          },
+          {
+            type: "quiz",
+            question: "For a flat dynamic 2D array, what does `row * cols + col` find?",
+            options: ["The correct 1D index", "The number of rows", "The heap size in bytes", "The pointer type"],
+            answer: 0,
+            explanation:
+              "The formula turns a row and column into the correct place inside one flat array.",
+          },
+        ],
+        challenge: {
+          title: "Make a Flat Dynamic Grid",
+          description:
+            "Create a 2x3 dynamic grid as one `int*` block using `new int[rows * cols]`. Store 10, 20, 30, 40, 50, 60, print row 1 column 2 using `row * cols + col`, then `delete[]` it.",
+          starterCode: `#include <iostream>
+using namespace std;
+
+int main() {
+    int rows = 2;
+    int cols = 3;
+    // TODO: create one flat dynamic grid and print row 1, column 2
+    return 0;
+}`,
+          solutionCode: `#include <iostream>
+using namespace std;
+
+int main() {
+    int rows = 2;
+    int cols = 3;
+    int* grid = new int[rows * cols];
+    grid[0 * cols + 0] = 10;
+    grid[0 * cols + 1] = 20;
+    grid[0 * cols + 2] = 30;
+    grid[1 * cols + 0] = 40;
+    grid[1 * cols + 1] = 50;
+    grid[1 * cols + 2] = 60;
+    cout << grid[1 * cols + 2] << endl;
+    delete[] grid;
+    grid = nullptr;
+    return 0;
+}`,
+          tests: [
+            { id: 1, label: "One flat block is allocated", keywords: ["new int[rows * cols]"] },
+            { id: 2, label: "Row-column formula is used", keywords: ["1 * cols + 2"] },
+            { id: 3, label: "Selected cell is printed", keywords: ["cout", "grid["] },
+            { id: 4, label: "Flat block is released", keywords: ["delete[] grid"] },
+          ],
+        },
+      },
+      {
+        id: "ptr-2d-4",
+        title: "Dynamic 2D Array with Row Pointers",
+        xp: 25,
+        theory: [
+          {
+            type: "text",
+            content:
+              "Another dynamic 2D style uses a pointer to row pointers: `int** grid`. First create the list of rows, then create each row separately.",
+          },
+          {
+            type: "callout",
+            variant: "warning",
+            content:
+              "This is not the same as a normal `int grid[2][3]`. With `int**`, each row is a separate heap array, so you must delete each row before deleting the row list.",
+          },
+          {
+            type: "stepthrough",
+            title: "Row-pointer cleanup order",
+            steps: [
+              {
+                label: "Create row list",
+                code: "int** grid = new int*[rows];",
+                desc: "`grid` points to an array of row pointers.",
+              },
+              {
+                label: "Create each row",
+                code: "grid[r] = new int[cols];",
+                desc: "Each row gets its own dynamic 1D array.",
+              },
+              {
+                label: "Use normal indexing",
+                code: "grid[1][2] = 60;",
+                desc: "After setup, `grid[row][col]` is easy to read.",
+              },
+              {
+                label: "Delete rows first",
+                code: "delete[] grid[r];\ndelete[] grid;",
+                desc: "Free every row, then free the row-pointer list.",
+              },
+            ],
+          },
+          {
+            type: "code",
+            lang: "cpp",
+            label: "Row-pointer matrix",
+            content: `int rows = 2;
+int cols = 3;
+int** grid = new int*[rows];
+
+for (int r = 0; r < rows; r++) {
+    grid[r] = new int[cols];
+}
+
+grid[1][2] = 60;
+cout << grid[1][2] << endl;
+
+for (int r = 0; r < rows; r++) {
+    delete[] grid[r];
+}
+delete[] grid;`,
+          },
+          {
+            type: "quiz",
+            question: "With `int** grid`, what must be deleted first?",
+            options: ["Each row: `delete[] grid[r]`", "The row list: `delete[] grid`", "Nothing", "Only `grid[0][0]`"],
+            answer: 0,
+            explanation:
+              "Each row owns a separate dynamic array. Delete the rows first, then the row-pointer list.",
+          },
+        ],
+        challenge: {
+          title: "Create a Row-Pointer Grid",
+          description:
+            "Create a 2x3 dynamic grid using `int**`. Allocate the row list, allocate each row, store and print `grid[1][2] = 60`, then delete every row and finally delete the row list.",
+          starterCode: `#include <iostream>
+using namespace std;
+
+int main() {
+    int rows = 2;
+    int cols = 3;
+    // TODO: create int** grid, allocate rows, use grid[1][2], then clean up
+    return 0;
+}`,
+          solutionCode: `#include <iostream>
+using namespace std;
+
+int main() {
+    int rows = 2;
+    int cols = 3;
+    int** grid = new int*[rows];
+    for (int r = 0; r < rows; r++) {
+        grid[r] = new int[cols];
+    }
+    grid[1][2] = 60;
+    cout << grid[1][2] << endl;
+    for (int r = 0; r < rows; r++) {
+        delete[] grid[r];
+    }
+    delete[] grid;
+    grid = nullptr;
+    return 0;
+}`,
+          tests: [
+            { id: 1, label: "Row pointer list is allocated", keywords: ["int**", "new int*[rows]"] },
+            { id: 2, label: "Each row is allocated", keywords: ["new int[cols]"] },
+            { id: 3, label: "2D indexing is used", keywords: ["grid[1][2]"] },
+            { id: 4, label: "Rows are deleted first", keywords: ["delete[] grid[r]"] },
+            { id: 5, label: "Row list is deleted", keywords: ["delete[] grid"] },
           ],
         },
       },

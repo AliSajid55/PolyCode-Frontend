@@ -241,12 +241,24 @@ export default function ProfilePage() {
     const node = activityWrapRef.current;
     if (!node) return undefined;
 
-    const updateWidth = () => setActivityWidth(node.getBoundingClientRect().width);
+    let animationFrame = 0;
+    const updateWidth = () => {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(() => {
+        const nextWidth = Math.round(node.getBoundingClientRect().width);
+        setActivityWidth((currentWidth) =>
+          currentWidth === nextWidth ? currentWidth : nextWidth,
+        );
+      });
+    };
     updateWidth();
 
     const observer = new ResizeObserver(updateWidth);
     observer.observe(node);
-    return () => observer.disconnect();
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      observer.disconnect();
+    };
   }, []);
 
   return (
