@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CHAPTERS } from "../data/oopsCurriculum";
+import { useLearnNav } from "../../shared/LearnNavContext";
 
 export default function OopsSidebar({
   currentLessonId,
@@ -10,6 +11,7 @@ export default function OopsSidebar({
   title = "OOP in C++",
 }) {
   const navigate = useNavigate();
+  const { menuOpen, closeMenu } = useLearnNav();
   const [collapsed, setCollapsed] = useState(false);
 
   // Which chapters are expanded — default: expand current chapter
@@ -28,16 +30,33 @@ export default function OopsSidebar({
     });
   }
 
+  function goToLesson(lessonId) {
+    closeMenu();
+    navigate(`${basePath}/lesson/${lessonId}`);
+  }
+
   return (
     <aside
-      className={`oops-sidebar ${collapsed ? "oops-sidebar-collapsed" : ""}`}
+      className={`oops-sidebar ${collapsed ? "oops-sidebar-collapsed" : ""} ${
+        menuOpen ? "oops-sidebar-mobile-open" : ""
+      }`}
     >
       <div className="oops-sidebar-header">
         {!collapsed && <span className="oops-sidebar-title">{title}</span>}
         <button
+          type="button"
+          className="oops-sidebar-close-mobile"
+          onClick={closeMenu}
+          aria-label="Close lesson menu"
+        >
+          ×
+        </button>
+        <button
+          type="button"
           className="oops-sidebar-toggle"
           onClick={() => setCollapsed(!collapsed)}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? "›" : "‹"}
         </button>
@@ -75,9 +94,7 @@ export default function OopsSidebar({
                           <button
                             className={`oops-sidebar-lesson-btn ${isDone ? "done" : ""} ${isCurrent ? "current" : ""}`}
                             style={{ "--ch-color": ch.color }}
-                            onClick={() =>
-                              navigate(`${basePath}/lesson/${l.id}`)
-                            }
+                            onClick={() => goToLesson(l.id)}
                           >
                             <span className="oops-sb-check">
                               {isDone ? "✓" : "○"}

@@ -5,6 +5,8 @@ import { getLearnNavLinks } from "../../language/courseCatalog";
 
 export default function Navbar({
   toggleSidebar,
+  showMobileMenu = true,
+  mobileMenuOpen = false,
   theme = "dark",
   onToggleTheme,
   onGoToStackPicker,
@@ -62,18 +64,26 @@ export default function Navbar({
     navigate("/login");
   };
 
+  const canToggleMobileMenu =
+    showMobileMenu && typeof toggleSidebar === "function";
+
   return (
     <nav className="navbar">
-      <button
-        type="button"
-        className="mobile-menu-toggle"
-        onClick={toggleSidebar}
-        aria-label="Toggle sidebar menu"
-      >
-        <span />
-        <span />
-        <span />
-      </button>
+      {canToggleMobileMenu ? (
+        <button
+          type="button"
+          className="mobile-menu-toggle"
+          onClick={toggleSidebar}
+          aria-label="Open lesson menu"
+          aria-expanded={mobileMenuOpen}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+      ) : (
+        <span className="mobile-menu-spacer" aria-hidden="true" />
+      )}
 
       <button
         type="button"

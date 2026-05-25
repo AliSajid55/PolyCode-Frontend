@@ -12,6 +12,7 @@ import Sidebar from "./features/navigation/components/Sidebar";
 import { PlaygroundProvider } from "./features/playground/context/PlaygroundContext";
 import { AuthProvider } from "./features/auth/context/AuthContext";
 import SelectionPins from "./shared/components/SelectionPins";
+import { LearnNavProvider } from "./features/learn/shared/LearnNavContext";
 import "./App.css";
 import "./styles/theme-light.css";
 import "./styles/stack-picker-dark.css";
@@ -205,6 +206,10 @@ function LearnShell({
   children,
 }) {
   const location = useLocation();
+  const [learnMenuOpen, setLearnMenuOpen] = React.useState(false);
+  const isLessonRoute = /\/lesson\//.test(location.pathname);
+  const toggleLearnMenu = () => setLearnMenuOpen((open) => !open);
+  const closeLearnMenu = () => setLearnMenuOpen(false);
 
   React.useEffect(() => {
     if (!location.pathname.startsWith("/learn/")) return;
@@ -219,17 +224,41 @@ function LearnShell({
     });
   }, [location.pathname]);
 
+  React.useEffect(() => {
+    closeLearnMenu();
+  }, [location.pathname]);
+
+  React.useEffect(() => {
+    const mq = window.matchMedia("(max-width: 900px)");
+    const lock = learnMenuOpen && mq.matches && isLessonRoute;
+    document.body.classList.toggle("learn-sidebar-open", lock);
+    document.body.style.overflow = lock ? "hidden" : "";
+    return () => {
+      document.body.classList.remove("learn-sidebar-open");
+      document.body.style.overflow = "";
+    };
+  }, [learnMenuOpen, isLessonRoute]);
+
   return (
-    <>
+    <LearnNavProvider menuOpen={learnMenuOpen} closeMenu={closeLearnMenu}>
       <Navbar
-        toggleSidebar={() => {}}
+        toggleSidebar={isLessonRoute ? toggleLearnMenu : undefined}
+        showMobileMenu={isLessonRoute}
+        mobileMenuOpen={learnMenuOpen}
         theme={theme}
         onToggleTheme={onToggleTheme}
         onGoToStackPicker={onGoToStackPicker}
         selectedLanguage={selectedLanguage}
       />
+      {learnMenuOpen && isLessonRoute && (
+        <div
+          className="backdrop learn-backdrop"
+          onClick={closeLearnMenu}
+          aria-hidden="true"
+        />
+      )}
       <main className="main-content learn-content">{children}</main>
-    </>
+    </LearnNavProvider>
   );
 }
 
