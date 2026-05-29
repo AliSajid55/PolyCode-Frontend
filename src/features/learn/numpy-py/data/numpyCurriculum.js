@@ -1,5 +1,5 @@
 // PolyCode — NumPy (Python) full curriculum
-// 11 chapters · 30 lessons · Python coding challenges
+// 11 chapters · 36 lessons · Python coding challenges
 
 export const NUMPY_CHAPTERS = [
   {
@@ -8,6 +8,118 @@ export const NUMPY_CHAPTERS = [
     icon: "🔢",
     color: "#4f46e5",
     lessons: [
+      {
+        id: "numpy-0",
+        title: "What is NumPy?",
+        xp: 10,
+        theory: [
+          {
+            type: "text",
+            content:
+              "**NumPy** (Numerical Python) is a free library that helps you work with large sets of numbers in Python — think step counts from a fitness band, pixel brightness in a photo, or prices on a shopping site.",
+          },
+          {
+            type: "text",
+            content:
+              "Its main building block is the **ndarray**: a grid of numbers stored efficiently. Once your data is in an ndarray, you can add, multiply, or compare whole chunks in one step instead of writing long loops.",
+          },
+          {
+            type: "diagram",
+            title: "Where NumPy shows up",
+            nodes: [
+              {
+                id: "science",
+                label: "Science & school",
+                color: "#4f46e5",
+                items: ["Physics formulas", "Statistics homework"],
+              },
+              {
+                id: "data",
+                label: "Data & charts",
+                color: "#6366f1",
+                items: ["pandas tables", "matplotlib plots"],
+              },
+              {
+                id: "ml",
+                label: "AI & games",
+                color: "#8b5cf6",
+                items: ["Neural networks", "Random game levels"],
+              },
+            ],
+          },
+          {
+            type: "code",
+            lang: "python",
+            label: "Install habit: import numpy as np",
+            content: `import numpy as np
+
+steps = np.array([4000, 5200, 6100])
+print(steps + 500)   # bonus steps added to each day`,
+          },
+          {
+            type: "code",
+            lang: "python",
+            label: "A tiny 2D table (rows and columns)",
+            content: `import numpy as np
+
+# Each row = one student, each column = one subject
+grades = np.array([[78, 85], [92, 88]])
+print(grades.shape)   # (2, 2) → 2 students, 2 subjects`,
+          },
+          {
+            type: "callout",
+            variant: "tip",
+            content:
+              "Almost every data-heavy Python project uses `import numpy as np`. You will use that line in every lesson in this course.",
+          },
+          {
+            type: "quiz",
+            question: "What does NumPy mainly give you for numeric work?",
+            options: [
+              "Faster loops in plain Python lists",
+              "ndarrays and vectorized math on many values at once",
+              "A way to store text in Excel",
+              "Built-in web servers",
+            ],
+            answer: 1,
+            explanation:
+              "NumPy centers on ndarrays and operations that run on whole arrays efficiently.",
+          },
+        ],
+        challenge: {
+          title: "Your First ndarray",
+          description:
+            "Import NumPy as `np`, create `temps = np.array([18, 22, 19])`, and print `temps + 3` (three warmer days).",
+          starterCode: `# Import NumPy as np
+# Create temps and print temps + 3
+
+`,
+          solutionCode: `import numpy as np
+
+temps = np.array([18, 22, 19])
+print(temps + 3)`,
+          tests: [
+            {
+              id: 1,
+              label: "Imports numpy as np",
+              hint: "import numpy as np",
+              keywords: [{ pattern: "import\\s+numpy\\s+as\\s+np" }],
+            },
+            {
+              id: 2,
+              label: "Uses np.array",
+              hint: "np.array([18, 22, 19])",
+              keywords: [{ pattern: "np\\.array\\s*\\(" }],
+            },
+            {
+              id: 3,
+              label: "Prints temps + 3",
+              hint: "print(temps + 3)",
+              keywords: [{ pattern: "print\\s*\\(\\s*temps\\s*\\+\\s*3\\s*\\)" }],
+            },
+          ],
+        },
+      },
       {
         id: "numpy-1",
         title: "Lists vs NumPy Arrays",
@@ -752,6 +864,89 @@ print(a + 10)`,
         },
       },
       {
+        id: "numpy-7b",
+        title: "Row vs Column Operations",
+        xp: 15,
+        theory: [
+          {
+            type: "text",
+            content:
+              "A 2D array is like a **cafeteria menu board**: rows are dishes, columns are days. **`axis=1`** works **across** a row (one total per dish). **`axis=0`** works **down** a column (one total per day).",
+          },
+          {
+            type: "text",
+            content:
+              "Example: each row is one food truck’s sales for Mon–Wed. `sum(axis=1)` = weekly total **per truck**. `sum(axis=0)` = total **per day** across all trucks.",
+          },
+          {
+            type: "code",
+            lang: "python",
+            label: "Total sales per truck (axis=1)",
+            content: `import numpy as np
+
+sales = np.array([[100, 120, 90],   # Truck A
+                  [80, 95, 110]])    # Truck B
+print(sales.sum(axis=1))   # [310 285]`,
+          },
+          {
+            type: "code",
+            lang: "python",
+            label: "Total sales per day (axis=0)",
+            content: `import numpy as np
+
+sales = np.array([[100, 120, 90],
+                  [80, 95, 110]])
+print(sales.mean(axis=0))   # [90. 107.5 100. ]`,
+          },
+          {
+            type: "callout",
+            variant: "tip",
+            content:
+              "Memory trick: **axis=0** collapses **rows** (you move down). **axis=1** collapses **columns** (you move sideways).",
+          },
+          {
+            type: "quiz",
+            question: "For a (3, 4) array, which axis gives one result per row?",
+            options: ["axis=0", "axis=1", "axis=2", "no axis"],
+            answer: 1,
+            explanation: "axis=1 reduces across columns inside each row.",
+          },
+        ],
+        challenge: {
+          title: "Busiest Day for All Trucks",
+          description:
+            "Given `sales = np.array([[50, 60], [70, 40], [55, 65]])`, print `sales.sum(axis=0)` (total per column/day).",
+          starterCode: `import numpy as np
+
+sales = np.array([[50, 60], [70, 40], [55, 65]])
+`,
+          solutionCode: `import numpy as np
+
+sales = np.array([[50, 60], [70, 40], [55, 65]])
+print(sales.sum(axis=0))`,
+          tests: [
+            {
+              id: 1,
+              label: "Uses sum",
+              hint: "sales.sum(axis=0)",
+              keywords: [{ pattern: "\\.sum\\s*\\(" }],
+            },
+            {
+              id: 2,
+              label: "axis=0",
+              hint: "axis=0",
+              keywords: [{ pattern: "axis\\s*=\\s*0" }],
+            },
+            {
+              id: 3,
+              label: "Prints",
+              hint: "print(...)",
+              keywords: [{ pattern: "print\\s*\\(" }],
+            },
+          ],
+        },
+      },
+      {
         id: "numpy-8",
         title: "2D Element-wise Ops",
         xp: 15,
@@ -1272,48 +1467,46 @@ print(np.nanmean(data))`,
     lessons: [
       {
         id: "numpy-13",
-        title: "reshape & flatten",
+        title: "reshape",
         xp: 14,
         theory: [
           {
             type: "text",
             content:
-              "**`reshape`** rearranges the same data into new dimensions — like refolding a **pizza box** without changing slice count. Total elements must stay the same! **`ravel()`** and **`flatten()`** squish to 1D.",
+              "**`reshape`** changes the layout of your data without adding or removing values — like turning a line of **12 eggs** into a **3×4** carton. The total count must stay the same.",
           },
           {
             type: "code",
             lang: "python",
-            label: "Reshape 1D → 2D",
+            label: "Line of numbers → photo grid",
             content: `import numpy as np
 
-a = np.arange(6)
-grid = a.reshape(2, 3)
-print(grid)
-# [[0 1 2]
-#  [3 4 5]]`,
+pixels = np.arange(12)
+image = pixels.reshape(3, 4)
+print(image.shape)   # (3, 4)`,
           },
           {
             type: "code",
             lang: "python",
-            label: "Flatten",
+            label: "Let NumPy pick one side with -1",
             content: `import numpy as np
 
-m = np.array([[1, 2], [3, 4]])
-print(m.ravel())    # [1 2 3 4] — view when possible
-print(m.flatten())  # [1 2 3 4] — always a copy`,
+data = np.arange(20)
+table = data.reshape(4, -1)   # 4 rows, auto columns
+print(table.shape)   # (4, 5)`,
           },
           {
             type: "callout",
             variant: "tip",
             content:
-              "Use `-1` in one dimension to auto-calculate: `a.reshape(2, -1)` lets NumPy figure out the other size.",
+              "Only one dimension can be `-1`. NumPy fills in that size from the total element count.",
           },
           {
             type: "quiz",
             question: "Can you reshape 6 elements into (2, 4)?",
-            options: ["Yes", "No — 2×4=8 ≠ 6", "Only with flatten", "Only 1D"],
+            options: ["Yes", "No — 2×4=8 ≠ 6", "Only if 1D", "Only with stack"],
             answer: 1,
-            explanation: "reshape requires the product of dimensions to equal total elements.",
+            explanation: "Rows × columns must equal the number of elements.",
           },
         ],
         challenge: {
@@ -1342,6 +1535,98 @@ print(a.reshape(2, 3))`,
             {
               id: 3,
               label: "Prints",
+              hint: "print(...)",
+              keywords: [{ pattern: "print\\s*\\(" }],
+            },
+          ],
+        },
+      },
+      {
+        id: "numpy-13b",
+        title: "transpose & ravel",
+        xp: 14,
+        theory: [
+          {
+            type: "text",
+            content:
+              "**.T** (transpose) swaps rows and columns — handy when a **timetable** is stored with days as rows but you need days as columns for a chart.",
+          },
+          {
+            type: "text",
+            content:
+              "**`ravel()`** flattens any shape into one long 1D list, reading row by row. It is quick and often shares memory with the original (a view).",
+          },
+          {
+            type: "code",
+            lang: "python",
+            label: "Transpose a class schedule",
+            content: `import numpy as np
+
+# rows = periods, cols = Mon–Wed
+schedule = np.array([[1, 2, 3],
+                     [4, 5, 6]])
+print(schedule.T)
+# now rows = days, cols = periods`,
+          },
+          {
+            type: "code",
+            lang: "python",
+            label: "Ravel then reshape again",
+            content: `import numpy as np
+
+board = np.array([[9, 8], [7, 6]])
+flat = board.ravel()
+back = flat.reshape(2, 2)
+print(back)`,
+          },
+          {
+            type: "callout",
+            variant: "info",
+            content:
+              "Need a flat copy you can edit safely? Use `flatten()` — it always copies. `ravel()` is for speed when you only read the data.",
+          },
+          {
+            type: "quiz",
+            question: "What does `.T` do on a 2D array?",
+            options: [
+              "Sorts smallest to largest",
+              "Swaps rows and columns",
+              "Removes duplicates",
+              "Adds a new row",
+            ],
+            answer: 1,
+            explanation: "Transpose flips the grid along the diagonal.",
+          },
+        ],
+        challenge: {
+          title: "Flip and Flatten",
+          description:
+            "Create `grid = np.array([[1,2,3],[4,5,6]])`, print `grid.T`, then print `grid.ravel()`.",
+          starterCode: `import numpy as np
+
+grid = np.array([[1, 2, 3], [4, 5, 6]])
+`,
+          solutionCode: `import numpy as np
+
+grid = np.array([[1, 2, 3], [4, 5, 6]])
+print(grid.T)
+print(grid.ravel())`,
+          tests: [
+            {
+              id: 1,
+              label: "Uses .T",
+              hint: "grid.T",
+              keywords: [{ pattern: "\\.T" }],
+            },
+            {
+              id: 2,
+              label: "Uses ravel",
+              hint: "grid.ravel()",
+              keywords: [{ pattern: "\\.ravel\\s*\\(" }],
+            },
+            {
+              id: 3,
+              label: "Prints twice",
               hint: "print(...)",
               keywords: [{ pattern: "print\\s*\\(" }],
             },
@@ -1507,64 +1792,74 @@ print(np.random.randint(1, 7, size=5))`,
       },
       {
         id: "numpy-21",
-        title: "choice & Shuffle",
+        title: "choice, shuffle & permutation",
         xp: 15,
         theory: [
           {
             type: "text",
             content:
-              "**`np.random.choice`** picks random items from an array — like drawing names from a hat. Pass `size` for multiple picks and `replace=False` for no duplicates (lottery style). **`np.random.shuffle`** mixes an array in place.",
+              "**`np.random.choice`** draws items from a list — like picking **raffle tickets** from a bowl. Use `replace=False` when each ticket can only win once.",
+          },
+          {
+            type: "text",
+            content:
+              "**`shuffle`** reorders an array in place (same cards, new order). **`permutation`** returns a **new** shuffled copy and leaves the original alone — useful when you must keep the old order for records.",
           },
           {
             type: "code",
             lang: "python",
-            label: "Random choice",
+            label: "Pick lunch spots without repeating",
             content: `import numpy as np
 
-prizes = np.array(["pizza", "trophy", "sticker", "high-five"])
-print(np.random.choice(prizes, size=3))
-print(np.random.choice(prizes, size=2, replace=False))`,
+spots = np.array(["tacos", "pasta", "sushi", "burger"])
+lunch_week = np.random.choice(spots, size=3, replace=False)
+print(lunch_week)`,
           },
           {
             type: "code",
             lang: "python",
-            label: "Shuffle deck",
+            label: "Shuffle vs permutation",
             content: `import numpy as np
 
-deck = np.arange(1, 11)
-np.random.shuffle(deck)
-print(deck)  # same array, new order`,
+queue = np.array([101, 102, 103, 104])
+np.random.shuffle(queue)
+print("shuffled queue:", queue)
+
+nums = np.array([10, 20, 30])
+shuffled_copy = np.random.permutation(nums)
+print("original:", nums)
+print("permuted:", shuffled_copy)`,
           },
           {
             type: "quiz",
-            question: "How do you pick without replacement?",
+            question: "Which leaves the original array unchanged?",
             options: [
-              "replace=True",
-              "replace=False",
-              "shuffle first only",
-              "Use randint",
+              "np.random.shuffle",
+              "np.random.permutation",
+              "both",
+              "neither",
             ],
             answer: 1,
-            explanation: "replace=False ensures each pick is unique.",
+            explanation: "permutation returns a new array; shuffle edits in place.",
           },
         ],
         challenge: {
-          title: "Pick a Winner",
+          title: "Fair Team Picker",
           description:
-            "From `np.array(['A','B','C','D'])`, use `np.random.choice` with `size=2` and `replace=False`. Print the result.",
+            "From `teams = np.array(['Red','Blue','Green','Yellow'])`, print `np.random.choice(teams, size=2, replace=False)`.",
           starterCode: `import numpy as np
 
-players = np.array(["A", "B", "C", "D"])
+teams = np.array(["Red", "Blue", "Green", "Yellow"])
 `,
           solutionCode: `import numpy as np
 
-players = np.array(["A", "B", "C", "D"])
-print(np.random.choice(players, size=2, replace=False))`,
+teams = np.array(["Red", "Blue", "Green", "Yellow"])
+print(np.random.choice(teams, size=2, replace=False))`,
           tests: [
             {
               id: 1,
               label: "Uses np.random.choice",
-              hint: "np.random.choice(players, ...)",
+              hint: "np.random.choice(teams, ...)",
               keywords: [{ pattern: "np\\.random\\.choice\\s*\\(" }],
             },
             {
@@ -1578,6 +1873,95 @@ print(np.random.choice(players, size=2, replace=False))`,
               label: "Prints",
               hint: "print(...)",
               keywords: [{ pattern: "print\\s*\\(" }],
+            },
+          ],
+        },
+      },
+      {
+        id: "numpy-21b",
+        title: "Random Simulations",
+        xp: 16,
+        theory: [
+          {
+            type: "text",
+            content:
+              "A **simulation** uses random numbers to mimic real life — coin tosses, dice games, or guessing how many customers visit a shop each hour.",
+          },
+          {
+            type: "text",
+            content:
+              "Run many trials and look at averages. More trials usually get closer to what you expect (dice average near 3.5). Set a **seed** when you want the same “random” story every time you test code.",
+          },
+          {
+            type: "code",
+            lang: "python",
+            label: "Simulate 20 coin flips",
+            content: `import numpy as np
+
+np.random.seed(0)
+flips = np.random.randint(0, 2, size=20)  # 0=heads, 1=tails
+heads = np.sum(flips == 0)
+print("Heads:", heads, "Tails:", 20 - heads)`,
+          },
+          {
+            type: "code",
+            lang: "python",
+            label: "Average of 100 dice rolls",
+            content: `import numpy as np
+
+np.random.seed(42)
+rolls = np.random.randint(1, 7, size=100)
+print("Average roll:", rolls.mean())`,
+          },
+          {
+            type: "callout",
+            variant: "info",
+            content:
+              "Simulations help you test ideas before building expensive real-world experiments.",
+          },
+          {
+            type: "quiz",
+            question: "Why run many random trials in a simulation?",
+            options: [
+              "To slow Python down",
+              "To see stable patterns in random outcomes",
+              "To remove NaN",
+              "To change array dtype",
+            ],
+            answer: 1,
+            explanation: "Large samples reveal averages and probabilities more clearly.",
+          },
+        ],
+        challenge: {
+          title: "Roll 50 Dice",
+          description:
+            "Set `np.random.seed(1)`, create `rolls = np.random.randint(1, 7, size=50)`, and print `rolls.mean()`.",
+          starterCode: `import numpy as np
+
+`,
+          solutionCode: `import numpy as np
+
+np.random.seed(1)
+rolls = np.random.randint(1, 7, size=50)
+print(rolls.mean())`,
+          tests: [
+            {
+              id: 1,
+              label: "Sets seed",
+              hint: "np.random.seed(1)",
+              keywords: [{ pattern: "np\\.random\\.seed\\s*\\(" }],
+            },
+            {
+              id: 2,
+              label: "Uses randint size 50",
+              hint: "randint(1, 7, size=50)",
+              keywords: [{ pattern: "randint\\s*\\(\\s*1\\s*,\\s*7" }],
+            },
+            {
+              id: 3,
+              label: "Prints mean",
+              hint: "rolls.mean()",
+              keywords: [{ pattern: "\\.mean\\s*\\(" }],
             },
           ],
         },
@@ -1669,63 +2053,76 @@ print(readings[~np.isnan(readings)])`,
       },
       {
         id: "numpy-23",
-        title: "sort & argsort",
+        title: "sort, argsort & unique",
         xp: 15,
         theory: [
           {
             type: "text",
             content:
-              "**`np.sort`** orders values smallest to largest. **`np.argsort`** returns **indices** that would sort the array — perfect for ranking **game scores** without losing track of who scored what.",
+              "**`np.sort`** lines up values from low to high — like sorting **playlist lengths** shortest first. **`np.argsort`** gives the **positions** that would do that sort, so you can rank data without moving the original list.",
+          },
+          {
+            type: "text",
+            content:
+              "**`np.unique`** finds distinct values and can count how many times each appears — great for “how many students picked each answer?” on a survey.",
           },
           {
             type: "code",
             lang: "python",
-            label: "Sort values",
+            label: "Sort and find the winner index",
             content: `import numpy as np
 
-scores = np.array([88, 55, 100, 72])
-print(np.sort(scores))  # [ 55  72  88 100]`,
+times = np.array([42.1, 38.5, 40.0, 39.2])
+order = np.argsort(times)
+print("Fastest runner index:", order[0])
+print("Sorted times:", np.sort(times))`,
           },
           {
             type: "code",
             lang: "python",
-            label: "Argsort for ranking",
+            label: "Count shirt sizes sold",
             content: `import numpy as np
 
-scores = np.array([88, 55, 100, 72])
-rank_idx = np.argsort(scores)
-print(rank_idx)           # [1 3 0 2] — index order low→high
-print(scores[rank_idx[-1]])  # highest score → 100`,
+sizes = np.array(["M", "S", "M", "L", "S", "M"])
+labels, counts = np.unique(sizes, return_counts=True)
+print(labels)
+print(counts)   # how many S, M, L`,
           },
           {
             type: "quiz",
-            question: "argsort returns?",
-            options: ["Sorted values", "Indices that sort", "Max index", "Boolean mask"],
+            question: "Which function returns only distinct values (and optional counts)?",
+            options: ["np.sort", "np.unique", "np.argsort", "np.ravel"],
             answer: 1,
-            explanation: "argsort gives indices; use arr[argsort(arr)] to get sorted values.",
+            explanation: "np.unique removes duplicates; return_counts=True adds tallies.",
           },
         ],
         challenge: {
-          title: "Rank the Scores",
+          title: "Count Each Answer",
           description:
-            "Print `np.argsort` of `np.array([40, 90, 70, 85])`.",
+            "For `answers = np.array([1, 2, 2, 3, 1, 2])`, print `np.unique(answers, return_counts=True)`.",
           starterCode: `import numpy as np
 
-scores = np.array([40, 90, 70, 85])
+answers = np.array([1, 2, 2, 3, 1, 2])
 `,
           solutionCode: `import numpy as np
 
-scores = np.array([40, 90, 70, 85])
-print(np.argsort(scores))`,
+answers = np.array([1, 2, 2, 3, 1, 2])
+print(np.unique(answers, return_counts=True))`,
           tests: [
             {
               id: 1,
-              label: "Uses np.argsort",
-              hint: "np.argsort(scores)",
-              keywords: [{ pattern: "np\\.argsort\\s*\\(" }],
+              label: "Uses np.unique",
+              hint: "np.unique(answers, return_counts=True)",
+              keywords: [{ pattern: "np\\.unique\\s*\\(" }],
             },
             {
               id: 2,
+              label: "return_counts=True",
+              hint: "return_counts=True",
+              keywords: [{ pattern: "return_counts\\s*=\\s*True" }],
+            },
+            {
+              id: 3,
               label: "Prints",
               hint: "print(...)",
               keywords: [{ pattern: "print\\s*\\(" }],
@@ -1891,50 +2288,56 @@ print(b)`,
       },
       {
         id: "numpy-26",
-        title: "ufuncs & Speed",
+        title: "ufuncs & vectorization",
         xp: 16,
         theory: [
           {
             type: "text",
             content:
-              "**Universal functions (ufuncs)** like `np.sqrt`, `np.exp`, and `np.abs` run element-wise in compiled C — much faster than Python loops. NumPy's secret sauce is doing millions of ops without a single `for`.",
+              "**Ufuncs** (universal functions) such as `np.sqrt`, `np.log`, and `np.abs` work on every element at once. **Vectorization** means writing `arr * 2` instead of looping — NumPy runs the work in fast compiled code.",
+          },
+          {
+            type: "text",
+            content:
+              "Picture converting **1000 battery percentages** to decimals: one ufunc call beats 1000 lines of Python `for` loops.",
           },
           {
             type: "code",
             lang: "python",
-            label: "Vectorized ufuncs",
+            label: "Ufuncs on sensor readings",
             content: `import numpy as np
 
-a = np.array([1, 4, 9, 16])
-print(np.sqrt(a))    # [1. 2. 3. 4.]
-print(np.exp([0, 1, 2]))  # e^x for each`,
+readings = np.array([0.25, 1.0, 4.0, 9.0])
+print(np.sqrt(readings))
+print(np.round(readings * 100))   # percent style`,
           },
           {
             type: "code",
             lang: "python",
-            label: "abs and log",
+            label: "Vectorized vs mental loop",
             content: `import numpy as np
 
-temps = np.array([-5, 0, 10, -3])
-print(np.abs(temps))  # [5 0 10 3]`,
+prices = np.array([10, 20, 30])
+discounted = prices * 0.9 + 1   # 10% off plus $1 fee, all at once
+print(discounted)`,
           },
           {
             type: "callout",
             variant: "tip",
             content:
-              "Rule of thumb: if you're writing `for x in arr`, ask if a ufunc or vectorized op exists first.",
+              "Before writing `for x in arr`, check if `+`, `*`, or a ufunc like `np.maximum` can do the job in one line.",
           },
           {
             type: "quiz",
-            question: "np.sqrt applied to an array is?",
+            question: "What is vectorization in NumPy?",
             options: [
-              "A Python loop",
-              "A ufunc applied element-wise",
-              "Matrix square root only",
-              "Invalid",
+              "Drawing arrows on plots",
+              "Applying an operation to whole arrays without Python loops",
+              "Storing strings only",
+              "Using only 1D arrays",
             ],
             answer: 1,
-            explanation: "sqrt is a ufunc — one call, every element processed in C.",
+            explanation: "Vectorized code runs bulk math on arrays efficiently.",
           },
         ],
         challenge: {
@@ -1960,6 +2363,94 @@ print(np.sqrt(a))`,
               label: "Prints",
               hint: "print(...)",
               keywords: [{ pattern: "print\\s*\\(" }],
+            },
+          ],
+        },
+      },
+      {
+        id: "numpy-26b",
+        title: "Speed & Memory Efficiency",
+        xp: 16,
+        theory: [
+          {
+            type: "text",
+            content:
+              "NumPy is fast because it stores numbers in a compact block and runs math in C. **Memory** matters when arrays get huge — a million `float64` values use more RAM than a million `float32` values.",
+          },
+          {
+            type: "text",
+            content:
+              "Avoid extra **copies** when you do not need them. Slicing can be a view (shared memory); `.copy()` is for when you must change data without touching the original.",
+          },
+          {
+            type: "code",
+            lang: "python",
+            label: "Compare memory: float64 vs float32",
+            content: `import numpy as np
+
+big = np.zeros(1_000_000, dtype=np.float64)
+small = np.zeros(1_000_000, dtype=np.float32)
+print(big.nbytes, small.nbytes)`,
+          },
+          {
+            type: "code",
+            lang: "python",
+            label: "Vectorized math on a big range",
+            content: `import numpy as np
+
+hours = np.arange(24)
+bill = hours * 0.15 + 2.0   # energy cost formula, all hours at once
+print(bill[0], bill[-1])`,
+          },
+          {
+            type: "callout",
+            variant: "info",
+            content:
+              "Use float32 for very large image or audio buffers when full double precision is not needed — you save RAM and often gain speed.",
+          },
+          {
+            type: "quiz",
+            question: "Why is `arr * 2` usually faster than a Python for-loop?",
+            options: [
+              "Python forbids loops on lists",
+              "NumPy runs the operation in optimized code on the whole array",
+              "It always uses less disk space",
+              "It converts arrays to strings",
+            ],
+            answer: 1,
+            explanation: "Bulk array ops avoid slow per-element Python overhead.",
+          },
+        ],
+        challenge: {
+          title: "Which Uses Less RAM?",
+          description:
+            "Create `a = np.zeros(100, dtype=np.float64)` and `b = np.zeros(100, dtype=np.float32)`. Print `a.nbytes` and `b.nbytes`.",
+          starterCode: `import numpy as np
+
+`,
+          solutionCode: `import numpy as np
+
+a = np.zeros(100, dtype=np.float64)
+b = np.zeros(100, dtype=np.float32)
+print(a.nbytes, b.nbytes)`,
+          tests: [
+            {
+              id: 1,
+              label: "float64 array",
+              hint: "dtype=np.float64",
+              keywords: [{ pattern: "float64" }],
+            },
+            {
+              id: 2,
+              label: "float32 array",
+              hint: "dtype=np.float32",
+              keywords: [{ pattern: "float32" }],
+            },
+            {
+              id: 3,
+              label: "Prints nbytes",
+              hint: "a.nbytes, b.nbytes",
+              keywords: [{ pattern: "\\.nbytes" }],
             },
           ],
         },
