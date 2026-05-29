@@ -222,6 +222,44 @@ print(result.shape)`,
     color: "#6366f1",
     lessons: [
       {
+        id: "numpy-2a",
+        title: "np.array()",
+        xp: 12,
+        theory: [
+          {
+            type: "text",
+            content:
+              "This lesson will show how to build arrays with `np.array()`. Full lesson content is coming soon.",
+          },
+        ],
+        challenge: {
+          title: "Coming Soon",
+          description:
+            "This challenge will be added when the lesson content is ready.",
+          starterCode: `# Lesson content coming soon
+
+`,
+          solutionCode: `import numpy as np
+
+arr = np.array([1, 2, 3])
+print(arr)`,
+          tests: [
+            {
+              id: 1,
+              label: "Uses np.array",
+              hint: "np.array([1, 2, 3])",
+              keywords: [{ pattern: "np\\.array\\s*\\(" }],
+            },
+            {
+              id: 2,
+              label: "Prints the array",
+              hint: "print(arr)",
+              keywords: [{ pattern: "print\\s*\\(" }],
+            },
+          ],
+        },
+      },
+      {
         id: "numpy-3",
         title: "arange & linspace",
         xp: 12,
