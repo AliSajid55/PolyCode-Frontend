@@ -397,6 +397,63 @@ print(result.shape)`,
           {
             type: "text",
             content:
+              "You already know **Python lists** — great for mixing names, numbers, and text. But when your data is **only numbers** (scores, prices, sensor readings), staying on a plain list makes math awkward: Python does not add a number to **every** item in one step.",
+            code: {
+              lang: "python",
+              label: "List problem — you need a loop for simple math",
+              content: `scores = [88, 92, 75, 100]
+
+# scores + 5  → TypeError! Can't add int to whole list
+
+boosted = [s + 5 for s in scores]   # loop required
+print(boosted)   # [93, 97, 80, 105]`,
+            },
+          },
+          {
+            type: "text",
+            content:
+              "That is why we **convert** a list with **`np.array()`**. Same numbers, but now they live in an **ndarray** — one type, stored together, built for fast **vector math** (add, multiply, or divide the whole row at once).",
+            code: {
+              lang: "python",
+              label: "Convert once, then math without a loop",
+              content: `import numpy as np
+
+scores = [88, 92, 75, 100]
+arr = np.array(scores)   # list → ndarray
+
+print(arr + 5)   # [93 97 80 105] — every score + 5
+print(arr * 2)   # [176 184 150 200] — every score doubled`,
+            },
+          },
+          {
+            type: "diagram",
+            title: "Why convert with np.array()?",
+            nodes: [
+              {
+                id: "list",
+                label: "Python list",
+                color: "#f43f5e",
+                items: [
+                  "Flexible (any types)",
+                  "Loops for numeric math",
+                  "Slower on large data",
+                ],
+              },
+              {
+                id: "ndarray",
+                label: "After np.array()",
+                color: "#4f46e5",
+                items: [
+                  "Numbers of one type",
+                  "Math on the whole array",
+                  "Much faster at scale",
+                ],
+              },
+            ],
+          },
+          {
+            type: "text",
+            content:
               "The most common way to make a NumPy array is **`np.array()`**. Pass it a Python list (or lists inside lists) and NumPy turns it into a fast **ndarray** — ready for math.",
             code: {
               lang: "python",
@@ -458,9 +515,28 @@ print(prices.dtype) # float64`,
           },
           {
             type: "callout",
+            variant: "info",
+            content:
+              "**Rule of thumb:** keep a **list** when data is small or mixed (names + ages). Use **`np.array(your_list)`** when you have lots of numbers and want quick math without writing loops.",
+          },
+          {
+            type: "callout",
             variant: "tip",
             content:
               "Always start with `import numpy as np`. Then `np.array(your_list)` is the go-to when you already have data in Python lists.",
+          },
+          {
+            type: "quiz",
+            question: "Why convert `[10, 20, 30]` with `np.array()` before doing math?",
+            options: [
+              "Lists cannot store integers",
+              "ndarrays allow math on every element at once, without a loop",
+              "np.array() sorts the numbers automatically",
+              "Python lists are read-only",
+            ],
+            answer: 1,
+            explanation:
+              "A list holds values, but NumPy arrays are built for fast element-wise math on the whole group.",
           },
           {
             type: "quiz",
