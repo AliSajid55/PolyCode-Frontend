@@ -175,12 +175,15 @@ print(df)`,
             lang: "python",
             label: "Creating a Series and a DataFrame",
             content: `import pandas as pd
-
-            scores = pd.Series([90, 85, 78], index=["Ali", "Sara", "Mo"])
-             table = pd.DataFrame({"math": [90, 85, 78], "english": [88, 91, 80]},
-                     index=["Ali", "Sara", "Mo"])
-             print(scores)
-             print(table)`,
+          
+scores = pd.Series([90, 85, 78], index=["Ali", "Sara", "Mo"])
+table = pd.DataFrame(
+              {"math": [90, 85, 78], "english": [88, 91, 80]},
+              index=["Ali", "Sara", "Mo"]
+          )
+          
+print(scores)
+print(table)`,
           },
           {
             type: "callout",
