@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import NumpyIntroTheory from "../../numpy-py/components/NumpyIntroTheory";
 import OopsSidebar from "../../oops-cpp/components/OopsSidebar";
@@ -12,53 +12,6 @@ import {
 import usePandasProgress from "../hooks/usePandasProgress";
 
 const BASE_PATH = "/learn/pandas-py";
-
-function plainLessonText(text = "") {
-  return text.replace(/\*\*/g, "").replace(/`/g, "");
-}
-
-function getLessonPlainBlocks(lesson) {
-  return lesson.theory
-    .filter((block) => block.type === "text" || block.type === "callout")
-    .map((block) => plainLessonText(block.content));
-}
-
-function getReadableSummary(lesson) {
-  const blocks = getLessonPlainBlocks(lesson);
-  return {
-    plain:
-      blocks[0] ||
-      `${lesson.title} is a core Pandas idea for working with tables in Python.`,
-    why: `${lesson.title} helps you analyze and clean real-world data without slow manual loops.`,
-    analogy:
-      blocks[1] ||
-      "Think of a DataFrame as a spreadsheet you can filter and transform with code.",
-  };
-}
-
-function getKeyTerms(lesson) {
-  const terms = new Set();
-  const source = `${lesson.title} ${getLessonPlainBlocks(lesson).join(" ")} ${
-    lesson.challenge.description
-  }`.toLowerCase();
-
-  [
-    "pandas",
-    "series",
-    "dataframe",
-    "loc",
-    "iloc",
-    "groupby",
-    "merge",
-    "csv",
-    "index",
-    "column",
-  ].forEach((term) => {
-    if (source.includes(term)) terms.add(term);
-  });
-
-  return [...terms].slice(0, 6);
-}
 
 export default function PandasLessonPage() {
   const { lessonId } = useParams();
@@ -86,20 +39,6 @@ export default function PandasLessonPage() {
   const lessonIdx = PANDAS_LESSONS.findIndex((item) => item.id === lessonId);
   const prev = PANDAS_LESSONS[lessonIdx - 1];
   const next = PANDAS_LESSONS[lessonIdx + 1];
-  const firstTextBlock = lesson?.theory.find((block) => block.type === "text");
-  const firstCodeBlock = lesson?.theory.find((block) => block.type === "code");
-  const firstCallout = lesson?.theory.find((block) => block.type === "callout");
-  const practicePrompts = lesson?.challenge?.tests?.slice(0, 3) || [];
-  const lessonSummary = useMemo(
-    () => (lesson ? getReadableSummary(lesson) : null),
-    [lesson],
-  );
-  const keyTerms = useMemo(() => (lesson ? getKeyTerms(lesson) : []), [lesson]);
-  const briefStepItems = [
-    "Read how Series and DataFrames differ from plain lists.",
-    "Run each code sample in the challenge editor.",
-    "Change one column or filter and predict the output before running.",
-  ];
 
   useEffect(() => {
     setTab("theory");
