@@ -131,7 +131,8 @@ export default function NumpyLessonPage() {
   const useFriendlyTheory =
     lesson.chapterId === "intro" ||
     lesson.chapterId === "creation" ||
-    lesson.chapterId === "indexing";
+    lesson.chapterId === "indexing" ||
+    lesson.chapterId === "broadcast";
   const isBookmarked = bookmarks.includes(lessonId);
   const completedCount = Object.keys(progress).length;
   const earnedXP = NUMPY_LESSONS.filter((item) => progress[item.id]).reduce(

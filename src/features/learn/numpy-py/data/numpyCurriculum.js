@@ -1502,42 +1502,96 @@ print(np.where(temps >= 60, temps, 0))`,
           {
             type: "text",
             content:
-              "**Broadcasting** lets NumPy stretch smaller arrays to match larger ones — without copying huge blocks of memory. Like giving every **pizza slice** the same extra topping: one scalar `+ 5` applies to every cell.",
+              "You already know **`scores + 5`** adds 5 to every score in a 1D array. **Broadcasting** is NumPy's way of doing the same idea on **tables** — one small value or one short row/column can stretch to match a bigger grid **without you writing a loop**.",
+            code: {
+              lang: "python",
+              label: "Real life: add $2 delivery fee to every menu price",
+              content: `import numpy as np
+
+# 2×3 menu prices (rows = meals, cols = sizes)
+prices = np.array([[8, 10, 12],
+                   [6,  7,  9]])
+
+# One number stretches to every cell
+with_fee = prices + 2
+print(with_fee)`,
+            },
+          },
+          {
+            type: "text",
+            content:
+              "**Why not a loop?** You could add 2 to each cell with nested `for` loops — but broadcasting does it in **one line** and is **much faster** on large spreadsheets (sales reports, sensor grids, image pixels).",
+            code: {
+              lang: "python",
+              label: "Same idea on a blank 2×3 table",
+              content: `import numpy as np
+
+m = np.ones((2, 3))   # 2 rows, 3 columns of 1.0
+print(m + 5)
+# [[6. 6. 6.]
+#  [6. 6. 6.]]`,
+            },
+          },
+          {
+            type: "text",
+            content:
+              "Broadcasting also works when one side is a **row** and the other is a **column**. Imagine **3 students** and **4 subjects** — a column of bonus points (one per student) can be added to the whole grade table.",
+            code: {
+              lang: "python",
+              label: "Column (3,1) + row (1,4) → table (3, 4)",
+              content: `import numpy as np
+
+# Bonus points per student (3 students, 1 column)
+bonus = np.array([[5],
+                  [3],
+                  [2]])
+
+# Subject weights (1 row, 4 subjects)
+weights = np.array([[1, 1, 2, 1]])
+
+# NumPy stretches both to shape (3, 4)
+result = bonus + weights
+print(result.shape)   # (3, 4)
+print(result)`,
+            },
           },
           {
             type: "diagram",
-            title: "Broadcasting shapes",
+            title: "Broadcasting in plain English",
             nodes: [
               {
                 id: "scalar",
-                label: "Scalar + matrix",
+                label: "One number + table",
                 color: "#a855f7",
-                items: ["(2,3) + 5", "5 stretches to every cell"],
+                items: [
+                  "prices + 2",
+                  "2 copies to every cell",
+                  "Like same tax on all items",
+                ],
               },
               {
                 id: "rowcol",
                 label: "Row + column",
                 color: "#8b5cf6",
-                items: ["(3,1) + (1,4)", "→ result (3, 4)"],
+                items: [
+                  "(3,1) + (1,4)",
+                  "Stretches to (3, 4)",
+                  "No loop needed",
+                ],
               },
             ],
           },
           {
-            type: "code",
-            lang: "python",
-            label: "Add scalar to matrix",
-            content: `import numpy as np
-
-m = np.ones((2, 3))
-print(m + 5)
-# [[6. 6. 6.]
-#  [6. 6. 6.]]`,
+            type: "callout",
+            variant: "info",
+            content:
+              "**Simple rule:** sizes must **match from the right** or one side must be **1**. If shapes fight (like (3,) vs (4,)), NumPy raises an error instead of guessing.",
           },
           {
             type: "callout",
             variant: "tip",
             content:
-              "Shapes must be compatible from the **right**. A column vector `(3, 1)` plus a row `(1, 4)` broadcasts to `(3, 4)`.",
+              "Think of broadcasting as **copying a small sticker onto every matching spot** in a bigger grid — NumPy does the copying efficiently for you.",
           },
           {
             type: "quiz",
@@ -1592,42 +1646,94 @@ print(a + 10)`,
           {
             type: "text",
             content:
-              "A 2D array is like a **cafeteria menu board**: rows are dishes, columns are days. **`axis=1`** works **across** a row (one total per dish). **`axis=0`** works **down** a column (one total per day).",
+              "A 2D table has **rows** (across) and **columns** (down). In real life: rows might be **food trucks**, columns might be **Mon / Tue / Wed sales**. When you **sum** or **average**, you must choose: total **per truck** or total **per day**?",
+            code: {
+              lang: "python",
+              label: "Sales table — 2 trucks, 3 days",
+              content: `import numpy as np
+
+# Rows = trucks, columns = Mon Tue Wed
+sales = np.array([[100, 120,  90],   # Truck A
+                  [ 80,  95, 110]])   # Truck B
+print(sales)`,
+            },
           },
           {
             type: "text",
             content:
-              "Example: each row is one food truck’s sales for Mon–Wed. `sum(axis=1)` = weekly total **per truck**. `sum(axis=0)` = total **per day** across all trucks.",
+              "**`axis=1`** goes **sideways across each row** — one answer **per row**. Use it for \"how much did **each truck** sell this week?\"",
+            code: {
+              lang: "python",
+              label: "Weekly total per truck (axis=1)",
+              content: `import numpy as np
+
+sales = np.array([[100, 120,  90],
+                  [ 80,  95, 110]])
+
+per_truck = sales.sum(axis=1)
+print(per_truck)   # [310 285]  → Truck A, Truck B`,
+            },
           },
           {
-            type: "code",
-            lang: "python",
-            label: "Total sales per truck (axis=1)",
-            content: `import numpy as np
+            type: "text",
+            content:
+              "**`axis=0`** goes **down each column** — one answer **per column**. Use it for \"how much did **every truck sell on Monday**?\" or average sales **per day**.",
+            code: {
+              lang: "python",
+              label: "Total and average per day (axis=0)",
+              content: `import numpy as np
 
-sales = np.array([[100, 120, 90],   # Truck A
-                  [80, 95, 110]])    # Truck B
-print(sales.sum(axis=1))   # [310 285]`,
+sales = np.array([[100, 120,  90],
+                  [ 80,  95, 110]])
+
+per_day_total = sales.sum(axis=0)
+per_day_avg   = sales.mean(axis=0)
+
+print(per_day_total)   # [180 215 200]
+print(per_day_avg)     # [90. 107.5 100. ]`,
+            },
           },
           {
-            type: "code",
-            lang: "python",
-            label: "Total sales per day (axis=0)",
-            content: `import numpy as np
-
-sales = np.array([[100, 120, 90],
-                  [80, 95, 110]])
-print(sales.mean(axis=0))   # [90. 107.5 100. ]`,
+            type: "diagram",
+            title: "Which axis to pick?",
+            nodes: [
+              {
+                id: "axis1",
+                label: "axis=1 (across row)",
+                color: "#a855f7",
+                items: [
+                  "One result per row",
+                  "Per student, per truck, per product",
+                  "sales.sum(axis=1)",
+                ],
+              },
+              {
+                id: "axis0",
+                label: "axis=0 (down column)",
+                color: "#8b5cf6",
+                items: [
+                  "One result per column",
+                  "Per day, per subject, per city",
+                  "sales.sum(axis=0)",
+                ],
+              },
+            ],
+          },
+          {
+            type: "callout",
+            variant: "info",
+            content:
+              "**Memory trick:** `axis=0` **collapses rows** (you move **down** the table). `axis=1` **collapses columns** (you move **sideways** along a row).",
           },
           {
             type: "callout",
             variant: "tip",
             content:
-              "Memory trick: **axis=0** collapses **rows** (you move down). **axis=1** collapses **columns** (you move sideways).",
+              "If you forget, ask: \"Do I want one number **per row** or **per column**?\" Row → `axis=1`. Column → `axis=0`.",
           },
           {
             type: "quiz",
-            question: "For a (3, 4) array, which axis gives one result per row?",
+            question: "For a (3, 4) grade table, which axis gives one total per student (per row)?",
             options: ["axis=0", "axis=1", "axis=2", "no axis"],
             answer: 1,
             explanation: "axis=1 reduces across columns inside each row.",
@@ -1675,36 +1781,100 @@ print(sales.sum(axis=0))`,
           {
             type: "text",
             content:
-              "Multiply, divide, and compare entire matrices **cell by cell** with `*`, `/`, and `>`. This is **not** matrix multiplication — it's like applying a discount to every item in a price grid independently.",
-          },
-          {
-            type: "code",
-            lang: "python",
-            label: "Element-wise multiply",
-            content: `import numpy as np
+              "On a **2D table**, you can multiply, divide, or compare **cell by cell** — like applying a **10% sale** to every item in a price grid, or checking which test scores passed. The **`*`** operator does **element-wise** math, **not** matrix multiplication.",
+            code: {
+              lang: "python",
+              label: "Real life: sale multipliers on a price grid",
+              content: `import numpy as np
 
-prices = np.array([[10, 20], [30, 40]])
-multipliers = np.array([[1, 2], [3, 4]])
-print(prices * multipliers)
+# Shelf prices (2 products × 2 stores)
+prices = np.array([[10, 20],
+                   [30, 40]])
+
+# Sale: store 1 ×1, store 2 ×2 for each product
+multipliers = np.array([[1, 2],
+                        [1, 2]])
+
+sale_prices = prices * multipliers
+print(sale_prices)
 # [[ 10  40]
-#  [ 90 160]]`,
+#  [ 30  80]]`,
+            },
           },
           {
-            type: "code",
-            lang: "python",
-            label: "Compare element-wise",
-            content: `import numpy as np
+            type: "text",
+            content:
+              "Comparisons work the same way — you get a **True/False table** the same shape as your data. Perfect for finding which cells pass a rule (like \"score at least 80\").",
+            code: {
+              lang: "python",
+              label: "Which scores passed? (≥ 80)",
+              content: `import numpy as np
 
-scores = np.array([[70, 85], [90, 55]])
-print(scores >= 80)
+scores = np.array([[70, 85],
+                   [90, 55]])
+
+passed = scores >= 80
+print(passed)
 # [[False  True]
 #  [ True False]]`,
+            },
+          },
+          {
+            type: "text",
+            content:
+              "When two tables are the **same shape**, `+`, `-`, `*`, `/` all work **pair by pair** — top-left with top-left, and so on. Broadcasting from the last lesson can also stretch a smaller table when shapes line up.",
+            code: {
+              lang: "python",
+              label: "Subtract a row of discounts from every product row",
+              content: `import numpy as np
+
+prices = np.array([[100, 200, 150],
+                   [ 80, 120,  90]])
+
+# $10 off every item in each size column
+discounts = np.array([10, 10, 10])
+
+final = prices - discounts   # broadcasts (3,) to each row
+print(final)`,
+            },
+          },
+          {
+            type: "diagram",
+            title: "Element-wise vs matrix multiply",
+            nodes: [
+              {
+                id: "elem",
+                label: "Element-wise *",
+                color: "#a855f7",
+                items: [
+                  "Same-size tables",
+                  "Each cell × matching cell",
+                  "Sales, discounts, masks",
+                ],
+              },
+              {
+                id: "matmul",
+                label: "Matrix multiply @",
+                color: "#8b5cf6",
+                items: [
+                  "Linear algebra",
+                  "Rows × columns rule",
+                  "Use @ or np.matmul later",
+                ],
+              },
+            ],
           },
           {
             type: "callout",
             variant: "info",
             content:
-              "Remember: `*` is element-wise. For true matrix multiply, use `@` or `np.matmul` (coming up in Linear Algebra!).",
+              "**Remember:** `*` = multiply **matching cells**. `@` or `np.matmul` = true **matrix** multiply (covered in Linear Algebra chapter).",
+          },
+          {
+            type: "callout",
+            variant: "tip",
+            content:
+              "Element-wise ops are what you use daily for reports: adjust prices, compare thresholds, combine two sensor readings.",
           },
           {
             type: "quiz",
