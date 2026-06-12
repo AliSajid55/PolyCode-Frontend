@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import NumpyIntroTheory from "../../numpy-py/components/NumpyIntroTheory";
 import OopsSidebar from "../../oops-cpp/components/OopsSidebar";
 import LearnProfileMenu from "../../shared/LearnProfileMenu";
+import LessonContentShell from "../../shared/LessonContentShell";
 import PythonCodeChallenge from "../../numpy-py/components/PythonCodeChallenge";
 import {
   PANDAS_CHAPTERS,
@@ -191,7 +192,11 @@ export default function PandasLessonPage() {
           </button>
         </div>
 
-        <div className="oops-lesson-content">
+        <LessonContentShell
+          storageKey={`pandas-py:${lessonId}`}
+          videoUrl={lesson.videoUrl}
+          videoTitle={`${lesson.title} — Pandas`}
+        >
           {tab === "theory" ? (
             <NumpyIntroTheory
               lesson={lesson}
@@ -212,7 +217,7 @@ export default function PandasLessonPage() {
               onCodeChange={handleCodeChange}
             />
           )}
-        </div>
+        </LessonContentShell>
 
         <div className="oops-lesson-nav">
           {prev ? (

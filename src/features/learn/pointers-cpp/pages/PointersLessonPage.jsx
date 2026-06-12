@@ -4,6 +4,7 @@ import CodeChallenge from "../../oops-cpp/components/CodeChallenge";
 import ConceptCard from "../../oops-cpp/components/ConceptCard";
 import OopsSidebar from "../../oops-cpp/components/OopsSidebar";
 import LearnProfileMenu from "../../shared/LearnProfileMenu";
+import LessonContentShell from "../../shared/LessonContentShell";
 import {
   POINTER_CHAPTERS,
   POINTER_LESSONS,
@@ -248,7 +249,11 @@ export default function PointersLessonPage() {
           </button>
         </div>
 
-        <div className="oops-lesson-content">
+        <LessonContentShell
+          storageKey={`pointers-cpp:${lessonId}`}
+          videoUrl={lesson.videoUrl}
+          videoTitle={`${lesson.title} — Pointers C++`}
+        >
           {tab === "theory" ? (
             <div className="oops-theory-pane">
               <div className="oops-lesson-title-row">
@@ -396,7 +401,7 @@ export default function PointersLessonPage() {
               onCodeChange={handleCodeChange}
             />
           )}
-        </div>
+        </LessonContentShell>
 
         <div className="oops-lesson-nav">
           {prev ? (

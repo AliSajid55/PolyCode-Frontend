@@ -1,5 +1,9 @@
 // PolyCode — Pandas (Python) full curriculum
 // 8 chapters · 20 lessons · Python coding challenges
+// YouTube links: edit pandasVideoLinks.js (not this file).
+
+import { applyLessonVideoLinks } from "../../shared/applyLessonVideoLinks";
+import { PANDAS_VIDEO_LINKS } from "./pandasVideoLinks";
 
 export const PANDAS_CHAPTERS = [
   {
@@ -2133,13 +2137,16 @@ print(df.to_csv(index=False))`,
   },
 ];
 
-export const PANDAS_LESSONS = PANDAS_CHAPTERS.flatMap((ch) =>
-  ch.lessons.map((l) => ({
-    ...l,
-    chapterId: ch.id,
-    chapterTitle: ch.title,
-    chapterColor: ch.color,
-  })),
+export const PANDAS_LESSONS = applyLessonVideoLinks(
+  PANDAS_CHAPTERS.flatMap((ch) =>
+    ch.lessons.map((l) => ({
+      ...l,
+      chapterId: ch.id,
+      chapterTitle: ch.title,
+      chapterColor: ch.color,
+    })),
+  ),
+  PANDAS_VIDEO_LINKS,
 );
 
 export const PANDAS_TOTAL_XP = PANDAS_LESSONS.reduce((s, l) => s + l.xp, 0);
