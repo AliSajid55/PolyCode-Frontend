@@ -4,6 +4,7 @@ import ConceptCard from "../../oops-cpp/components/ConceptCard";
 import NumpyIntroTheory from "../components/NumpyIntroTheory";
 import OopsSidebar from "../../oops-cpp/components/OopsSidebar";
 import LearnProfileMenu from "../../shared/LearnProfileMenu";
+import LessonContentShell from "../../shared/LessonContentShell";
 import PythonCodeChallenge from "../components/PythonCodeChallenge";
 import {
   NUMPY_CHAPTERS,
@@ -242,7 +243,11 @@ export default function NumpyLessonPage() {
           </button>
         </div>
 
-        <div className="oops-lesson-content">
+        <LessonContentShell
+          storageKey={`numpy-py:${lessonId}`}
+          videoUrl={lesson.videoUrl}
+          videoTitle={`${lesson.title} — NumPy`}
+        >
           {tab === "theory" ? (
             useFriendlyTheory ? (
               <NumpyIntroTheory
@@ -397,7 +402,7 @@ export default function NumpyLessonPage() {
               onCodeChange={handleCodeChange}
             />
           )}
-        </div>
+        </LessonContentShell>
 
         <div className="oops-lesson-nav">
           {prev ? (

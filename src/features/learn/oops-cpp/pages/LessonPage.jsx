@@ -5,6 +5,7 @@ import ConceptCard from "../components/ConceptCard";
 import CodeChallenge from "../components/CodeChallenge";
 import OopsSidebar from "../components/OopsSidebar";
 import LearnProfileMenu from "../../shared/LearnProfileMenu";
+import LessonContentShell from "../../shared/LessonContentShell";
 import useOopsProgress from "../hooks/useOopsProgress";
 import { useLessonAssistantContext } from "../../../assistant/hooks/useLessonAssistantContext";
 
@@ -261,8 +262,11 @@ export default function LessonPage() {
           </button>
         </div>
 
-        {/* Content */}
-        <div className="oops-lesson-content">
+        <LessonContentShell
+          storageKey={`oops-cpp:${lessonId}`}
+          videoUrl={lesson.videoUrl}
+          videoTitle={`${lesson.title} — OOP C++`}
+        >
           {tab === "theory" ? (
             <div className="oops-theory-pane">
               <div className="oops-lesson-title-row">
@@ -416,7 +420,7 @@ export default function LessonPage() {
               onCodeChange={handleCodeChange}
             />
           )}
-        </div>
+        </LessonContentShell>
 
         {/* Prev / Next nav */}
         <div className="oops-lesson-nav">

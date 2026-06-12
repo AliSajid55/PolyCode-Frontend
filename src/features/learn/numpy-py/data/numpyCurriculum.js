@@ -1,5 +1,9 @@
 // PolyCode — NumPy (Python) full curriculum
 // 11 chapters · 36 lessons · Python coding challenges
+// YouTube links: edit numpyVideoLinks.js (not this file).
+
+import { applyLessonVideoLinks } from "../../shared/applyLessonVideoLinks";
+import { NUMPY_VIDEO_LINKS } from "./numpyVideoLinks";
 
 export const NUMPY_CHAPTERS = [
   {
@@ -4117,13 +4121,16 @@ print(np.argsort(scores))`,
   },
 ];
 
-export const NUMPY_LESSONS = NUMPY_CHAPTERS.flatMap((ch) =>
-  ch.lessons.map((l) => ({
-    ...l,
-    chapterId: ch.id,
-    chapterTitle: ch.title,
-    chapterColor: ch.color,
-  })),
+export const NUMPY_LESSONS = applyLessonVideoLinks(
+  NUMPY_CHAPTERS.flatMap((ch) =>
+    ch.lessons.map((l) => ({
+      ...l,
+      chapterId: ch.id,
+      chapterTitle: ch.title,
+      chapterColor: ch.color,
+    })),
+  ),
+  NUMPY_VIDEO_LINKS,
 );
 
 export const NUMPY_TOTAL_XP = NUMPY_LESSONS.reduce((s, l) => s + l.xp, 0);

@@ -2,7 +2,11 @@
 //  PolyCode — OOP in C++ Curriculum Data
 //  Full curriculum: Beginner → Advanced
 //  Structured like FreeCodeCamp + LeetCode
+//  YouTube links: edit oopsVideoLinks.js (not this file).
 // ──────────────────────────────────────────────
+
+import { applyLessonVideoLinks } from "../../shared/applyLessonVideoLinks";
+import { OOPS_VIDEO_LINKS } from "./oopsVideoLinks";
 
 export const CHAPTERS = [
   // ═══════════════════════════════════════
@@ -4107,13 +4111,16 @@ int main() {
 // ──────────────────────────────────────────────
 
 /** Flat list of all lessons for quick lookup */
-export const ALL_LESSONS = CHAPTERS.flatMap((ch) =>
-  ch.lessons.map((l) => ({
-    ...l,
-    chapterId: ch.id,
-    chapterTitle: ch.title,
-    chapterColor: ch.color,
-  })),
+export const ALL_LESSONS = applyLessonVideoLinks(
+  CHAPTERS.flatMap((ch) =>
+    ch.lessons.map((l) => ({
+      ...l,
+      chapterId: ch.id,
+      chapterTitle: ch.title,
+      chapterColor: ch.color,
+    })),
+  ),
+  OOPS_VIDEO_LINKS,
 );
 
 export const TOTAL_XP = ALL_LESSONS.reduce((s, l) => s + l.xp, 0);

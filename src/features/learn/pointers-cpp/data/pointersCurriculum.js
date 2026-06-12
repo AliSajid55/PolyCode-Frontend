@@ -1,5 +1,9 @@
 // PolyCode — Pointers in C++ Curriculum
 // Focus: beginner-friendly mental models, visual steps, and safe modern C++.
+// YouTube links: edit pointersVideoLinks.js (not this file).
+
+import { applyLessonVideoLinks } from "../../shared/applyLessonVideoLinks";
+import { POINTERS_VIDEO_LINKS } from "./pointersVideoLinks";
 
 const FINAL_POINTER_QUESTIONS = [
   {
@@ -1567,13 +1571,16 @@ int main() {
   },
 ];
 
-export const POINTER_LESSONS = POINTER_CHAPTERS.flatMap((chapter) =>
-  chapter.lessons.map((lesson) => ({
-    ...lesson,
-    chapterId: chapter.id,
-    chapterTitle: chapter.title,
-    chapterColor: chapter.color,
-  })),
+export const POINTER_LESSONS = applyLessonVideoLinks(
+  POINTER_CHAPTERS.flatMap((chapter) =>
+    chapter.lessons.map((lesson) => ({
+      ...lesson,
+      chapterId: chapter.id,
+      chapterTitle: chapter.title,
+      chapterColor: chapter.color,
+    })),
+  ),
+  POINTERS_VIDEO_LINKS,
 );
 
 export const POINTER_TOTAL_XP = POINTER_LESSONS.reduce(
