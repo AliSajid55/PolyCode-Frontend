@@ -1,7 +1,6 @@
 import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
-import OpenAssistantButton from "./OpenAssistantButton";
+import { Sparkles } from "lucide-react";
 
 export default function Hero() {
   const reduceMotion = useReducedMotion();

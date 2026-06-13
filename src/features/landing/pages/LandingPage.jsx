@@ -2,7 +2,6 @@ import React from "react";
 import AnimatedBackground from "../components/AnimatedBackground";
 import Footer from "../components/Footer";
 import Hero from "../components/Hero";
-import HowItWorksSection from "../components/HowItWorksSection";
 import LanguagePickerSection from "../components/LanguagePickerSection";
 import Navbar from "../components/Navbar";
 import StatsSection from "../components/StatsSection";

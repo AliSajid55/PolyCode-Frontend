@@ -1,7 +1,6 @@
 import React, { useRef } from "react";
 import { motion, useReducedMotion, useInView } from "framer-motion";
 import { BookOpen, Bot, Shield } from "lucide-react";
-import OpenAssistantButton from "./OpenAssistantButton";
 
 const MODULES = [
   {

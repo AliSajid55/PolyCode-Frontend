@@ -5,6 +5,7 @@ export default function Footer() {
   return (
     <footer className="footer-pro">
       <div className="footer-main">
+        {/* Brand */}
         <div className="footer-brand">
           <div className="footer-logo">
             <span className="footer-logo-gradient">Poly</span>Code
@@ -16,16 +17,21 @@ export default function Footer() {
           </p>
 
           <div className="footer-socials">
-            <a href="#">
+            <a
+              href="https://github.com/QuantumLogicsLabs/PolyCode"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Github size={18} />
             </a>
 
-            <a href="#">
+            <a href="mailto:support@quantumlogicslimited.com">
               <Mail size={18} />
             </a>
           </div>
         </div>
 
+        {/* Platform */}
         <div className="footer-links">
           <h4>Platform</h4>
 
@@ -45,22 +51,28 @@ export default function Footer() {
           </a>
         </div>
 
+        {/* Resources */}
         <div className="footer-links">
           <h4>Resources</h4>
 
-          <a href="#">Documentation</a>
-          <a href="#">Learning Paths</a>
-          <a href="#">Challenges</a>
-          <a href="#">Community</a>
+          <a href="https://code.quantumlogicslimited.com/hub">Documentation</a>
+
+          <a href="#get-started">Learning Paths</a>
+
+          <a href="#modules">Challenges</a>
         </div>
 
+        {/* Pages */}
         <div className="footer-links">
-          <h4>Company</h4>
+          <h4>Pages</h4>
 
-          <a href="#">About</a>
-          <a href="#">Contact</a>
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
+          <a href="#top">About</a>
+
+          <a href="mailto:support@quantumlogicslimited.com">Contact</a>
+
+          <a href="/privacy">Privacy Policy</a>
+
+          <a href="/terms">Terms of Service</a>
         </div>
       </div>
 
