@@ -1,0 +1,232 @@
+================================================================================
+START OF FOLDER: lib
+================================================================================
+
+================================================================================
+PROJECT STRUCTURE
+================================================================================
+Root: C:\QuantumLogics\PolyCode\frontend\src\features\landing\lib
+
+lib/
+├── assistantApi.js
+├── assistantConfig.js
+└── useTypewriter.js
+
+Total files: 3
+
+================================================================================
+FILE CONTENTS
+================================================================================
+
+--------------------------------------------------------------------------------
+FILE: /assistantApi.js
+--------------------------------------------------------------------------------
+import { getApiBase } from "../../../config/apiBase";
+
+function getAuthHeaders() {
+  const headers = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+
+  const token = localStorage.getItem("token");
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
+export async function postAssistantChat({
+  message,
+  history,
+  session_id,
+  context,
+  assistant_message_id,
+}) {
+  const url = `${getApiBase()}/chat/assistant`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      message,
+      history,
+      session_id,
+      context: context || {},
+      assistant_message_id,
+    }),
+  });
+
+  if (res.status === 429) {
+    throw new Error(
+      "Too many messages. Please wait a moment before trying again.",
+    );
+  }
+
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const errBody = await res.json();
+      detail = errBody.error || errBody.detail || detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail || `Request failed (${res.status})`);
+  }
+
+  const data = await res.json();
+  if (!data.success) {
+    throw new Error("Assistant did not return a successful response.");
+  }
+  return data;
+}
+
+export async function fetchAssistantSession(sessionId) {
+  const url = `${getApiBase()}/chat/assistant/session/${encodeURIComponent(sessionId)}`;
+
+  try {
+    const res = await fetch(url, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!res.ok) {
+      return null;
+    }
+
+    return res.json();
+  } catch {
+    // Backend offline, CORS, or network issue — fall back to local session
+    return null;
+  }
+}
+
+export async function postAssistantFeedback({
+  session_id,
+  message_id,
+  rating,
+  user_message,
+  assistant_message,
+  context,
+}) {
+  const url = `${getApiBase()}/chat/assistant/feedback`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        session_id,
+        message_id,
+        rating,
+        user_message,
+        assistant_message,
+        context: context || {},
+      }),
+    });
+
+    if (!res.ok) {
+      let detail = res.statusText;
+      try {
+        const errBody = await res.json();
+        detail = errBody.error || detail;
+      } catch {
+        /* ignore */
+      }
+      throw new Error(detail || `Feedback failed (${res.status})`);
+    }
+
+    return res.json();
+  } catch (err) {
+    if (err instanceof Error) throw err;
+    throw new Error("Could not save feedback.");
+  }
+}
+
+export async function clearAssistantSession(sessionId) {
+  const url = `${getApiBase()}/chat/assistant/session/${encodeURIComponent(sessionId)}`;
+
+  try {
+    await fetch(url, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+  } catch {
+    /* ignore when backend is unreachable */
+  }
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /assistantConfig.js
+--------------------------------------------------------------------------------
+const publicUrl = process.env.PUBLIC_URL || "";
+
+export const ASSISTANT_CONFIG = {
+  name: "PolyMentor",
+  shortName: "PM",
+  tagline: "Your AI programming mentor",
+  welcomeMessage:
+    "Welcome to **PolyMentor**. I can explain PolyCode, guide your learning path, and help you understand PolyGuard security — ask me anything.",
+  storageKey: "polycode_assistant_session",
+  avatarSrc: `${publicUrl}/images/assistant.png`,
+  inputPlaceholder: "Type your question here…",
+  poweredByLabel: "PolyCode Ecosystem · AI Assistant",
+  quickPrompts: [
+    "What is PolyCode?",
+    "How does PolyMentor work?",
+    "Tell me about PolyGuard",
+    "How do I get started?",
+  ],
+};
+
+
+--------------------------------------------------------------------------------
+FILE: /useTypewriter.js
+--------------------------------------------------------------------------------
+import { useEffect, useRef, useState } from "react";
+
+export function useTypewriter(text, active, charDelayMs = 16) {
+  const [displayed, setDisplayed] = useState(() => (active ? "" : text));
+  const [done, setDone] = useState(!active);
+
+  const textRef = useRef(text);
+  const activeRef = useRef(active);
+  textRef.current = text;
+  activeRef.current = active;
+
+  useEffect(() => {
+    if (!active) {
+      setDisplayed(text);
+      setDone(true);
+      return;
+    }
+
+    setDisplayed("");
+    setDone(false);
+
+    let index = 0;
+
+    const id = window.setInterval(() => {
+      index += 1;
+      const slice = textRef.current.slice(0, index);
+      setDisplayed(slice);
+
+      if (index >= textRef.current.length) {
+        window.clearInterval(id);
+        setDone(true);
+      }
+    }, charDelayMs);
+
+    return () => {
+      window.clearInterval(id);
+    };
+  }, [text, active, charDelayMs]);
+
+  return { displayed, done };
+}
+
+
+================================================================================
+END OF FOLDER: lib
+================================================================================
