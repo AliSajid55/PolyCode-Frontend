@@ -8800,11 +8800,12 @@ body {
 }
 
 .certificate-course {
-  font-size: 42px;
+  font-size: 32px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: #000;
+  text-align: center;
 }
 
 .certificate-stats {
@@ -8845,6 +8846,7 @@ body {
 
 .signature-image {
   height: 120px;
+  margin-bottom: -20px;
 }
 
 .signature-line {

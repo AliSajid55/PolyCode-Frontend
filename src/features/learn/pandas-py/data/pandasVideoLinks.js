@@ -59,5 +59,6 @@ export const PANDAS_VIDEO_LINKS = {
   // ── Ch 8: Files & Wrap-up ────────────────────────────────────────────────
   "pandas-18":
     "https://www.youtube.com/watch?v=8r4Cv3Cgh-4&list=PL-6ebHRQo24KfQQVkbi-Fhm3Eolw9Dn_z&index=19", // read_csv concept
-  "pandas-19": "", // Export & recap
+  "pandas-19":
+    "https://www.youtube.com/watch?v=yx6o9963LPQ&list=PL-6ebHRQo24KfQQVkbi-Fhm3Eolw9Dn_z&index=20", // Export & recap
 };

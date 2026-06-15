@@ -1,6 +1,6 @@
 // src/features/learn/shared/CourseCertificate.jsx
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "../../auth/context/AuthContext";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
@@ -13,6 +13,7 @@ export default function CourseCertificate({
 }) {
   const { user } = useAuth();
   const certificateRef = useRef();
+  const [shareUrl, setShareUrl] = useState(null); // 👈 add here
 
   const isComplete = completedCount >= totalLessons;
 
@@ -39,17 +40,33 @@ export default function CourseCertificate({
     });
 
     const imgData = canvas.toDataURL("image/png");
-
     const pdf = new jsPDF({
       orientation: "landscape",
       unit: "mm",
       format: "a4",
     });
+    pdf.addImage(
+      imgData,
+      "PNG",
+      0,
+      0,
+      pdf.internal.pageSize.getWidth(),
+      pdf.internal.pageSize.getHeight(),
+    );
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+    // 👇 ADD FROM HERE
+    const blob = pdf.output("blob");
+    const formData = new FormData();
+    formData.append("certificate", blob, `${certificateId}.pdf`);
 
-    pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pageHeight);
+    const res = await fetch("http://localhost:5000/api/certificates/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const { url } = await res.json();
+    setShareUrl(url);
+    // 👆 TO HERE
 
     pdf.save(`${courseName}-certificate.pdf`);
   };
@@ -129,10 +146,15 @@ export default function CourseCertificate({
           />{" "}
         </div>
       </div>
-
       <button className="download-btn" onClick={downloadPDF}>
         Download PDF Certificate
       </button>
+      {shareUrl && (
+        <a href={shareUrl} target="_blank">
+          Share Certificate
+        </a>
+      )}{" "}
+      {/* 👈 add here */}
     </div>
   );
   console.log("courseName:", courseName);
