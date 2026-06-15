@@ -150,12 +150,11 @@ export default function CourseCertificate({
         Download PDF Certificate
       </button>
       {shareUrl && (
-        <a href={shareUrl} target="_blank">
+        <a href={shareUrl} target="_blank" rel="noopener noreferrer">
           Share Certificate
         </a>
       )}{" "}
       {/* 👈 add here */}
     </div>
   );
-  console.log("courseName:", courseName);
 }
