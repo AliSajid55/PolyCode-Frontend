@@ -48,15 +48,33 @@ export default function CourseCertificate({
       certId.current = generateLocalCertId(user?._id || user?.id, courseName);
     }
 
-    const courseSlug = courseName.toLowerCase().replace(/\s+/g, "-");
-    const qrUrl = `https://code.quantumlogicslimited.com/certificate/${courseSlug}/${certId.current}`;
+    const queryParams = new URLSearchParams({
+      id: certId.current,
+      name: userName,
+      course: courseName,
+      date: issueDate,
+      lessons: totalLessons.toString(),
+      xp: earnedXP.toString(),
+    }).toString();
+
+    const qrUrl = `https://poly-code-frontend-tau.vercel.app/verify-certificate?${queryParams}`;
 
     QRCode.toDataURL(qrUrl, {
       width: 120,
       margin: 1,
       color: { dark: "#1e293b", light: "#ffffff" },
-    }).then(setQrDataUrl);
-  }, [isComplete, courseName, user]);
+    })
+      .then(setQrDataUrl)
+      .catch((err) => console.error("QR Generation Error:", err));
+  }, [
+    isComplete,
+    courseName,
+    user,
+    userName,
+    issueDate,
+    totalLessons,
+    earnedXP,
+  ]);
 
   async function downloadPDF() {
     if (!certificateRef.current) return;

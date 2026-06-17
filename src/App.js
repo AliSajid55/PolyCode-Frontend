@@ -15,6 +15,7 @@ import SelectionPins from "./shared/components/SelectionPins";
 import { LearnNavProvider } from "./features/learn/shared/LearnNavContext";
 import GlobalAssistant from "./features/assistant/components/GlobalAssistant";
 import { AssistantProvider } from "./features/assistant/context/AssistantContext";
+import VerifyCertificatePage from "./features/learn/shared/VerifyCertificatePage";
 import "./App.css";
 import "./styles/theme-light.css";
 import "./styles/stack-picker-dark.css";
@@ -63,7 +64,8 @@ const JsFundamentalsHub = lazy(
   () => import("./features/learn/js-fundamentals/pages/JsFundamentalsHub"),
 );
 const JsFundamentalsLessonPage = lazy(
-  () => import("./features/learn/js-fundamentals/pages/JsFundamentalsLessonPage"),
+  () =>
+    import("./features/learn/js-fundamentals/pages/JsFundamentalsLessonPage"),
 );
 
 const PageFallback = () => (
@@ -201,6 +203,10 @@ function MainApp({
                 element={<DailyChallenge theme={theme} />}
               />
               <Route path="*" element={<Navigate to="/hub" replace />} />
+              <Route
+                path="/verify-certificate"
+                element={<VerifyCertificatePage />}
+              />
             </Routes>
           </Suspense>
         </main>
