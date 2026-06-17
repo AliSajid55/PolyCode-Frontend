@@ -4,7 +4,6 @@ import "./challenge-complete.css";
 
 export default function ChallengeCompleteCelebration({
   show,
-  accentColor = "#b8ff00",
   title = "Challenge complete!",
   message = "Go ahead!",
   onDismiss,
@@ -23,7 +22,6 @@ export default function ChallengeCompleteCelebration({
         >
           <motion.div
             className="challenge-complete-card"
-            style={{ "--celebrate-accent": accentColor }}
             initial={{ opacity: 0, scale: 0.82, y: 24 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 12 }}

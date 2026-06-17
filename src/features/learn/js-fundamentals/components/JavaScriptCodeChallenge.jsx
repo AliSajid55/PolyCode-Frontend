@@ -206,7 +206,6 @@ export default function JavaScriptCodeChallenge({
     <div className="oops-challenge">
       <ChallengeCompleteCelebration
         show={showCelebration}
-        accentColor={accentColor}
         onDismiss={dismissCelebration}
       />
       <div className="oops-problem-panel">

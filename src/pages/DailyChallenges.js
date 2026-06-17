@@ -95,7 +95,6 @@ export default function DailyChallenge({ theme }) {
   <>
     <ChallengeCompleteCelebration
       show={showCelebration}
-      accentColor="#b8ff00"
       onDismiss={dismissCelebration}
     />
     <motion.div

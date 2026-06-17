@@ -1112,7 +1112,6 @@ export default function CodeChallenge({
     <div className="oops-challenge">
       <ChallengeCompleteCelebration
         show={showCelebration}
-        accentColor={accentColor}
         onDismiss={dismissCelebration}
       />
       {/* Problem statement */}
