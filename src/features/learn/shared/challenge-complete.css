@@ -16,11 +16,14 @@
 }
 
 .challenge-complete-card {
+  --celebrate-accent: #22c55e;
+  --celebrate-accent-soft: #86efac;
+  --celebrate-accent-glow: rgba(34, 197, 94, 0.35);
   width: min(100%, 320px);
   padding: 28px 24px 22px;
   text-align: center;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.22);
   background: linear-gradient(
     165deg,
     rgba(22, 28, 42, 0.98) 0%,
@@ -29,7 +32,7 @@
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.45),
     0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-    0 0 40px color-mix(in srgb, var(--celebrate-accent) 22%, transparent);
+    0 0 40px var(--celebrate-accent-glow);
 }
 
 .challenge-complete-icon {
@@ -46,7 +49,7 @@
 }
 
 .challenge-complete-circle {
-  stroke: color-mix(in srgb, var(--celebrate-accent) 75%, #ffffff);
+  stroke: var(--celebrate-accent-soft);
 }
 
 .challenge-complete-check {
@@ -57,7 +60,7 @@
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  border: 2px solid color-mix(in srgb, var(--celebrate-accent) 35%, transparent);
+  border: 2px solid rgba(34, 197, 94, 0.35);
   pointer-events: none;
 }
 
@@ -88,7 +91,7 @@
   border-radius: 999px;
   font-size: 0.9rem;
   font-weight: 700;
-  color: #0b1020;
+  color: #052e16;
   background: var(--celebrate-accent);
   cursor: pointer;
   transition: transform 0.15s ease, opacity 0.15s ease;
