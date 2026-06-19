@@ -5,7 +5,6 @@ import {
   ChevronDown,
   Moon,
   Sun,
-  ArrowRight, // keep whatever else is actually used
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
