@@ -28,6 +28,9 @@ import { useTypewriter } from "../lib/useTypewriter";
 import AssistantAvatar from "./AssistantAvatar";
 
 const MAX_STORED_MESSAGES = 20;
+const DOCK_POSITION_KEY = "polycode_assistant_dock_position";
+const DOCK_MARGIN = 12;
+const DRAG_CLICK_THRESHOLD = 6;
 
 const WELCOME_MESSAGE = {
   id: "welcome",
@@ -58,6 +61,47 @@ function loadSession() {
     /* ignore */
   }
   return { sessionId: generateSessionId(), messages: [WELCOME_MESSAGE] };
+}
+
+function loadDockPosition() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = localStorage.getItem(DOCK_POSITION_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (Number.isFinite(parsed?.x) && Number.isFinite(parsed?.y)) {
+      return parsed;
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return null;
+}
+
+function clampDockPosition(position, size = { width: 220, height: 76 }) {
+  if (typeof window === "undefined") return position;
+
+  return {
+    x: Math.min(
+      Math.max(DOCK_MARGIN, position.x),
+      Math.max(DOCK_MARGIN, window.innerWidth - size.width - DOCK_MARGIN),
+    ),
+    y: Math.min(
+      Math.max(DOCK_MARGIN, position.y),
+      Math.max(DOCK_MARGIN, window.innerHeight - size.height - DOCK_MARGIN),
+    ),
+  };
+}
+
+function saveDockPosition(position) {
+  try {
+    localStorage.setItem(DOCK_POSITION_KEY, JSON.stringify(position));
+  } catch {
+    /* ignore */
+  }
 }
 
 function saveSession(session) {
@@ -274,12 +318,35 @@ export default function AssistantFab() {
   const [error, setError] = useState(null);
   const [feedbackSavingId, setFeedbackSavingId] = useState(null);
   const messagesEndRef = useRef(null);
+  const messagesScrollRef = useRef(null);
   const inputRef = useRef(null);
   const sessionRef = useRef(session);
+  const dockRef = useRef(null);
+  const dragStateRef = useRef(null);
+  const ignoreNextDockClickRef = useRef(false);
+  const [dockPosition, setDockPosition] = useState(() => loadDockPosition());
+  const [draggingDock, setDraggingDock] = useState(false);
 
   useEffect(() => {
     sessionRef.current = session;
   }, [session]);
+
+  useEffect(() => {
+    if (!dockPosition) return undefined;
+
+    const onResize = () => {
+      const rect = dockRef.current?.getBoundingClientRect();
+      const nextPosition = clampDockPosition(dockPosition, {
+        width: rect?.width || 220,
+        height: rect?.height || 76,
+      });
+      setDockPosition(nextPosition);
+      saveDockPosition(nextPosition);
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [dockPosition]);
 
   useEffect(() => {
     let cancelled = false;
@@ -315,7 +382,14 @@ export default function AssistantFab() {
   }, []);
 
   useEffect(() => {
-    if (open) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!open) return;
+
+    window.requestAnimationFrame(() => {
+      const scrollNode = messagesScrollRef.current;
+      if (scrollNode) {
+        scrollNode.scrollTop = scrollNode.scrollHeight;
+      }
+    });
   }, [session.messages, open, sending]);
 
   useEffect(() => {
@@ -483,6 +557,82 @@ export default function AssistantFab() {
   const messageContent = (msg) =>
     msg.id === "welcome" ? getWelcomeMessage(assistantContext) : msg.content;
 
+  const handleDockPointerDown = (event) => {
+    if (event.button !== 0) return;
+
+    const rect = dockRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+      moved: false,
+      width: rect.width,
+      height: rect.height,
+    };
+
+    dockRef.current?.setPointerCapture?.(event.pointerId);
+  };
+
+  const handleDockPointerMove = (event) => {
+    const state = dragStateRef.current;
+    if (!state || state.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - state.startX;
+    const deltaY = event.clientY - state.startY;
+    if (!state.moved && Math.hypot(deltaX, deltaY) < DRAG_CLICK_THRESHOLD) {
+      return;
+    }
+
+    event.preventDefault();
+    state.moved = true;
+    setDraggingDock(true);
+
+    setDockPosition(
+      clampDockPosition(
+        {
+          x: event.clientX - state.offsetX,
+          y: event.clientY - state.offsetY,
+        },
+        { width: state.width, height: state.height },
+      ),
+    );
+  };
+
+  const handleDockPointerUp = (event) => {
+    const state = dragStateRef.current;
+    if (!state || state.pointerId !== event.pointerId) return;
+
+    dragStateRef.current = null;
+    dockRef.current?.releasePointerCapture?.(event.pointerId);
+    setDraggingDock(false);
+
+    if (state.moved) {
+      ignoreNextDockClickRef.current = true;
+      const rect = dockRef.current?.getBoundingClientRect();
+      const nextPosition = clampDockPosition(
+        {
+          x: event.clientX - state.offsetX,
+          y: event.clientY - state.offsetY,
+        },
+        { width: rect?.width || state.width, height: rect?.height || state.height },
+      );
+      setDockPosition(nextPosition);
+      saveDockPosition(nextPosition);
+    }
+  };
+
+  const openFromDock = () => {
+    if (ignoreNextDockClickRef.current) {
+      ignoreNextDockClickRef.current = false;
+      return;
+    }
+    setOpen(true);
+  };
+
   return (
     <>
       <AnimatePresence>
@@ -558,6 +708,7 @@ export default function AssistantFab() {
             </div>
 
             <div
+              ref={messagesScrollRef}
               className="polym_mentor-scroll"
               style={{
                 flex: 1,
@@ -719,14 +870,29 @@ export default function AssistantFab() {
 
       {!open ? (
         <motion.div
-          className="assistant-dock-btn polym_mentor-dock"
+          ref={dockRef}
+          className={`assistant-dock-btn polym_mentor-dock${draggingDock ? " assistant-dock-btn--dragging" : ""}`}
+          onPointerDown={handleDockPointerDown}
+          onPointerMove={handleDockPointerMove}
+          onPointerUp={handleDockPointerUp}
+          onPointerCancel={handleDockPointerUp}
           initial={reduceMotion ? {} : { x: 40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 24 }}
+          style={
+            dockPosition
+              ? {
+                  left: dockPosition.x,
+                  top: dockPosition.y,
+                  right: "auto",
+                  bottom: "auto",
+                }
+              : undefined
+          }
         >
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={openFromDock}
             aria-label={`Open ${ASSISTANT_CONFIG.name}`}
             style={{
               display: "flex",
@@ -735,7 +901,7 @@ export default function AssistantFab() {
               background: "none",
               border: "none",
               color: "inherit",
-              cursor: "pointer",
+              cursor: draggingDock ? "grabbing" : "grab",
               padding: 0,
             }}
           >

@@ -61,9 +61,16 @@
   border-radius: 1rem 0 0 1rem;
   background: rgba(10, 16, 24, 0.95);
   padding: 0.5rem 1rem 0.5rem 0.5rem;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
   backdrop-filter: blur(16px);
   transition: border-color 0.2s, padding-left 0.3s, background 0.2s;
+}
+
+.assistant-dock-btn--dragging {
+  cursor: grabbing;
+  transition: none;
 }
 
 .assistant-dock-btn:hover {

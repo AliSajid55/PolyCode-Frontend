@@ -20,6 +20,7 @@ import {
   PANDAS_TOTAL_XP,
 } from "../learn/pandas-py/data/pandasCurriculum";
 import usePandasProgress from "../learn/pandas-py/hooks/usePandasProgress";
+import CourseCertificate from "../learn/shared/CourseCertificate";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MIN_ACTIVITY_DAYS = 30;
@@ -209,6 +210,21 @@ function TrackProgressCard({
   );
 }
 
+function getCompletedTrackCertificate(track) {
+  const completedCount = Object.keys(track.progress).length;
+  if (completedCount < track.lessons.length) return null;
+
+  const earnedXP = track.lessons
+    .filter((lesson) => track.progress[lesson.id])
+    .reduce((sum, lesson) => sum + lesson.xp, 0);
+
+  return {
+    ...track,
+    completedCount,
+    earnedXP,
+  };
+}
+
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAuth();
   const [editOpen, setEditOpen] = React.useState(false);
@@ -248,6 +264,32 @@ export default function ProfilePage() {
       pandas.completedMap,
     ],
   );
+  const completedCertificates = [
+    getCompletedTrackCertificate({
+      courseName: "OOPs C++",
+      lessons: ALL_LESSONS,
+      totalXP: TOTAL_XP,
+      progress: oops.completedMap,
+    }),
+    getCompletedTrackCertificate({
+      courseName: "Pointers C++",
+      lessons: POINTER_LESSONS,
+      totalXP: POINTER_TOTAL_XP,
+      progress: pointers.completedMap,
+    }),
+    getCompletedTrackCertificate({
+      courseName: "NumPy for Python",
+      lessons: NUMPY_LESSONS,
+      totalXP: NUMPY_TOTAL_XP,
+      progress: numpy.completedMap,
+    }),
+    getCompletedTrackCertificate({
+      courseName: "Pandas for Python",
+      lessons: PANDAS_LESSONS,
+      totalXP: PANDAS_TOTAL_XP,
+      progress: pandas.completedMap,
+    }),
+  ].filter(Boolean);
 
   React.useEffect(() => {
     const node = activityWrapRef.current;
@@ -356,6 +398,27 @@ export default function ProfilePage() {
           accent="#059669"
         />
       </div>
+
+      {completedCertificates.length > 0 && (
+        <section className="profile-certificates-section">
+          <div className="profile-section-heading">
+            <span>Certificates</span>
+            <h2>Your completed course certificates</h2>
+          </div>
+          <div className="profile-certificates-list">
+            {completedCertificates.map((certificate) => (
+              <CourseCertificate
+                key={certificate.courseName}
+                courseName={certificate.courseName}
+                totalLessons={certificate.lessons.length}
+                completedCount={certificate.completedCount}
+                earnedXP={certificate.earnedXP}
+                totalXP={certificate.totalXP}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }

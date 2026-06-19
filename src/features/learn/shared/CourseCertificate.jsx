@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../auth/context/AuthContext";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
-import QRCode from "qrcode";
 
 function generateLocalCertId(userId, courseName) {
   const slug = courseName
@@ -43,6 +40,7 @@ export default function CourseCertificate({
 
   useEffect(() => {
     if (!isComplete) return;
+    let cancelled = false;
 
     if (!certId.current) {
       certId.current = generateLocalCertId(user?._id || user?.id, courseName);
@@ -57,15 +55,30 @@ export default function CourseCertificate({
       xp: earnedXP.toString(),
     }).toString();
 
-    const qrUrl = `https://https://code.quantumlogicslimited.com//verify-certificate?${queryParams}`;
+    const qrUrl = `https://code.quantumlogicslimited.com/verify-certificate?${queryParams}`;
 
-    QRCode.toDataURL(qrUrl, {
-      width: 120,
-      margin: 1,
-      color: { dark: "#1e293b", light: "#ffffff" },
-    })
-      .then(setQrDataUrl)
-      .catch((err) => console.error("QR Generation Error:", err));
+    async function generateQrCode() {
+      try {
+        const qrcodeModule = await import("qrcode");
+        const toDataURL =
+          qrcodeModule.toDataURL || qrcodeModule.default?.toDataURL;
+        if (!toDataURL) throw new Error("QR generator unavailable");
+
+        const dataUrl = await toDataURL(qrUrl, {
+          width: 120,
+          margin: 1,
+          color: { dark: "#1e293b", light: "#ffffff" },
+        });
+        if (!cancelled) setQrDataUrl(dataUrl);
+      } catch (err) {
+        console.error("QR Generation Error:", err);
+      }
+    }
+
+    generateQrCode();
+    return () => {
+      cancelled = true;
+    };
   }, [
     isComplete,
     courseName,
@@ -80,6 +93,10 @@ export default function CourseCertificate({
     if (!certificateRef.current) return;
     setDownloading(true);
     try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
       const canvas = await html2canvas(certificateRef.current, {
         scale: 4,
         useCORS: true,

@@ -5578,6 +5578,35 @@ body {
   gap: 18px;
 }
 
+.profile-certificates-section {
+  margin-top: 28px;
+}
+
+.profile-section-heading {
+  margin-bottom: 16px;
+}
+
+.profile-section-heading span {
+  display: inline-flex;
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--acid, #10b981);
+  text-transform: uppercase;
+}
+
+.profile-section-heading h2 {
+  margin: 0;
+  color: var(--txt-0, #f8fafc);
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+}
+
+.profile-certificates-list {
+  display: grid;
+  gap: 22px;
+}
+
 .profile-track-card {
   padding: 18px;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
