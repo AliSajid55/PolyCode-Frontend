@@ -99,7 +99,7 @@ function HighlightedCode({ language, code, isLight }) {
       lineNumberStyle={{
         minWidth: "2.2em",
         paddingRight: "1em",
-        color: "rgba(148, 163, 184, 0.45)",
+        color: "#9ca3af",
         userSelect: "none",
       }}
       wrapLongLines

@@ -339,6 +339,12 @@
   overflow-x: auto;
 }
 
+.assistant-code-body .linenumber,
+.assistant-code-body .react-syntax-highlighter-line-number {
+  color: #9ca3af !important;
+  opacity: 1 !important;
+}
+
 .assistant-code-pre {
   margin: 0;
   padding: 14px 16px;

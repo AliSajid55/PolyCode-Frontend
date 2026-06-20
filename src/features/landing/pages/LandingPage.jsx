@@ -34,7 +34,7 @@ export default function LandingPage({
 
           <CourseSlider />
 
-          <TryPythonSection theme={theme} />
+          <TryPythonSection />
           <StatsSection />
           <LanguagePickerSection
             onLanguageSelect={onLanguageSelect}

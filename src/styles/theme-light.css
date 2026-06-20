@@ -864,6 +864,11 @@
   color: #0f172a;
 }
 
+.app.theme-light .assistant-code-body .linenumber,
+.app.theme-light .assistant-code-body .react-syntax-highlighter-line-number {
+  color: #94a3b8 !important;
+}
+
 .app.theme-light .assistant-md-link {
   color: #2563eb;
 }
