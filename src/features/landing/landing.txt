@@ -211,6 +211,9 @@ import { useTypewriter } from "../lib/useTypewriter";
 import AssistantAvatar from "./AssistantAvatar";
 
 const MAX_STORED_MESSAGES = 20;
+const DOCK_POSITION_KEY = "polycode_assistant_dock_position";
+const DOCK_MARGIN = 12;
+const DRAG_CLICK_THRESHOLD = 6;
 
 const WELCOME_MESSAGE = {
   id: "welcome",
@@ -241,6 +244,47 @@ function loadSession() {
     /* ignore */
   }
   return { sessionId: generateSessionId(), messages: [WELCOME_MESSAGE] };
+}
+
+function loadDockPosition() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = localStorage.getItem(DOCK_POSITION_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (Number.isFinite(parsed?.x) && Number.isFinite(parsed?.y)) {
+      return parsed;
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return null;
+}
+
+function clampDockPosition(position, size = { width: 220, height: 76 }) {
+  if (typeof window === "undefined") return position;
+
+  return {
+    x: Math.min(
+      Math.max(DOCK_MARGIN, position.x),
+      Math.max(DOCK_MARGIN, window.innerWidth - size.width - DOCK_MARGIN),
+    ),
+    y: Math.min(
+      Math.max(DOCK_MARGIN, position.y),
+      Math.max(DOCK_MARGIN, window.innerHeight - size.height - DOCK_MARGIN),
+    ),
+  };
+}
+
+function saveDockPosition(position) {
+  try {
+    localStorage.setItem(DOCK_POSITION_KEY, JSON.stringify(position));
+  } catch {
+    /* ignore */
+  }
 }
 
 function saveSession(session) {
@@ -457,12 +501,35 @@ export default function AssistantFab() {
   const [error, setError] = useState(null);
   const [feedbackSavingId, setFeedbackSavingId] = useState(null);
   const messagesEndRef = useRef(null);
+  const messagesScrollRef = useRef(null);
   const inputRef = useRef(null);
   const sessionRef = useRef(session);
+  const dockRef = useRef(null);
+  const dragStateRef = useRef(null);
+  const suppressDockClickRef = useRef(false);
+  const [dockPosition, setDockPosition] = useState(() => loadDockPosition());
+  const [draggingDock, setDraggingDock] = useState(false);
 
   useEffect(() => {
     sessionRef.current = session;
   }, [session]);
+
+  useEffect(() => {
+    if (!dockPosition) return undefined;
+
+    const onResize = () => {
+      const rect = dockRef.current?.getBoundingClientRect();
+      const nextPosition = clampDockPosition(dockPosition, {
+        width: rect?.width || 220,
+        height: rect?.height || 76,
+      });
+      setDockPosition(nextPosition);
+      saveDockPosition(nextPosition);
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [dockPosition]);
 
   useEffect(() => {
     let cancelled = false;
@@ -498,7 +565,14 @@ export default function AssistantFab() {
   }, []);
 
   useEffect(() => {
-    if (open) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!open) return;
+
+    window.requestAnimationFrame(() => {
+      const scrollNode = messagesScrollRef.current;
+      if (scrollNode) {
+        scrollNode.scrollTop = scrollNode.scrollHeight;
+      }
+    });
   }, [session.messages, open, sending]);
 
   useEffect(() => {
@@ -666,6 +740,99 @@ export default function AssistantFab() {
   const messageContent = (msg) =>
     msg.id === "welcome" ? getWelcomeMessage(assistantContext) : msg.content;
 
+  const handleDockPointerDown = (event) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+
+    const rect = dockRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+      moved: false,
+      width: rect.width,
+      height: rect.height,
+    };
+    suppressDockClickRef.current = false;
+
+    dockRef.current?.setPointerCapture?.(event.pointerId);
+  };
+
+  const handleDockPointerMove = (event) => {
+    const state = dragStateRef.current;
+    if (!state || state.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - state.startX;
+    const deltaY = event.clientY - state.startY;
+    if (!state.moved && Math.hypot(deltaX, deltaY) < DRAG_CLICK_THRESHOLD) {
+      return;
+    }
+
+    event.preventDefault();
+    state.moved = true;
+    suppressDockClickRef.current = true;
+    setDraggingDock(true);
+
+    setDockPosition(
+      clampDockPosition(
+        {
+          x: event.clientX - state.offsetX,
+          y: event.clientY - state.offsetY,
+        },
+        { width: state.width, height: state.height },
+      ),
+    );
+  };
+
+  const handleDockPointerUp = (event) => {
+    const state = dragStateRef.current;
+    if (!state || state.pointerId !== event.pointerId) return;
+
+    dragStateRef.current = null;
+    dockRef.current?.releasePointerCapture?.(event.pointerId);
+    setDraggingDock(false);
+
+    if (state.moved) {
+      const rect = dockRef.current?.getBoundingClientRect();
+      const nextPosition = clampDockPosition(
+        {
+          x: event.clientX - state.offsetX,
+          y: event.clientY - state.offsetY,
+        },
+        { width: rect?.width || state.width, height: rect?.height || state.height },
+      );
+      setDockPosition(nextPosition);
+      saveDockPosition(nextPosition);
+      return;
+    }
+
+    setOpen(true);
+  };
+
+  const handleDockPointerCancel = (event) => {
+    const state = dragStateRef.current;
+    if (!state || state.pointerId !== event.pointerId) return;
+
+    dragStateRef.current = null;
+    dockRef.current?.releasePointerCapture?.(event.pointerId);
+    setDraggingDock(false);
+  };
+
+  const openFromDock = (event) => {
+    if (suppressDockClickRef.current) {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      suppressDockClickRef.current = false;
+      return;
+    }
+
+    setOpen(true);
+  };
+
   return (
     <>
       <AnimatePresence>
@@ -741,6 +908,7 @@ export default function AssistantFab() {
             </div>
 
             <div
+              ref={messagesScrollRef}
               className="polym_mentor-scroll"
               style={{
                 flex: 1,
@@ -902,15 +1070,38 @@ export default function AssistantFab() {
 
       {!open ? (
         <motion.div
-          className="assistant-dock-btn polym_mentor-dock"
+          ref={dockRef}
+          role="button"
+          tabIndex={0}
+          className={`assistant-dock-btn polym_mentor-dock${draggingDock ? " assistant-dock-btn--dragging" : ""}`}
+          onPointerDown={handleDockPointerDown}
+          onPointerMove={handleDockPointerMove}
+          onPointerUp={handleDockPointerUp}
+          onPointerCancel={handleDockPointerCancel}
+          onClick={openFromDock}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setOpen(true);
+            }
+          }}
+          aria-label={`Open ${ASSISTANT_CONFIG.name}`}
           initial={reduceMotion ? {} : { x: 40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 24 }}
+          style={
+            dockPosition
+              ? {
+                  left: dockPosition.x,
+                  top: dockPosition.y,
+                  right: "auto",
+                  bottom: "auto",
+                }
+              : undefined
+          }
         >
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            aria-label={`Open ${ASSISTANT_CONFIG.name}`}
+          <div
+            aria-hidden="true"
             style={{
               display: "flex",
               alignItems: "center",
@@ -918,7 +1109,7 @@ export default function AssistantFab() {
               background: "none",
               border: "none",
               color: "inherit",
-              cursor: "pointer",
+              cursor: draggingDock ? "grabbing" : "grab",
               padding: 0,
             }}
           >
@@ -933,7 +1124,7 @@ export default function AssistantFab() {
             <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: "0.5rem", background: "var(--acid-dim)", color: "var(--acid)" }}>
               <Sparkles size={16} />
             </span>
-          </button>
+          </div>
         </motion.div>
       ) : null}
     </>
@@ -946,95 +1137,13 @@ FILE: /components/CourseSlider.jsx
 --------------------------------------------------------------------------------
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Boxes,
-  Layers3,
-  Grid3x3,
-  Table2,
-  Play,
-  Brain,
-  FileText,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 /* ─── Course data ───────────────────────────────────────────────
    Add new courses here — they appear in the slider automatically.
    Pull from courseCatalog.js values so it's one source of truth.
 ──────────────────────────────────────────────────────────────── */
-const COURSES = [
-  {
-    title: "OOPs C++",
-    tag: "C++ · Interactive",
-    icon: Boxes,
-    description:
-      "Classes, constructors, inheritance, polymorphism, design principles, and real coding challenges.",
-    href: "/learn/oops-cpp",
-    accent: "#ffe566",
-    level: "Intermediate",
-  },
-  {
-    title: "Pointers C++",
-    tag: "C++ · Memory",
-    icon: Layers3,
-    description:
-      "Addresses, dereferencing, nullptr, arrays, smart pointers, callbacks, and safety.",
-    href: "/learn/pointers-cpp",
-    accent: "#00d4ff",
-    level: "Intermediate",
-  },
-  {
-    title: "NumPy · Python",
-    tag: "Python · Data",
-    icon: Grid3x3,
-    description:
-      "ndarray basics, shape, dtype, vector math, and hands-on Python challenges with NumPy.",
-    href: "/learn/numpy-py",
-    accent: "#4dabdc",
-    level: "Beginner",
-  },
-  {
-    title: "Pandas · Python",
-    tag: "Python · Data",
-    icon: Table2,
-    description:
-      "Series, DataFrames, filtering, cleaning, groupby, merges, and CSV workflows.",
-    href: "/learn/pandas-py",
-    accent: "#059669",
-    level: "Beginner",
-  },
-  {
-    title: "Daily Challenge",
-    tag: "All Levels · Routine",
-    icon: Brain,
-    description:
-      "A fresh coding problem every day. Build consistency, sharpen problem-solving skills.",
-    href: "/daily-challenge",
-    accent: "#a78bfa",
-    level: "All Levels",
-  },
-  {
-    title: "Playground",
-    tag: "All Languages · Hands-on",
-    icon: Play,
-    description:
-      "Experiment freely — write, run, and test code in the browser with zero setup.",
-    href: "/playground",
-    accent: "#fb923c",
-    level: "All Levels",
-  },
-  {
-    title: "Documentation",
-    tag: "Reference · Guides",
-    icon: FileText,
-    description:
-      "Curated guides, syntax notes, examples, and reference material for every language.",
-    href: "/hub",
-    accent: "#38bdf8",
-    level: "All Levels",
-  },
-];
-
+import { ALL_COURSES as COURSES } from "../../learn/shared/allCourses";
 const CARD_WIDTH = 300; // px — keep in sync with CSS
 const GAP = 20;
 const AUTO_SCROLL_INTERVAL = 3500; // ms
@@ -1346,6 +1455,7 @@ export default function Footer() {
 FILE: /components/Hero.jsx
 --------------------------------------------------------------------------------
 import React from "react";
+import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 
@@ -1375,9 +1485,9 @@ export default function Hero() {
             mentoring, and built-in security analysis in one platform.
           </p>
           <div className="landing-hero-actions">
-            <a href="#get-started" className="landing-btn-primary">
+            <Link to="/login" className="landing-btn-primary">
               Get Started
-            </a>
+            </Link>
           </div>
         </motion.div>
 
@@ -1394,7 +1504,7 @@ export default function Hero() {
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
           >
             <img
-              src="/images/polycode-hero.png"
+              src="/images/herooooo.png"
               alt="PolyCode platform — Learn, Code, Secure with PolyMentor, courses, and PolyGuard"
             />
           </motion.div>
@@ -1978,60 +2088,13 @@ FILE: /components/Navbar.jsx
 --------------------------------------------------------------------------------
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowRight,
-  ChevronDown,
-  Boxes,
-  Layers3,
-  Grid3x3,
-  Table2,
-  FileText,
-  Moon,
-  Sun,
-} from "lucide-react";
+import { ArrowRight, ChevronDown, Moon, Sun } from "lucide-react";
 import { getLanguages } from "../../docs/services/api";
+import { ALL_COURSES as COURSES } from "../../learn/shared/allCourses";
 
 const NAV_LINKS = [
   { href: "#modules", label: "Features" },
   { href: "/hub", label: "Docs" },
-];
-
-const COURSES = [
-  {
-    label: "OOPs C++",
-    sub: "Classes · Inheritance · Polymorphism",
-    href: "/learn/oops-cpp",
-    icon: Boxes,
-    accent: "#ffe566",
-  },
-  {
-    label: "Pointers C++",
-    sub: "Memory · Smart Pointers · Safety",
-    href: "/learn/pointers-cpp",
-    icon: Layers3,
-    accent: "#00d4ff",
-  },
-  {
-    label: "NumPy · Python",
-    sub: "Arrays · Vector Math · Data",
-    href: "/learn/numpy-py",
-    icon: Grid3x3,
-    accent: "#4dabdc",
-  },
-  {
-    label: "Pandas · Python",
-    sub: "DataFrames · Groupby · CSV",
-    href: "/learn/pandas-py",
-    icon: Table2,
-    accent: "#059669",
-  },
-  {
-    label: "JS Fundamentals",
-    sub: "Variables · Functions · Arrays",
-    href: "/learn/js-fundamentals",
-    icon: FileText,
-    accent: "#f59e0b",
-  },
 ];
 
 export default function Navbar({ theme = "dark", onToggleTheme }) {
@@ -2143,9 +2206,8 @@ export default function Navbar({ theme = "dark", onToggleTheme }) {
                         </div>
                         <div className="ln-dropdown-text">
                           <span className="ln-dropdown-name">
-                            {course.label}
+                            {course.title}
                           </span>
-                          <span className="ln-dropdown-sub">{course.sub}</span>
                         </div>
                         <ArrowRight size={13} className="ln-dropdown-arrow" />
                       </button>
@@ -2288,7 +2350,23 @@ import { useState } from "react";
 import {
   runPythonCode,
   formatPythonOutput,
+  getPythonRuntimeError,
 } from "../../learn/shared/runPython.js";
+import {
+  runJavaScriptCode,
+  formatJavaScriptOutput,
+  getJavaScriptRuntimeError,
+} from "../../learn/shared/runJavaScript.js";
+import {
+  runCppCode,
+  formatCppOutput,
+  getCppRuntimeError,
+} from "../../learn/shared/runCpp.js";
+import {
+  runCsharpCode,
+  formatCsharpOutput,
+  getCsharpRuntimeError,
+} from "../../learn/shared/runCsharp.js";
 
 const LANGUAGES = [
   {
@@ -2315,7 +2393,43 @@ const LANGUAGES = [
     desc: "High-performance systems language used in games, operating systems, and embedded software.",
     code: `// C++ Example\n#include <iostream>\nusing namespace std;\n\nint main() {\n  cout << "Welcome to PolyCode!" << endl;\n  return 0;\n}`,
   },
+  {
+    id: "csharp",
+    label: "C#",
+    accent: "#9b4f96",
+    icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg",
+    desc: "A modern, object-oriented language by Microsoft, widely used for apps, games, and enterprise software.",
+    code: `// C# Example\nstring name = "PolyCode";\nConsole.WriteLine("Welcome to " + name + "!");`,
+  },
 ];
+
+async function runForLanguage(langId, code) {
+  if (langId === "python") {
+    const { result } = await runPythonCode(code);
+    const err = getPythonRuntimeError(result);
+    if (err) throw new Error(err);
+    return formatPythonOutput(result) || "(no output)";
+  }
+  if (langId === "javascript") {
+    const { result } = await runJavaScriptCode(code);
+    const err = getJavaScriptRuntimeError(result);
+    if (err) throw new Error(err);
+    return formatJavaScriptOutput(result) || "(no output)";
+  }
+  if (langId === "cpp") {
+    const { result } = await runCppCode(code);
+    const err = getCppRuntimeError(result);
+    if (err) throw new Error(err);
+    return formatCppOutput(result) || "(no output)";
+  }
+  if (langId === "csharp") {
+    const { result } = await runCsharpCode(code);
+    const err = getCsharpRuntimeError(result);
+    if (err) throw new Error(err);
+    return formatCsharpOutput(result) || "(no output)";
+  }
+  throw new Error("Unsupported language");
+}
 
 export default function TryItSection() {
   const [activeLang, setActiveLang] = useState(LANGUAGES[0]);
@@ -2330,15 +2444,11 @@ export default function TryItSection() {
   };
 
   const run = async () => {
-    if (activeLang.id !== "python") {
-      setOutput("// This language runner is coming soon!");
-      return;
-    }
     setRunning(true);
     setOutput("");
     try {
-      const { result } = await runPythonCode(code);
-      setOutput(formatPythonOutput(result) || "(no output)");
+      const out = await runForLanguage(activeLang.id, code);
+      setOutput(out);
     } catch (e) {
       setOutput("Error: " + e.message);
     } finally {
@@ -2404,7 +2514,7 @@ export default function TryItSection() {
               <span className="landing-dot landing-dot-y" />
               <span className="landing-dot landing-dot-g" />
               <span className="tryit-terminal-title">
-                {activeLang.label.toLowerCase()}_playground.py
+                {activeLang.label.toLowerCase()}_playground
               </span>
             </div>
 
@@ -2976,7 +3086,7 @@ FILE: /landing.css
     ),
     radial-gradient(
       circle at 100% 0%,
-      rgba(0, 242, 255, 0.05) 0%,
+      rgba(168, 147, 42, 0.05) 0%,
       transparent 40%
     ),
     radial-gradient(

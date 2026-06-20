@@ -2,10 +2,10 @@ import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 const ORBS = [
-  { size: 420, x: "8%", y: "12%", color: "rgba(139,92,246,0.08)", duration: 22, delay: 0 },
-  { size: 320, x: "78%", y: "8%", color: "rgba(0,242,255,0.05)", duration: 18, delay: 2 },
-  { size: 280, x: "65%", y: "62%", color: "rgba(255,229,102,0.03)", duration: 26, delay: 1 },
-  { size: 200, x: "12%", y: "72%", color: "rgba(0,242,255,0.04)", duration: 20, delay: 3 },
+  { size: 420, x: "8%", y: "12%", color: "rgba(99,102,241,0.09)", duration: 22, delay: 0 },
+  { size: 320, x: "78%", y: "8%", color: "rgba(56,189,248,0.06)", duration: 18, delay: 2 },
+  { size: 280, x: "65%", y: "62%", color: "rgba(124,58,237,0.05)", duration: 26, delay: 1 },
+  { size: 200, x: "12%", y: "72%", color: "rgba(56,189,248,0.05)", duration: 20, delay: 3 },
 ];
 
 const PARTICLES = Array.from({ length: 18 }, (_, i) => ({

@@ -2,20 +2,20 @@ import React from "react";
 import LandingPage from "./pages/LandingPage";
 
 /**
- * Landing page always starts in dark mode. Theme toggle only affects the
- * landing route and does not persist to the global app theme.
+ * Landing page theme follows the global app theme and stays in sync when toggled.
  */
 export default function LandingShell({
   savedTheme,
+  onThemeChange,
   footer,
   onLanguageSelect,
   continueLanguage,
 }) {
-  const [landingTheme, setLandingTheme] = React.useState("dark");
+  const [landingTheme, setLandingTheme] = React.useState(savedTheme);
 
-  React.useLayoutEffect(() => {
-    setLandingTheme("dark");
-  }, []);
+  React.useEffect(() => {
+    setLandingTheme(savedTheme);
+  }, [savedTheme]);
 
   React.useLayoutEffect(() => {
     const html = document.documentElement;
@@ -25,8 +25,8 @@ export default function LandingShell({
     body.classList.toggle("light-theme", landingTheme === "light");
 
     if (landingTheme === "light") {
-      html.style.backgroundColor = "#f4f6fa";
-      body.style.backgroundColor = "#f4f6fa";
+      html.style.backgroundColor = "#eef1f6";
+      body.style.backgroundColor = "#eef1f6";
     } else {
       html.style.backgroundColor = "#03050a";
       body.style.backgroundColor = "#03050a";
@@ -41,8 +41,12 @@ export default function LandingShell({
   }, [landingTheme, savedTheme]);
 
   const toggleLandingTheme = React.useCallback(() => {
-    setLandingTheme((current) => (current === "dark" ? "light" : "dark"));
-  }, []);
+    setLandingTheme((current) => {
+      const next = current === "dark" ? "light" : "dark";
+      onThemeChange?.(next);
+      return next;
+    });
+  }, [onThemeChange]);
 
   return (
     <div className={`app ${landingTheme === "light" ? "theme-light" : ""}`}>

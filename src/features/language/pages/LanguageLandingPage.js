@@ -77,6 +77,13 @@ const languageMeta = {
     description:
       "Query data, shape tables, reason about joins, and learn database habits that scale.",
   },
+  quantum: {
+    name: "Quantum",
+    icon: "/images/logo.png",
+    color: "#6366f1",
+    description:
+      "Explore quantum computing concepts, circuits, gates, simulators, and hybrid classical-quantum workflows.",
+  },
 };
 
 function normalizeLanguage(value = "") {
@@ -125,7 +132,8 @@ export default function LanguageLandingPage({ selectedLanguage, onLanguageSelect
         </div>
         <div className="language-hero-mark" aria-hidden="true">
           <div className="language-hero-icon">
-            {typeof meta.icon === "string" && meta.icon.startsWith("http") ? (
+            {typeof meta.icon === "string" &&
+            (meta.icon.startsWith("http") || meta.icon.startsWith("/")) ? (
               <img src={meta.icon} alt="" />
             ) : (
               <span>{meta.icon}</span>

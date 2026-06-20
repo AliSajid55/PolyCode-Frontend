@@ -457,7 +457,7 @@
 }
 
 .app.theme-light .navbar-icon-btn.active {
-  color: #047857;
-  border-color: rgba(4, 120, 87, 0.35);
-  background: rgba(4, 120, 87, 0.1);
+  color: var(--accent);
+  border-color: rgba(var(--acid-rgb), 0.35);
+  background: var(--acid-dim);
 }

@@ -63,8 +63,8 @@ textarea {
 }
 
 :root[data-theme="light"] ::selection {
-  background: rgba(14, 165, 233, 0.24);
-  color: #06121f;
+  background: rgba(79, 70, 229, 0.18);
+  color: #111827;
 }
 
 ::highlight(polycode-selection-pins) {
@@ -79,7 +79,7 @@ textarea {
 }
 
 :root[data-theme="light"] :focus-visible {
-  outline-color: #047857;
+  outline-color: #4f46e5;
 }
 
 /* Thin scrollbar */
@@ -315,12 +315,12 @@ textarea {
 }
 
 :root[data-theme="light"] .navbar-signup-btn {
-  background: #0f172a;
-  color: #f8fafc;
+  background: #111827;
+  color: #ffffff;
 }
 
 :root[data-theme="light"] .navbar-signup-btn:hover {
-  background: #1e293b;
+  background: #1f2937;
   opacity: 1;
 }
 
@@ -346,13 +346,19 @@ textarea {
   box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
 }
 
+:root[data-theme="light"] .auth-field input {
+  background: #ffffff;
+  border-color: var(--border, #e5e7eb);
+  color: var(--txt-0, #111827);
+}
+
 :root[data-theme="light"] .auth-field input:focus {
-  border-color: #047857;
-  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.15);
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
 :root[data-theme="light"] .auth-link {
-  color: #047857;
+  color: #4f46e5;
 }
 
 /* User avatar button */
@@ -440,7 +446,7 @@ textarea {
 
 /* Light theme overrides */
 .app.theme-light .auth-page {
-  background: var(--bg, #f5f7fa);
+  background: var(--bg, #f8f9fb);
 }
 
 .app.theme-light .auth-card {
@@ -449,21 +455,21 @@ textarea {
 }
 
 .app.theme-light .auth-field input {
-  background: #080d16;
-  color: #f8fafc;
-  border-color: rgba(255, 255, 255, 0.12);
+  background: #ffffff;
+  color: var(--txt-0);
+  border-color: var(--border);
 }
 
 .app.theme-light .auth-field input::placeholder {
-  color: #64748b;
+  color: var(--txt-3);
 }
 
 .app.theme-light .auth-field input:-webkit-autofill,
 .app.theme-light .auth-field input:-webkit-autofill:hover,
 .app.theme-light .auth-field input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #f8fafc;
-  caret-color: #f8fafc;
-  box-shadow: 0 0 0 1000px #080d16 inset;
+  -webkit-text-fill-color: var(--txt-0);
+  caret-color: var(--txt-0);
+  box-shadow: 0 0 0 1000px #ffffff inset;
   transition: background-color 9999s ease-out;
 }
 

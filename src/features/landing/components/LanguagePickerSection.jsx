@@ -53,6 +53,10 @@ const languageMeta = {
     color: "#012456",
   },
   "q#": { icon: "⚛️", color: "#0078d4" },
+  quantum: {
+    icon: "/images/logo.png",
+    color: "#6366f1",
+  },
   r: {
     icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/r/r-original.svg",
     color: "#276dc3",
@@ -202,7 +206,7 @@ export default function LanguagePickerSection({
                 }}
               >
                 <div className="lang-icon-wrapper">
-                  {meta.icon.startsWith("http") ? (
+                  {meta.icon.startsWith("http") || meta.icon.startsWith("/") ? (
                     <img src={meta.icon} alt={language} />
                   ) : (
                     <span>{meta.icon}</span>

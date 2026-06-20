@@ -1,4 +1,5 @@
 export const POLYCODE_VSCODE_THEME = "polycode-vscode-dark";
+export const POLYCODE_VSCODE_LIGHT_THEME = "polycode-vscode-light";
 
 export function definePolycodeMonacoTheme(monaco) {
   if (!monaco) return;
@@ -46,6 +47,43 @@ export function definePolycodeMonacoTheme(monaco) {
       "scrollbarSlider.background": "#79797966",
       "scrollbarSlider.hoverBackground": "#646464b3",
       "scrollbarSlider.activeBackground": "#bfbfbf66",
+    },
+  });
+}
+
+export function definePolycodeMonacoLightTheme(monaco) {
+  if (!monaco) return;
+
+  monaco.editor.defineTheme(POLYCODE_VSCODE_LIGHT_THEME, {
+    base: "vs",
+    inherit: true,
+    rules: [
+      { token: "", foreground: "1e293b", background: "f8fafc" },
+      { token: "comment", foreground: "64748b", fontStyle: "italic" },
+      { token: "keyword", foreground: "7c3aed" },
+      { token: "number", foreground: "b45309" },
+      { token: "string", foreground: "2563eb" },
+      { token: "type", foreground: "2563eb" },
+      { token: "class", foreground: "2563eb" },
+      { token: "function", foreground: "4338ca" },
+      { token: "variable", foreground: "0f172a" },
+    ],
+    colors: {
+      "editor.background": "#f8fafc",
+      "editor.foreground": "#1e293b",
+      "editorLineNumber.foreground": "#94a3b8",
+      "editorLineNumber.activeForeground": "#475569",
+      "editorCursor.foreground": "#4f46e5",
+      "editor.selectionBackground": "#4f46e530",
+      "editor.lineHighlightBackground": "#eef2f7",
+      "editor.lineHighlightBorder": "#00000000",
+      "editorGutter.background": "#f1f5f9",
+      "editorWidget.background": "#ffffff",
+      "editorSuggestWidget.background": "#ffffff",
+      "editorSuggestWidget.border": "#e2e8f0",
+      "focusBorder": "#4f46e5",
+      "scrollbarSlider.background": "#cbd5e166",
+      "scrollbarSlider.hoverBackground": "#94a3b899",
     },
   });
 }
