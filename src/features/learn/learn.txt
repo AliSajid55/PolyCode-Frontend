@@ -44,6 +44,7 @@ learn/
 │   └── pandas-py.txt
 ├── pointers-cpp/  [skipped]
 ├── shared/
+│   ├── allCourses.js
 │   ├── annotationCursors.js
 │   ├── applyLessonVideoLinks.js
 │   ├── challenge-complete.css
@@ -52,7 +53,9 @@ learn/
 │   ├── LearnNavContext.js
 │   ├── LearnProfileMenu.jsx
 │   ├── LessonAnnotator.jsx
+│   ├── LessonChallengeTab.jsx
 │   ├── LessonContentShell.jsx
+│   ├── LessonReadGate.jsx
 │   ├── LessonVideo.jsx
 │   ├── runCpp.js
 │   ├── runCsharp.js
@@ -61,12 +64,13 @@ learn/
 │   ├── runPython.js
 │   ├── shared.txt
 │   ├── useChallengeCelebration.js
+│   ├── useLessonReadGate.js
 │   ├── VerifyCertificatePage.jsx
 │   └── youtubeUtils.js
 ├── .gitignore
 ├── .txtconfig
 
-Total files: 39
+Total files: 43
 
 ================================================================================
 FILE CONTENTS
@@ -1905,16 +1909,27 @@ import {
   CSHARP_TOTAL_XP,
 } from "../data/csharpCurriculum";
 import useCsharpProgress from "../hooks/useCsharpProgress";
+import useLessonReadGate from "../../shared/useLessonReadGate";
+import LessonChallengeTab from "../../shared/LessonChallengeTab";
 import { useLessonAssistantContext } from "../../../assistant/hooks/useLessonAssistantContext";
 
 const BASE_PATH = "/learn/c-sharp-fundamentals";
+const READ_GATE_PREFIX = "csharp";
 
 export default function CsharpLessonPage() {
   const { lessonId } = useParams();
   const navigate = useNavigate();
   const [tab, setTab] = useState("theory");
   const [focusMode, setFocusMode] = useState(false);
-  const [confidence, setConfidence] = useState("");
+  const {
+    markedAsRead,
+    markAsRead,
+    confidence,
+    handleConfidenceChange,
+    createGoToChallenge,
+    challengeTabLocked,
+  } = useLessonReadGate(READ_GATE_PREFIX, lessonId);
+  const goToChallenge = createGoToChallenge(setTab);
   
   const {
     user,
@@ -1962,12 +1977,6 @@ export default function CsharpLessonPage() {
     setNoteDraft(getLessonNote(lessonId));
   }, [lessonId, getLessonNote]);
 
-  useEffect(() => {
-    setConfidence(
-      localStorage.getItem(`csharp_confidence_${lessonId}`) || "",
-    );
-  }, [lessonId]);
-
   useEffect(
     () => () => {
       window.clearTimeout(codeSaveTimer.current);
@@ -2007,11 +2016,6 @@ export default function CsharpLessonPage() {
     codeSaveTimer.current = window.setTimeout(() => {
       saveCode(lessonId, code).catch(() => {});
     }, 700);
-  }
-
-  function handleConfidenceChange(value) {
-    setConfidence(value);
-    localStorage.setItem(`csharp_confidence_${lessonId}`, value);
   }
 
   return (
@@ -2082,13 +2086,12 @@ export default function CsharpLessonPage() {
           >
             Theory
           </button>
-          <button
-            type="button"
-            className={`oops-tab ${tab === "challenge" ? "active" : ""}`}
-            onClick={() => setTab("challenge")}
-          >
-            Challenge <span className="oops-tab-xp">+{lesson.xp} XP</span>
-          </button>
+          <LessonChallengeTab
+            active={tab === "challenge"}
+            locked={challengeTabLocked}
+            xp={lesson.xp}
+            onClick={goToChallenge}
+          />
         </div>
 
         <LessonContentShell
@@ -2104,7 +2107,9 @@ export default function CsharpLessonPage() {
               onSaveNote={handleSaveNote}
               confidence={confidence}
               onConfidenceChange={handleConfidenceChange}
-              onGoChallenge={() => setTab("challenge")}
+              markedAsRead={markedAsRead}
+              onMarkAsRead={markAsRead}
+              onGoChallenge={goToChallenge}
             />
           ) : (
             <CsharpCodeChallenge
@@ -6678,7 +6683,6 @@ import {
   PANDAS_TOTAL_XP,
 } from "../data/pandasCurriculum";
 import usePandasProgress from "../hooks/usePandasProgress";
-import CourseCertificate from "../../shared/CourseCertificate";
 const BASE_PATH = "/learn/pandas-py";
 
 function lessonPlainText(lesson) {
@@ -7018,13 +7022,6 @@ export default function PandasHub() {
           );
         })}
       </div>
-      <CourseCertificate
-        courseName="Pandas for Python"
-        totalLessons={PANDAS_LESSONS.length}
-        completedCount={completedCount}
-        earnedXP={earnedXP}
-        totalXP={PANDAS_TOTAL_XP}
-      />
     </div>
   );
 }
@@ -7046,16 +7043,27 @@ import {
   PANDAS_TOTAL_XP,
 } from "../data/pandasCurriculum";
 import usePandasProgress from "../hooks/usePandasProgress";
+import useLessonReadGate from "../../shared/useLessonReadGate";
+import LessonChallengeTab from "../../shared/LessonChallengeTab";
 import { useLessonAssistantContext } from "../../../assistant/hooks/useLessonAssistantContext";
 
 const BASE_PATH = "/learn/pandas-py";
+const READ_GATE_PREFIX = "pandas_py";
 
 export default function PandasLessonPage() {
   const { lessonId } = useParams();
   const navigate = useNavigate();
   const [tab, setTab] = useState("theory");
   const [focusMode, setFocusMode] = useState(false);
-  const [confidence, setConfidence] = useState("");
+  const {
+    markedAsRead,
+    markAsRead,
+    confidence,
+    handleConfidenceChange,
+    createGoToChallenge,
+    challengeTabLocked,
+  } = useLessonReadGate(READ_GATE_PREFIX, lessonId);
+  const goToChallenge = createGoToChallenge(setTab);
   const {
     user,
     isAuthenticated,
@@ -7098,12 +7106,6 @@ export default function PandasLessonPage() {
     setNoteDraft(getLessonNote(lessonId));
   }, [lessonId, getLessonNote]);
 
-  useEffect(() => {
-    setConfidence(
-      localStorage.getItem(`pandas_py_confidence_${lessonId}`) || "",
-    );
-  }, [lessonId]);
-
   useEffect(
     () => () => {
       window.clearTimeout(codeSaveTimer.current);
@@ -7143,11 +7145,6 @@ export default function PandasLessonPage() {
     codeSaveTimer.current = window.setTimeout(() => {
       saveCode(lessonId, code).catch(() => {});
     }, 700);
-  }
-
-  function handleConfidenceChange(value) {
-    setConfidence(value);
-    localStorage.setItem(`pandas_py_confidence_${lessonId}`, value);
   }
 
   return (
@@ -7218,13 +7215,12 @@ export default function PandasLessonPage() {
           >
             Theory
           </button>
-          <button
-            type="button"
-            className={`oops-tab ${tab === "challenge" ? "active" : ""}`}
-            onClick={() => setTab("challenge")}
-          >
-            Challenge <span className="oops-tab-xp">+{lesson.xp} XP</span>
-          </button>
+          <LessonChallengeTab
+            active={tab === "challenge"}
+            locked={challengeTabLocked}
+            xp={lesson.xp}
+            onClick={goToChallenge}
+          />
         </div>
 
         <LessonContentShell
@@ -7240,7 +7236,9 @@ export default function PandasLessonPage() {
               onSaveNote={handleSaveNote}
               confidence={confidence}
               onConfidenceChange={handleConfidenceChange}
-              onGoChallenge={() => setTab("challenge")}
+              markedAsRead={markedAsRead}
+              onMarkAsRead={markAsRead}
+              onGoChallenge={goToChallenge}
             />
           ) : (
             <PythonCodeChallenge
@@ -10294,6 +10292,22 @@ END OF FOLDER: pandas-py
 ================================================================================
 
 --------------------------------------------------------------------------------
+FILE: /shared/allCourses.js
+--------------------------------------------------------------------------------
+import { languageCourses } from "../../language/courseCatalog";
+
+/** Flattens every course across all languages into one list,
+ *  de-duplicated by href, for use in Navbar + landing slider.
+ *  Add a new course only in courseCatalog.js -> it appears here automatically. */
+export const ALL_COURSES = Object.values(languageCourses)
+  .flat()
+  .reduce((acc, course) => {
+    if (!acc.some((c) => c.href === course.href)) acc.push(course);
+    return acc;
+  }, []);
+
+
+--------------------------------------------------------------------------------
 FILE: /shared/annotationCursors.js
 --------------------------------------------------------------------------------
 export const DEFAULT_PENCIL_COLOR = "#ffe566";
@@ -10827,9 +10841,6 @@ FILE: /shared/CourseCertificate.jsx
 --------------------------------------------------------------------------------
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../auth/context/AuthContext";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
-import QRCode from "qrcode";
 
 function generateLocalCertId(userId, courseName) {
   const slug = courseName
@@ -10870,6 +10881,7 @@ export default function CourseCertificate({
 
   useEffect(() => {
     if (!isComplete) return;
+    let cancelled = false;
 
     if (!certId.current) {
       certId.current = generateLocalCertId(user?._id || user?.id, courseName);
@@ -10884,15 +10896,30 @@ export default function CourseCertificate({
       xp: earnedXP.toString(),
     }).toString();
 
-    const qrUrl = `https://https://code.quantumlogicslimited.com//verify-certificate?${queryParams}`;
+    const qrUrl = `https://poly-code-frontend-tau.vercel.app//verify-certificate?${queryParams}`;
 
-    QRCode.toDataURL(qrUrl, {
-      width: 120,
-      margin: 1,
-      color: { dark: "#1e293b", light: "#ffffff" },
-    })
-      .then(setQrDataUrl)
-      .catch((err) => console.error("QR Generation Error:", err));
+    async function generateQrCode() {
+      try {
+        const qrcodeModule = await import("qrcode");
+        const toDataURL =
+          qrcodeModule.toDataURL || qrcodeModule.default?.toDataURL;
+        if (!toDataURL) throw new Error("QR generator unavailable");
+
+        const dataUrl = await toDataURL(qrUrl, {
+          width: 120,
+          margin: 1,
+          color: { dark: "#1e293b", light: "#ffffff" },
+        });
+        if (!cancelled) setQrDataUrl(dataUrl);
+      } catch (err) {
+        console.error("QR Generation Error:", err);
+      }
+    }
+
+    generateQrCode();
+    return () => {
+      cancelled = true;
+    };
   }, [
     isComplete,
     courseName,
@@ -10907,6 +10934,10 @@ export default function CourseCertificate({
     if (!certificateRef.current) return;
     setDownloading(true);
     try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
       const canvas = await html2canvas(certificateRef.current, {
         scale: 4,
         useCORS: true,
@@ -11148,7 +11179,7 @@ export default function LearnProfileMenu({
           <button
             type="button"
             className="learn-profile-view-btn"
-            onClick={() => navigate("/profile")}
+            onClick={() => navigate(user?.username ? `/@${user.username}` : "/profile")}
           >
             View full profile
           </button>
@@ -11190,7 +11221,7 @@ import {
 } from "./annotationCursors";
 
 const STAGE_INTERACTIVE_SELECTOR =
-  ".lesson-annotator-text-input, .lesson-annotator-label, .lesson-annotator-fab-wrap, .numpy-notes-panel, .oops-notes-panel, .numpy-confidence-panel, textarea, input, select, button, a";
+  ".lesson-annotator-text-input, .lesson-annotator-label, .lesson-annotator-fab-wrap, .numpy-notes-panel, .oops-notes-panel, .numpy-confidence-panel, .numpy-mark-read-panel, .numpy-theory-actions, .lesson-read-gate, .lesson-confidence-panel, .lesson-read-actions, textarea, input, select, button, a";
 
 const TOOLS = {
   POINTER: "pointer",
@@ -11982,6 +12013,33 @@ export default function LessonAnnotator({ storageKey, children }) {
 
 
 --------------------------------------------------------------------------------
+FILE: /shared/LessonChallengeTab.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+
+export default function LessonChallengeTab({
+  active,
+  locked,
+  xp,
+  onClick,
+}) {
+  return (
+    <button
+      type="button"
+      className={`oops-tab${active ? " active" : ""}${locked ? " oops-tab-locked" : ""}`}
+      onClick={onClick}
+      disabled={locked}
+      title={
+        locked ? "Mark the lesson as read on the Theory tab first" : undefined
+      }
+    >
+      Challenge <span className="oops-tab-xp">+{xp} XP</span>
+    </button>
+  );
+}
+
+
+--------------------------------------------------------------------------------
 FILE: /shared/LessonContentShell.jsx
 --------------------------------------------------------------------------------
 import React from "react";
@@ -12005,6 +12063,83 @@ export default function LessonContentShell({
         <LessonVideo url={videoUrl} title={videoTitle} placement="end" />
       ) : null}
     </div>
+  );
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /shared/LessonReadGate.jsx
+--------------------------------------------------------------------------------
+import React from "react";
+
+const CONFIDENCE_OPTIONS = [
+  ["review", "😅 Need another read"],
+  ["almost", "🙂 Getting it"],
+  ["ready", "🚀 Ready for the challenge"],
+];
+
+/**
+ * Mark-as-read gate, then confidence check + challenge CTA.
+ * Used at the end of theory content across all courses.
+ */
+export default function LessonReadGate({
+  markedAsRead = false,
+  onMarkAsRead,
+  confidence = "",
+  onConfidenceChange,
+  onGoChallenge,
+  accentColor = "#818cf8",
+  challengeLabel = "Ready? Try the coding challenge →",
+}) {
+  if (!markedAsRead) {
+    return (
+      <div
+        className="lesson-read-gate"
+        style={{ "--lesson-accent": accentColor }}
+      >
+        <p className="lesson-read-gate-hint">
+          Finished reading? Mark this lesson as read to unlock the next steps.
+        </p>
+        <button
+          type="button"
+          className="lesson-mark-read-btn"
+          onClick={onMarkAsRead}
+        >
+          Mark as read
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="lesson-confidence-panel">
+        <h3>How do you feel about this lesson?</h3>
+        <div className="lesson-confidence-options">
+          {CONFIDENCE_OPTIONS.map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={confidence === value ? "active" : ""}
+              onClick={() => onConfidenceChange(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="lesson-read-actions">
+        <button
+          type="button"
+          className="lesson-challenge-cta"
+          style={{ "--lesson-accent": accentColor }}
+          onClick={onGoChallenge}
+        >
+          {challengeLabel}
+        </button>
+      </div>
+    </>
   );
 }
 
@@ -12152,8 +12287,10 @@ export async function runCsharpCode(source) {
         // 1. Check for missing semicolons on expressions (excluding block brackets)
         if (!hasSemicolon && !line.endsWith("{") && !line.endsWith("}")) {
           resolve({
-            result: { error: `Compilation Error (CS1002): ; expected on line ${i + 1}` },
-            runtime: "browser"
+            result: {
+              error: `Compilation Error (CS1002): ; expected on line ${i + 1}`,
+            },
+            runtime: "browser",
           });
           return;
         }
@@ -12168,8 +12305,10 @@ export async function runCsharpCode(source) {
               stdoutLines.push(String(outputValue));
             } catch (err) {
               resolve({
-                result: { error: `Runtime Error on line ${i + 1}: ${err.message}` },
-                runtime: "browser"
+                result: {
+                  error: `Runtime Error on line ${i + 1}: ${err.message}`,
+                },
+                runtime: "browser",
               });
               return;
             }
@@ -12178,15 +12317,22 @@ export async function runCsharpCode(source) {
         }
 
         // 3. Parse Variable Declarations (e.g., int x = 5; string name = "Poly"; var flag = true;)
-        const declMatch = cleanLine.match(/^(int|string|bool|double|char|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.*)$/);
+        const declMatch = cleanLine.match(
+          /^(int|string|bool|double|char|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.*)$/,
+        );
         if (declMatch) {
-          const [,, varName, expression] = declMatch;
+          const [, , varName, expression] = declMatch;
           try {
-            variables[varName] = evaluateExpression(expression.trim(), variables);
+            variables[varName] = evaluateExpression(
+              expression.trim(),
+              variables,
+            );
           } catch (err) {
             resolve({
-              result: { error: `Runtime Error on line ${i + 1}: ${err.message}` },
-              runtime: "browser"
+              result: {
+                error: `Runtime Error on line ${i + 1}: ${err.message}`,
+              },
+              runtime: "browser",
             });
             return;
           }
@@ -12194,13 +12340,17 @@ export async function runCsharpCode(source) {
         }
 
         // 4. Parse Variable Re-assignments (e.g., x = 10; score += 5;)
-        const assignMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*(\+?=|-\s*=)\s*(.*)$/);
+        const assignMatch = cleanLine.match(
+          /^([a-zA-Z_][a-zA-Z0-9_]*)\s*(\+?=|-\s*=)\s*(.*)$/,
+        );
         if (assignMatch) {
           const [, varName, operator, expression] = assignMatch;
           if (!(varName in variables)) {
             resolve({
-              result: { error: `Compilation Error (CS0103): The name '${varName}' does not exist in the current context on line ${i + 1}` },
-              runtime: "browser"
+              result: {
+                error: `Compilation Error (CS0103): The name '${varName}' does not exist in the current context on line ${i + 1}`,
+              },
+              runtime: "browser",
             });
             return;
           }
@@ -12212,8 +12362,10 @@ export async function runCsharpCode(source) {
             else variables[varName] = value;
           } catch (err) {
             resolve({
-              result: { error: `Runtime Error on line ${i + 1}: ${err.message}` },
-              runtime: "browser"
+              result: {
+                error: `Runtime Error on line ${i + 1}: ${err.message}`,
+              },
+              runtime: "browser",
             });
             return;
           }
@@ -12225,44 +12377,220 @@ export async function runCsharpCode(source) {
       if (openBraces > 0) {
         resolve({
           result: { error: "Compilation Error (CS1513): } expected" },
-          runtime: "browser"
+          runtime: "browser",
         });
         return;
       }
 
       resolve({
-        result: { stdout: stdoutLines.join("\n") || "Process exited with code 0 (no printed output)." },
-        runtime: "browser"
+        result: {
+          stdout:
+            stdoutLines.join("\n") ||
+            "Process exited with code 0 (no printed output).",
+        },
+        runtime: "browser",
       });
     }, 400);
   });
 }
 
-/**
- * Helper to safely substitute memory values and process arithmetic/concatenation
- */
+// ---------------------------------------------------------------------------
+// Safe expression evaluator — no eval / Function constructor
+// Recursive-descent parser supporting: string/number/boolean literals,
+// variable references, parentheses, unary +/-, and binary operators with
+// correct precedence (*, /, % before +, -).
+// ---------------------------------------------------------------------------
+
 function evaluateExpression(expr, variables) {
-  // Handle literal strings safely
+  // Fast path: plain string literal
   if (expr.startsWith('"') && expr.endsWith('"')) {
     return expr.slice(1, -1);
   }
 
-  // Tokens optimization: replace defined variables with their current primitive state values
-  let tokens = expr;
-  Object.keys(variables).forEach((varName) => {
-    // Ensure we match complete words so 'x' doesn't replace characters inside 'max'
-    const regex = new RegExp(`\\b${varName}\\b`, "g");
-    const val = variables[varName];
-    tokens = tokens.replace(regex, typeof val === "string" ? `"${val}"` : val);
-  });
+  const parser = new SafeExpressionParser(expr, variables);
+  return parser.parse();
+}
 
-  try {
-    // Using a sanitized, scoped evaluation container for basic arithmetic/string operations
-    // e.g. "Hello " + "World" or 5 + 10 - 2
-    return Function(`return (${tokens});`)();
-  } catch {
-    throw new Error(`Invalid expression syntax: ${expr}`);
+class SafeExpressionParser {
+  constructor(expr, variables) {
+    this.expr = expr;
+    this.variables = variables;
+    this.tokens = tokenizeExpression(expr);
+    this.index = 0;
   }
+
+  parse() {
+    const value = this.parseAddition();
+    if (!this.isAtEnd()) {
+      throw new Error(`Unexpected token '${this.peek().value}'`);
+    }
+    return value;
+  }
+
+  parseAddition() {
+    let value = this.parseMultiplication();
+
+    while (this.match("+", "-")) {
+      const operator = this.previous().value;
+      const right = this.parseMultiplication();
+      if (operator === "+") {
+        value =
+          typeof value === "string" || typeof right === "string"
+            ? `${value}${right}`
+            : value + right;
+      } else {
+        value = toNumber(value) - toNumber(right);
+      }
+    }
+
+    return value;
+  }
+
+  parseMultiplication() {
+    let value = this.parseUnary();
+
+    while (this.match("*", "/", "%")) {
+      const operator = this.previous().value;
+      const right = toNumber(this.parseUnary());
+      const left = toNumber(value);
+      if (operator === "*") value = left * right;
+      else if (operator === "/") {
+        if (right === 0) throw new Error("DivideByZeroException");
+        value = left / right;
+      } else value = left % right;
+    }
+
+    return value;
+  }
+
+  parseUnary() {
+    if (this.match("-")) return -toNumber(this.parseUnary());
+    if (this.match("+")) return toNumber(this.parseUnary());
+    return this.parsePrimary();
+  }
+
+  parsePrimary() {
+    if (this.matchType("number", "string", "boolean")) {
+      return this.previous().value;
+    }
+
+    if (this.matchType("identifier")) {
+      const name = this.previous().value;
+      if (Object.prototype.hasOwnProperty.call(this.variables, name)) {
+        return this.variables[name];
+      }
+      throw new Error(
+        `The name '${name}' does not exist in the current context`,
+      );
+    }
+
+    if (this.match("(")) {
+      const value = this.parseAddition();
+      if (!this.match(")")) throw new Error("Missing closing parenthesis");
+      return value;
+    }
+
+    throw new Error(
+      `Unexpected token '${this.peek()?.value || "end of expression"}'`,
+    );
+  }
+
+  match(...values) {
+    if (this.isAtEnd()) return false;
+    if (!values.includes(this.peek().value)) return false;
+    this.index += 1;
+    return true;
+  }
+
+  matchType(...types) {
+    if (this.isAtEnd()) return false;
+    if (!types.includes(this.peek().type)) return false;
+    this.index += 1;
+    return true;
+  }
+
+  previous() {
+    return this.tokens[this.index - 1];
+  }
+
+  peek() {
+    return this.tokens[this.index];
+  }
+
+  isAtEnd() {
+    return this.index >= this.tokens.length;
+  }
+}
+
+function tokenizeExpression(expr) {
+  const tokens = [];
+  let index = 0;
+
+  while (index < expr.length) {
+    const char = expr[index];
+
+    if (/\s/.test(char)) {
+      index += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      let value = "";
+      index += 1;
+      while (index < expr.length && expr[index] !== '"') {
+        if (expr[index] === "\\" && index + 1 < expr.length) {
+          const escaped = expr[index + 1];
+          value += escaped === "n" ? "\n" : escaped === "t" ? "\t" : escaped;
+          index += 2;
+        } else {
+          value += expr[index];
+          index += 1;
+        }
+      }
+      if (expr[index] !== '"') throw new Error("Unterminated string literal");
+      tokens.push({ type: "string", value });
+      index += 1;
+      continue;
+    }
+
+    if (/[0-9.]/.test(char)) {
+      const match = expr.slice(index).match(/^\d+(?:\.\d+)?/);
+      if (!match) throw new Error(`Invalid number near '${expr.slice(index)}'`);
+      tokens.push({ type: "number", value: Number(match[0]) });
+      index += match[0].length;
+      continue;
+    }
+
+    if (/[A-Za-z_]/.test(char)) {
+      const match = expr.slice(index).match(/^[A-Za-z_][A-Za-z0-9_]*/);
+      const value = match[0];
+      if (value === "true" || value === "false") {
+        tokens.push({ type: "boolean", value: value === "true" });
+      } else {
+        tokens.push({ type: "identifier", value });
+      }
+      index += value.length;
+      continue;
+    }
+
+    if ("+-*/%()".includes(char)) {
+      tokens.push({ type: "operator", value: char });
+      index += 1;
+      continue;
+    }
+
+    throw new Error(`Unsupported character '${char}'`);
+  }
+
+  return tokens;
+}
+
+function toNumber(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    throw new Error(`Expected a number but got '${value}'`);
+  }
+  return number;
 }
 
 export function formatCsharpOutput(result) {
@@ -12272,6 +12600,7 @@ export function formatCsharpOutput(result) {
 export function getCsharpRuntimeError(result) {
   return result?.error || null;
 }
+
 
 --------------------------------------------------------------------------------
 FILE: /shared/runJavaScript.js
@@ -15095,6 +15424,74 @@ export function useChallengeCelebration(challengeId) {
   }, []);
 
   return { showCelebration, triggerCelebration, dismissCelebration };
+}
+
+
+--------------------------------------------------------------------------------
+FILE: /shared/useLessonReadGate.js
+--------------------------------------------------------------------------------
+import { useCallback, useEffect, useState } from "react";
+
+function readStorageKey(prefix, lessonId) {
+  return `${prefix}_read_${lessonId}`;
+}
+
+function confidenceStorageKey(prefix, lessonId) {
+  return `${prefix}_confidence_${lessonId}`;
+}
+
+/**
+ * Shared read gate + confidence state for all learn courses.
+ * @param {string} storagePrefix - e.g. "numpy_py", "oops", "pointers_cpp"
+ * @param {string} lessonId
+ */
+export default function useLessonReadGate(storagePrefix, lessonId) {
+  const [markedAsRead, setMarkedAsRead] = useState(false);
+  const [confidence, setConfidence] = useState("");
+
+  useEffect(() => {
+    if (!lessonId || !storagePrefix) return;
+    setMarkedAsRead(
+      localStorage.getItem(readStorageKey(storagePrefix, lessonId)) === "true",
+    );
+    setConfidence(
+      localStorage.getItem(confidenceStorageKey(storagePrefix, lessonId)) || "",
+    );
+  }, [lessonId, storagePrefix]);
+
+  const markAsRead = useCallback(() => {
+    if (!lessonId || !storagePrefix) return;
+    setMarkedAsRead(true);
+    localStorage.setItem(readStorageKey(storagePrefix, lessonId), "true");
+  }, [lessonId, storagePrefix]);
+
+  const handleConfidenceChange = useCallback(
+    (value) => {
+      if (!lessonId || !storagePrefix) return;
+      setConfidence(value);
+      localStorage.setItem(confidenceStorageKey(storagePrefix, lessonId), value);
+    },
+    [lessonId, storagePrefix],
+  );
+
+  const createGoToChallenge = useCallback(
+    (setTab) => () => {
+      if (!markedAsRead) return;
+      setTab("challenge");
+    },
+    [markedAsRead],
+  );
+
+  const challengeTabLocked = !markedAsRead;
+
+  return {
+    markedAsRead,
+    markAsRead,
+    confidence,
+    handleConfidenceChange,
+    createGoToChallenge,
+    challengeTabLocked,
+  };
 }
 
 
