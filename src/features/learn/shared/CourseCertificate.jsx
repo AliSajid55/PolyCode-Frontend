@@ -55,7 +55,7 @@ export default function CourseCertificate({
       xp: earnedXP.toString(),
     }).toString();
 
-    const qrUrl = `https://code.quantumlogicslimited.com/verify-certificate?${queryParams}`;
+    const qrUrl = `https://poly-code-frontend-tau.vercel.app//verify-certificate?${queryParams}`;
 
     async function generateQrCode() {
       try {

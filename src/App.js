@@ -54,24 +54,44 @@ function lazyWithChunkRetry(importer) {
   );
 }
 
-const LandingPage = lazyWithChunkRetry(() => import("./features/landing/pages/LandingPage"));
+const LandingPage = lazyWithChunkRetry(
+  () => import("./features/landing/pages/LandingPage"),
+);
 const LanguageLandingPage = lazyWithChunkRetry(
   () => import("./features/language/pages/LanguageLandingPage"),
 );
-const HomePage = lazyWithChunkRetry(() => import("./features/docs/pages/Home/HomePage"));
-const DocumentPage = lazyWithChunkRetry(() => import("./features/docs/pages/DocumentPage"));
-const CategoryPage = lazyWithChunkRetry(() => import("./features/docs/pages/CategoryPage"));
-const SearchPage = lazyWithChunkRetry(() => import("./features/docs/pages/SearchPage"));
+const HomePage = lazyWithChunkRetry(
+  () => import("./features/docs/pages/Home/HomePage"),
+);
+const DocumentPage = lazyWithChunkRetry(
+  () => import("./features/docs/pages/DocumentPage"),
+);
+const CategoryPage = lazyWithChunkRetry(
+  () => import("./features/docs/pages/CategoryPage"),
+);
+const SearchPage = lazyWithChunkRetry(
+  () => import("./features/docs/pages/SearchPage"),
+);
 const PlaygroundPage = lazyWithChunkRetry(
   () => import("./features/playground/pages/PlaygroundPage"),
 );
-const LoginPage = lazyWithChunkRetry(() => import("./features/auth/pages/LoginPage"));
-const SignupPage = lazyWithChunkRetry(() => import("./features/auth/pages/SignupPage"));
-const DailyChallenge = lazyWithChunkRetry(() => import("./pages/DailyChallenges"));
-const ProfilePage = lazyWithChunkRetry(() => import("./features/profile/ProfilePage"));
+const LoginPage = lazyWithChunkRetry(
+  () => import("./features/auth/pages/LoginPage"),
+);
+const SignupPage = lazyWithChunkRetry(
+  () => import("./features/auth/pages/SignupPage"),
+);
+const DailyChallenge = lazyWithChunkRetry(
+  () => import("./pages/DailyChallenges"),
+);
+const ProfilePage = lazyWithChunkRetry(
+  () => import("./features/profile/ProfilePage"),
+);
 
 // Learn — OOP C++ pages
-const OopsHub = lazyWithChunkRetry(() => import("./features/learn/oops-cpp/pages/OopsHub"));
+const OopsHub = lazyWithChunkRetry(
+  () => import("./features/learn/oops-cpp/pages/OopsHub"),
+);
 const LessonPage = lazyWithChunkRetry(
   () => import("./features/learn/oops-cpp/pages/LessonPage"),
 );
@@ -81,9 +101,17 @@ const PointersHub = lazyWithChunkRetry(
 const PointersLessonPage = lazyWithChunkRetry(
   () => import("./features/learn/pointers-cpp/pages/PointersLessonPage"),
 );
-const NumpyHub = lazyWithChunkRetry(() => import("./features/learn/numpy-py/pages/NumpyHub"));
+const NumpyHub = lazyWithChunkRetry(
+  () => import("./features/learn/numpy-py/pages/NumpyHub"),
+);
 const NumpyLessonPage = lazyWithChunkRetry(
   () => import("./features/learn/numpy-py/pages/NumpyLessonPage"),
+);
+const MatplotlibHub = lazyWithChunkRetry(
+  () => import("./features/learn/matplotlib-py/pages/MatplotlibHub"),
+);
+const MatplotlibLessonPage = lazyWithChunkRetry(
+  () => import("./features/learn/matplotlib-py/pages/MatplotlibLessonPage"),
 );
 const PandasHub = lazyWithChunkRetry(
   () => import("./features/learn/pandas-py/pages/PandasHub"),
@@ -444,7 +472,8 @@ function AppRoutes() {
     const path = location.pathname;
     if (
       path.startsWith("/learn/numpy-py") ||
-      path.startsWith("/learn/pandas-py")
+      path.startsWith("/learn/pandas-py") ||
+      path.startsWith("/learn/matplotlib-py")
     ) {
       handleLanguageSelect("Python", { stay: true });
     } else if (path.startsWith("/learn/js-fundamentals")) {
@@ -716,6 +745,38 @@ function AppRoutes() {
             </ThemedShell>
           }
         />
+        {/* ✅ CORRECT: Route is the direct child, ThemedShell is inside the element prop */}
+        <Route
+          path="/learn/matplotlib-py"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onToggleTheme={toggleTheme}
+                onGoToStackPicker={goToStackPicker}
+                selectedLanguage={selectedLanguage}
+              >
+                <MatplotlibHub />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+
+        <Route
+          path="/learn/matplotlib-py/lesson/:lessonId"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onToggleTheme={toggleTheme}
+                onGoToStackPicker={goToStackPicker}
+                selectedLanguage={selectedLanguage}
+              >
+                <MatplotlibLessonPage />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
         <Route
           path="/learn/js-fundamentals"
           element={
@@ -792,10 +853,7 @@ function AppRoutes() {
             </ThemedShell>
           }
         />
-        <Route
-          path="/profile"
-          element={<ProfileRedirect />}
-        />
+        <Route path="/profile" element={<ProfileRedirect />} />
         <Route
           path="/*"
           element={

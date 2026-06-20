@@ -7,6 +7,7 @@ import {
   Brain,
   Table2,
   Terminal,
+  Presentation,
 } from "lucide-react";
 
 export function languageKey(value = "") {
@@ -26,7 +27,8 @@ export const generalCourses = [
     title: "Practice Playground",
     tag: "Hands-on",
     icon: Play,
-    description: "Experiment with code, run snippets, and test ideas as you learn.",
+    description:
+      "Experiment with code, run snippets, and test ideas as you learn.",
     href: "/playground",
   },
   {
@@ -99,6 +101,15 @@ export const languageCourses = {
       href: "/learn/pandas-py",
       accent: "#059669",
     },
+    {
+      tag: "Data Visualization",
+      title: "Matplotlib-py",
+      description:
+        "Master the art of plotting, charts, and customizing beautiful data science visualizations from scratch.",
+      href: "/learn/matplotlib-py",
+      accent: "#239120", // Give it a distinct color hex code
+      icon: Presentation, // You can use 'Presentation', 'LineChart', or 'BarChart2' from lucide-react
+    },
   ],
   javascript: [
     {
@@ -148,6 +159,7 @@ export const learnNavByLanguage = {
   python: [
     { label: "NumPy", to: "/learn/numpy-py" },
     { label: "Pandas", to: "/learn/pandas-py" },
+    { label: "Matplotlib", to: "/learn/matplotlib-py" },
   ],
   javascript: [{ label: "JS Basics", to: "/learn/js-fundamentals" }],
 };
@@ -162,7 +174,8 @@ export function inferLanguageFromLearnPath(pathname = "") {
   }
   if (
     pathname.startsWith("/learn/numpy-py") ||
-    pathname.startsWith("/learn/pandas-py")
+    pathname.startsWith("/learn/pandas-py") ||
+    pathname.startsWith("/learn/matplotlib-py")
   ) {
     return "python";
   }
@@ -181,8 +194,5 @@ export function getLearnNavLinks(selectedLanguage, pathname = "") {
 }
 
 export function getLanguageLandingCourses(languageKeyValue) {
-  return [
-    ...(languageCourses[languageKeyValue] || []),
-    ...generalCourses,
-  ];
+  return [...(languageCourses[languageKeyValue] || []), ...generalCourses];
 }
