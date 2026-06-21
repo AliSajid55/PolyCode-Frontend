@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   Eraser,
   GripVertical,
@@ -47,6 +48,42 @@ const TOOL_ITEMS = [
 const STROKE_WIDTH = 3;
 const ERASER_RADIUS = 14;
 const DRAG_THRESHOLD = 4;
+const FAB_DRAG_THRESHOLD = 6;
+const FAB_POS_KEY = "polycode_annotator_fab_position";
+
+function loadFabPosition() {
+  try {
+    const raw = localStorage.getItem(FAB_POS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (
+      typeof parsed?.x === "number" &&
+      typeof parsed?.y === "number" &&
+      Number.isFinite(parsed.x) &&
+      Number.isFinite(parsed.y)
+    ) {
+      return parsed;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function saveFabPosition(position) {
+  if (!position) return;
+  localStorage.setItem(FAB_POS_KEY, JSON.stringify(position));
+}
+
+function clampFabPosition(x, y, size = 44) {
+  const margin = 8;
+  const maxX = Math.max(margin, window.innerWidth - size - margin);
+  const maxY = Math.max(margin, window.innerHeight - size - margin);
+  return {
+    x: Math.min(maxX, Math.max(margin, x)),
+    y: Math.min(maxY, Math.max(margin, y)),
+  };
+}
 
 function loadAnnotations(storageKey) {
   if (!storageKey) return { strokes: [], labels: [] };
@@ -342,6 +379,7 @@ export default function LessonAnnotator({ storageKey, children }) {
   const contentRef = useRef(null);
   const canvasRef = useRef(null);
   const fabRef = useRef(null);
+  const fabDragRef = useRef(null);
   const drawingRef = useRef(false);
   const currentStrokeRef = useRef(null);
   const prefsRef = useRef(loadAnnotationPrefs());
@@ -356,6 +394,17 @@ export default function LessonAnnotator({ storageKey, children }) {
   const [pendingTextPoint, setPendingTextPoint] = useState(null);
   const [laserPoint, setLaserPoint] = useState(null);
   const [editingLabelId, setEditingLabelId] = useState(null);
+  const [fabPosition, setFabPosition] = useState(() => loadFabPosition());
+
+  const fabWrapStyle = useMemo(() => {
+    if (!fabPosition) return undefined;
+    return {
+      left: `${fabPosition.x}px`,
+      top: `${fabPosition.y}px`,
+      right: "auto",
+      bottom: "auto",
+    };
+  }, [fabPosition]);
 
   const redrawCanvas = useCallback((nextStrokes) => {
     const canvas = canvasRef.current;
@@ -635,6 +684,165 @@ export default function LessonAnnotator({ storageKey, children }) {
     setEditingLabelId(null);
   };
 
+  const handleFabPointerDown = (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+    event.preventDefault();
+
+    const wrap = fabRef.current;
+    if (!wrap) return;
+
+    const pointer = event.touches?.[0] || event;
+    const rect = wrap.getBoundingClientRect();
+    const startX = pointer.clientX;
+    const startY = pointer.clientY;
+    const origin = fabPosition || { x: rect.left, y: rect.top };
+
+    fabDragRef.current = {
+      startX,
+      startY,
+      originX: origin.x,
+      originY: origin.y,
+      dragged: false,
+    };
+
+    const onMove = (moveEvent) => {
+      const state = fabDragRef.current;
+      if (!state) return;
+
+      const movePointer = moveEvent.touches?.[0] || moveEvent;
+      const dx = movePointer.clientX - state.startX;
+      const dy = movePointer.clientY - state.startY;
+
+      if (!state.dragged && Math.hypot(dx, dy) < FAB_DRAG_THRESHOLD) {
+        return;
+      }
+
+      state.dragged = true;
+      setMenuOpen(false);
+      const next = clampFabPosition(state.originX + dx, state.originY + dy);
+      setFabPosition(next);
+    };
+
+    const onUp = (upEvent) => {
+      const state = fabDragRef.current;
+      fabDragRef.current = null;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onUp);
+
+      if (state?.dragged) {
+        const upPointer = upEvent?.changedTouches?.[0] || upEvent;
+        if (upPointer?.clientX != null) {
+          const dx = upPointer.clientX - state.startX;
+          const dy = upPointer.clientY - state.startY;
+          const saved = clampFabPosition(
+            state.originX + dx,
+            state.originY + dy,
+          );
+          setFabPosition(saved);
+          saveFabPosition(saved);
+        }
+        return;
+      }
+
+      setMenuOpen((open) => !open);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("touchend", onUp);
+  };
+
+  const fabUi =
+    typeof document !== "undefined" ? (
+      <div
+        ref={fabRef}
+        className="lesson-annotator-fab-wrap"
+        style={fabWrapStyle}
+      >
+        <button
+          type="button"
+          className={`lesson-annotator-fab${menuOpen ? " lesson-annotator-fab--open" : ""}`}
+          onMouseDown={handleFabPointerDown}
+          onTouchStart={handleFabPointerDown}
+          aria-label={menuOpen ? "Close markup tools" : "Open markup tools"}
+          aria-expanded={menuOpen}
+          title="Drag to move · click to open tools"
+        >
+          <ActiveIcon size={18} aria-hidden />
+        </button>
+
+        {menuOpen ? (
+          <div
+            className="lesson-annotator-fab-menu"
+            role="menu"
+            aria-label="Markup tools"
+          >
+            <div className="lesson-annotator-fab-menu-head">
+              <span>Markup · drag button to move</span>
+              <button
+                type="button"
+                className="lesson-annotator-fab-close"
+                onClick={() => setMenuOpen(false)}
+                aria-label="Close tools"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <div className="lesson-annotator-fab-tools">
+              {TOOL_ITEMS.map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="menuitem"
+                  className={tool === id ? "active" : ""}
+                  onClick={() => selectTool(id)}
+                  title={label}
+                >
+                  <Icon size={16} aria-hidden />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+
+            {tool === TOOLS.PENCIL || tool === TOOLS.LASER ? (
+              <div className="lesson-annotator-fab-colors">
+                <span>
+                  {tool === TOOLS.PENCIL ? "Pencil color" : "Laser color"}
+                </span>
+                <ColorPicker
+                  label={tool === TOOLS.PENCIL ? "Pencil" : "Laser"}
+                  value={tool === TOOLS.PENCIL ? pencilColor : laserColor}
+                  onChange={
+                    tool === TOOLS.PENCIL ? setPencilColor : setLaserColor
+                  }
+                  compact
+                />
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              className="lesson-annotator-fab-clear"
+              onClick={handleClearAll}
+            >
+              <Trash2 size={14} aria-hidden />
+              Clear all markup
+            </button>
+
+            {canAdjustLabels ? (
+              <p className="lesson-annotator-fab-hint">
+                Drag notes to move · double-click or ✎ to edit
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    ) : null;
+
   return (
     <div
       className={`lesson-annotator lesson-annotator--tool-${tool}${
@@ -734,84 +942,7 @@ export default function LessonAnnotator({ storageKey, children }) {
         ) : null}
       </div>
 
-      <div ref={fabRef} className="lesson-annotator-fab-wrap">
-        <button
-          type="button"
-          className={`lesson-annotator-fab${menuOpen ? " lesson-annotator-fab--open" : ""}`}
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-label={menuOpen ? "Close markup tools" : "Open markup tools"}
-          aria-expanded={menuOpen}
-        >
-          <ActiveIcon size={18} aria-hidden />
-        </button>
-
-        {menuOpen ? (
-          <div
-            className="lesson-annotator-fab-menu"
-            role="menu"
-            aria-label="Markup tools"
-          >
-            <div className="lesson-annotator-fab-menu-head">
-              <span>Markup</span>
-              <button
-                type="button"
-                className="lesson-annotator-fab-close"
-                onClick={() => setMenuOpen(false)}
-                aria-label="Close tools"
-              >
-                <X size={14} />
-              </button>
-            </div>
-
-            <div className="lesson-annotator-fab-tools">
-              {TOOL_ITEMS.map(({ id, label, Icon }) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="menuitem"
-                  className={tool === id ? "active" : ""}
-                  onClick={() => selectTool(id)}
-                  title={label}
-                >
-                  <Icon size={16} aria-hidden />
-                  <span>{label}</span>
-                </button>
-              ))}
-            </div>
-
-            {tool === TOOLS.PENCIL || tool === TOOLS.LASER ? (
-              <div className="lesson-annotator-fab-colors">
-                <span>
-                  {tool === TOOLS.PENCIL ? "Pencil color" : "Laser color"}
-                </span>
-                <ColorPicker
-                  label={tool === TOOLS.PENCIL ? "Pencil" : "Laser"}
-                  value={tool === TOOLS.PENCIL ? pencilColor : laserColor}
-                  onChange={
-                    tool === TOOLS.PENCIL ? setPencilColor : setLaserColor
-                  }
-                  compact
-                />
-              </div>
-            ) : null}
-
-            <button
-              type="button"
-              className="lesson-annotator-fab-clear"
-              onClick={handleClearAll}
-            >
-              <Trash2 size={14} aria-hidden />
-              Clear all markup
-            </button>
-
-            {canAdjustLabels ? (
-              <p className="lesson-annotator-fab-hint">
-                Drag notes to move · double-click or ✎ to edit
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
+      {fabUi ? createPortal(fabUi, document.body) : null}
     </div>
   );
 }

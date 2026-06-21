@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import "./challenge-complete.css";
 
@@ -8,7 +9,9 @@ export default function ChallengeCompleteCelebration({
   message = "Go ahead!",
   onDismiss,
 }) {
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {show && (
         <motion.div
@@ -100,6 +103,7 @@ export default function ChallengeCompleteCelebration({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

@@ -1,18 +1,14 @@
-.oops-challenge {
-  position: relative;
-}
-
 .challenge-complete-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 30;
+  z-index: 1200;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(6, 10, 18, 0.72);
-  backdrop-filter: blur(6px);
-  border-radius: 14px;
+  background: rgba(6, 10, 18, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .challenge-complete-card {
@@ -104,11 +100,4 @@
 
 .challenge-complete-btn:active {
   transform: translateY(0);
-}
-
-.daily-challenges-container .challenge-complete-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  border-radius: 0;
 }

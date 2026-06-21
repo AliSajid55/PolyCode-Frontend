@@ -1182,12 +1182,6 @@ export default function CodeChallenge({
           <pre className="oops-output-body">
             {output?.stdout || "Run your code to see console output here."}
           </pre>
-          {output?.expected && (
-            <div className="oops-expected-output">
-              <span>Expected</span>
-              <code>{output.expected}</code>
-            </div>
-          )}
         </div>
       </div>
 

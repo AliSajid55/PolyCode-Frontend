@@ -293,12 +293,6 @@ export default function CppFundamentalsCodeChallenge({
           <pre className="oops-output-body">
             {output?.stdout || "Run your code to see output here."}
           </pre>
-          {output?.expected && (
-            <div className="oops-expected-output">
-              <span>Expected</span>
-              <code>{output.expected}</code>
-            </div>
-          )}
         </div>
       </div>
 

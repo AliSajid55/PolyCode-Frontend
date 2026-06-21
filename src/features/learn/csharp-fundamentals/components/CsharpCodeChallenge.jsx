@@ -318,12 +318,6 @@ export default function CsharpCodeChallenge({
           <pre className="oops-output-body">
             {output?.stdout || "Compile your source entry assembly to inspect output lines."}
           </pre>
-          {output?.expected && (
-            <div className="oops-expected-output">
-              <span>Expected Check</span>
-              <code>{output.expected}</code>
-            </div>
-          )}
         </div>
       </div>
 
