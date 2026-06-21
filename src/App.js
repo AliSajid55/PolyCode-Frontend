@@ -142,6 +142,13 @@ const CsharpHub = lazyWithChunkRetry(
 const CsharpLessonPage = lazyWithChunkRetry(
   () => import("./features/learn/csharp-fundamentals/pages/CsharpLessonPage"),
 );
+const CppFundamentalsHub = lazyWithChunkRetry(
+  () => import("./features/learn/cpp-fundamentals/pages/CppFundamentalsHub"),
+);
+const CppFundamentalsLessonPage = lazyWithChunkRetry(
+  () =>
+    import("./features/learn/cpp-fundamentals/pages/CppFundamentalsLessonPage"),
+);
 
 const PageFallback = () => (
   <div className="loading">
@@ -496,6 +503,7 @@ function AppRoutes() {
     } else if (path.startsWith("/learn/c-sharp-fundamentals")) {
       handleLanguageSelect("C#", { stay: true });
     } else if (
+      path.startsWith("/learn/cpp-fundamentals") ||
       path.startsWith("/learn/oops-cpp") ||
       path.startsWith("/learn/pointers-cpp")
     ) {
@@ -791,6 +799,52 @@ function AppRoutes() {
             </ThemedShell>
           }
         />
+        <Route
+          path="/learn/cpp-fundamentals"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onThemeChange={handleThemeChange}
+                onGoToStackPicker={goToStackPicker}
+                selectedLanguage={selectedLanguage}
+              >
+                <CppFundamentalsHub />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+        <Route
+          path="/learn/cpp-fundamentals/lesson/:lessonId"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onThemeChange={handleThemeChange}
+                onGoToStackPicker={goToStackPicker}
+                selectedLanguage={selectedLanguage}
+              >
+                <CppFundamentalsLessonPage />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+        <Route
+          path="/learn/cpp-fundamentals/:lessonId"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onThemeChange={handleThemeChange}
+                onGoToStackPicker={goToStackPicker}
+                selectedLanguage={selectedLanguage}
+              >
+                <CppFundamentalsLessonPage />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+
         <Route
           path="/learn/js-fundamentals"
           element={

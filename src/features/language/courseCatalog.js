@@ -44,6 +44,15 @@ export const generalCourses = [
 export const languageCourses = {
   cpp: [
     {
+      title: "C++ Fundamentals",
+      tag: "Interactive Course",
+      icon: Terminal,
+      description:
+        "Beginner to advanced C++: variables, control flow, functions, arrays, pointers, structs, OOP preview, STL, and capstone projects.",
+      href: "/learn/cpp-fundamentals",
+      accent: "#f34b7d",
+    },
+    {
       title: "OOPs C++",
       tag: "Interactive Course",
       icon: Boxes,
@@ -63,6 +72,15 @@ export const languageCourses = {
     },
   ],
   "c++": [
+    {
+      title: "C++ Fundamentals",
+      tag: "Interactive Course",
+      icon: Terminal,
+      description:
+        "Beginner to advanced C++: variables, control flow, functions, arrays, pointers, structs, OOP preview, STL, and capstone projects.",
+      href: "/learn/cpp-fundamentals",
+      accent: "#f34b7d",
+    },
     {
       title: "OOPs C++",
       tag: "Interactive Course",
@@ -149,10 +167,12 @@ export const languageCourses = {
 /** Navbar learn links per language (mirrors languageCourses). */
 export const learnNavByLanguage = {
   cpp: [
+    { label: "Basics", to: "/learn/cpp-fundamentals" },
     { label: "OOPs", to: "/learn/oops-cpp" },
     { label: "Pointers", to: "/learn/pointers-cpp" },
   ],
   "c++": [
+    { label: "Basics", to: "/learn/cpp-fundamentals" },
     { label: "OOPs", to: "/learn/oops-cpp" },
     { label: "Pointers", to: "/learn/pointers-cpp" },
   ],
@@ -167,6 +187,7 @@ export const learnNavByLanguage = {
 /** Infer stack from an active /learn/* route when language is not set. */
 export function inferLanguageFromLearnPath(pathname = "") {
   if (
+    pathname.startsWith("/learn/cpp-fundamentals") ||
     pathname.startsWith("/learn/oops-cpp") ||
     pathname.startsWith("/learn/pointers-cpp")
   ) {
