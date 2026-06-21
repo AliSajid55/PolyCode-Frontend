@@ -125,8 +125,8 @@ export const languageCourses = {
       description:
         "Master the art of plotting, charts, and customizing beautiful data science visualizations from scratch.",
       href: "/learn/matplotlib-py",
-      accent: "#239120", // Give it a distinct color hex code
-      icon: Presentation, // You can use 'Presentation', 'LineChart', or 'BarChart2' from lucide-react
+      accent: "#239120",
+      icon: Presentation,
     },
   ],
   javascript: [
@@ -138,6 +138,17 @@ export const languageCourses = {
         "Variables, logic, functions, arrays, and objects with friendly theory and hands-on JS challenges.",
       href: "/learn/js-fundamentals",
       accent: "#f59e0b",
+    },
+  ],
+  php: [
+    {
+      title: "PHP Fundamentals",
+      tag: "Interactive Course",
+      icon: Terminal,
+      description:
+        "Modern server-side PHP: strict types, control flow, match expressions, associative arrays, superglobals, OOP constructor property promotion, and custom REST API endpoints.",
+      href: "/learn/php-fundamentals",
+      accent: "#777bb4",
     },
   ],
   csharp: [
@@ -182,6 +193,7 @@ export const learnNavByLanguage = {
     { label: "Matplotlib", to: "/learn/matplotlib-py" },
   ],
   javascript: [{ label: "JS Basics", to: "/learn/js-fundamentals" }],
+  php: [{ label: "PHP Basics", to: "/learn/php-fundamentals" }],
 };
 
 /** Infer stack from an active /learn/* route when language is not set. */
@@ -202,6 +214,9 @@ export function inferLanguageFromLearnPath(pathname = "") {
   }
   if (pathname.startsWith("/learn/js-fundamentals")) {
     return "javascript";
+  }
+  if (pathname.startsWith("/learn/php-fundamentals")) {
+    return "php";
   }
   return null;
 }

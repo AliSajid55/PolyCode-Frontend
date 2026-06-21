@@ -149,6 +149,12 @@ const CppFundamentalsLessonPage = lazyWithChunkRetry(
   () =>
     import("./features/learn/cpp-fundamentals/pages/CppFundamentalsLessonPage"),
 );
+const PhpFundamentalsHub = lazyWithChunkRetry(
+  () => import("./features/learn/php-fundamentals/pages/phpFundamentalsHub"),
+);
+const PhpFundamentalsLessonPage = lazyWithChunkRetry(
+  () => import("./features/learn/php-fundamentals/pages/phpFundamentalsLessonPage"),
+);
 
 const PageFallback = () => (
   <div className="loading">
@@ -502,6 +508,9 @@ function AppRoutes() {
       handleLanguageSelect("JavaScript", { stay: true });
     } else if (path.startsWith("/learn/c-sharp-fundamentals")) {
       handleLanguageSelect("C#", { stay: true });
+    }
+      else if (path.startsWith("/learn/php-fundamentals")) { // 👈 ADD THIS
+      handleLanguageSelect("PHP", { stay: true });
     } else if (
       path.startsWith("/learn/cpp-fundamentals") ||
       path.startsWith("/learn/oops-cpp") ||
@@ -932,6 +941,51 @@ function AppRoutes() {
               selectedLanguage={selectedLanguage}
               onLanguageSelect={handleLanguageSelect}
             />
+          }
+        />
+        <Route
+          path="/learn/php-fundamentals"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onThemeChange={handleThemeChange}
+                onGoToStackPicker={goToStackPicker}
+                selectedLanguage={selectedLanguage}
+              >
+                <PhpFundamentalsHub />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+        <Route
+          path="/learn/php-fundamentals/lesson/:lessonId"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onThemeChange={handleThemeChange}
+                onGoToStackPicker={goToStackPicker}
+                selectedLanguage={selectedLanguage}
+              >
+                <PhpFundamentalsLessonPage />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+        <Route
+          path="/learn/php-fundamentals/:lessonId"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onThemeChange={handleThemeChange}
+                onGoToStackPicker={goToStackPicker}
+                selectedLanguage={selectedLanguage}
+              >
+                <PhpFundamentalsLessonPage />
+              </LearnShell>
+            </ThemedShell>
           }
         />
       </Routes>
