@@ -3,7 +3,6 @@ import { useAuth } from "../../../auth/context/AuthContext";
 
 const LOCAL_KEY = "ruby_fundamentals_progress";
 const LOCAL_CODE_KEY = "ruby_fundamentals_saved_code";
-const LOCAL_NOTES_KEY = "ruby_fundamentals_notes";
 const LOCAL_BOOKMARKS_KEY = "ruby_fundamentals_bookmarks";
 const LOCAL_LAST_KEY = "ruby_fundamentals_last_lesson";
 
@@ -25,21 +24,14 @@ export default function useRubyFundamentalsProgress() {
     return {
       completed: readJson(LOCAL_KEY, {}),
       savedCode: readJson(LOCAL_CODE_KEY, {}),
-      notes: readJson(LOCAL_NOTES_KEY, {}),
       bookmarks: readJson(LOCAL_BOOKMARKS_KEY, []),
     };
   }, [localVersion]);
 
   const completedMap = isAuthenticated ? localSnapshot.completed : {};
   const savedCodeMap = isAuthenticated ? localSnapshot.savedCode : {};
-  const notesMap = localSnapshot.notes;
   const bookmarks = localSnapshot.bookmarks;
   const lastLessonId = localStorage.getItem(LOCAL_LAST_KEY);
-
-  const getLessonNote = useCallback(
-    (id) => localSnapshot.notes[id] || "",
-    [localSnapshot],
-  );
 
   const completeLesson = useCallback(
     async (lesson) => {
@@ -72,16 +64,6 @@ export default function useRubyFundamentalsProgress() {
     [isAuthenticated, refreshLocal],
   );
 
-  const saveNote = useCallback(
-    async (lessonId, note) => {
-      const current = readJson(LOCAL_NOTES_KEY, {});
-      current[lessonId] = note;
-      localStorage.setItem(LOCAL_NOTES_KEY, JSON.stringify(current));
-      refreshLocal();
-    },
-    [refreshLocal],
-  );
-
   const toggleBookmark = useCallback(
     async (lessonId) => {
       const current = readJson(LOCAL_BOOKMARKS_KEY, []);
@@ -103,15 +85,12 @@ export default function useRubyFundamentalsProgress() {
     remoteProgress: null,
     completedMap,
     savedCodeMap,
-    notesMap,
     bookmarks,
     lastLessonId,
     completeLesson,
     rememberLesson,
     saveCode,
-    saveNote,
     toggleBookmark,
     addTime,
-    getLessonNote,
   };
 }

@@ -640,9 +640,6 @@ function NumpyTheoryBlock({ block, step, accentColor }) {
 
 export default function NumpyIntroTheory({
   lesson,
-  noteDraft,
-  onNoteChange,
-  onSaveNote,
   confidence,
   onConfidenceChange,
   markedAsRead = false,
@@ -704,21 +701,6 @@ export default function NumpyIntroTheory({
         onGoChallenge={onGoChallenge}
         accentColor={accentColor}
       />
-
-      <div className="numpy-notes-panel">
-        <h3>📝 Your notes</h3>
-        <p className="numpy-notes-hint">
-          Write anything you want to remember — in your own words.
-        </p>
-        <textarea
-          value={noteDraft}
-          onChange={(event) => onNoteChange(event.target.value)}
-          placeholder="Example: ndarray = a neat row of numbers I can math on all at once..."
-        />
-        <button type="button" className="numpy-notes-save" onClick={onSaveNote}>
-          Save note
-        </button>
-      </div>
     </div>
   );
 }

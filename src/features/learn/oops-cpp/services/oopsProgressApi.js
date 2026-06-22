@@ -25,13 +25,6 @@ export function saveOopsCode(token, lessonId, code) {
   });
 }
 
-export function saveOopsNote(token, lessonId, note) {
-  return request("/note", token, {
-    method: "POST",
-    body: JSON.stringify({ lessonId, note }),
-  });
-}
-
 export function toggleOopsBookmark(token, lessonId) {
   return request("/bookmark", token, {
     method: "POST",
@@ -65,13 +58,6 @@ export function progressToMap(progress) {
 export function savedCodeToMap(progress) {
   return (progress?.savedCode || []).reduce((acc, item) => {
     acc[item.lessonId] = item.code;
-    return acc;
-  }, {});
-}
-
-export function notesToMap(progress) {
-  return (progress?.notes || []).reduce((acc, item) => {
-    acc[item.lessonId] = item.note;
     return acc;
   }, {});
 }

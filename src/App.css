@@ -7032,49 +7032,6 @@ body {
   border-top: 1px solid var(--border, #1e2433);
 }
 
-.oops-notes-panel {
-  display: grid;
-  gap: 10px;
-  margin: 24px 0 0;
-  padding: 16px;
-  border: 1px solid var(--border, #1e2433);
-  border-radius: 10px;
-  background: var(--ink-2, #0d1117);
-}
-
-.oops-notes-panel h3 {
-  margin: 6px 0 0;
-  color: var(--txt-0, #f0f0ff);
-  font-size: 1rem;
-}
-
-.oops-notes-panel textarea {
-  min-height: 110px;
-  resize: vertical;
-  border: 1px solid var(--border, #1e2433);
-  border-radius: 8px;
-  padding: 12px;
-  background: var(--ink, #03050a);
-  color: var(--txt-1, #c0c8e0);
-  font: inherit;
-  outline: none;
-}
-
-.oops-notes-panel textarea:focus {
-  border-color: var(--acid, #ffe566);
-}
-
-.oops-notes-panel button {
-  justify-self: end;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  background: var(--acid, #ffe566);
-  color: var(--ink, #03050a);
-  font-weight: 800;
-  cursor: pointer;
-}
-
 .oops-confidence-panel {
   display: grid;
   grid-template-columns: minmax(220px, 0.8fr) 1fr;
@@ -8715,7 +8672,6 @@ body {
   color: var(--txt-1, #c0c8e0);
 }
 
-.numpy-notes-panel,
 .numpy-confidence-panel {
   margin-top: 28px;
   padding: 20px;
@@ -8724,42 +8680,10 @@ body {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.numpy-notes-panel h3,
 .numpy-confidence-panel h3 {
   margin: 0 0 8px;
   font-size: 1rem;
   color: var(--txt-0, #f0f0ff);
-}
-
-.numpy-notes-hint {
-  margin: 0 0 12px;
-  font-size: 0.88rem;
-  color: var(--txt-2, #6e7891);
-}
-
-.numpy-notes-panel textarea {
-  width: 100%;
-  min-height: 88px;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.25);
-  color: var(--txt-1, #c0c8e0);
-  font-family: inherit;
-  font-size: 0.92rem;
-  resize: vertical;
-  box-sizing: border-box;
-}
-
-.numpy-notes-save {
-  margin-top: 10px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: none;
-  background: rgba(79, 70, 229, 0.85);
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .numpy-confidence-options {
@@ -9256,8 +9180,6 @@ body {
   z-index: 1;
 }
 
-.lesson-annotator-content .numpy-notes-panel,
-.lesson-annotator-content .oops-notes-panel,
 .lesson-annotator-content .numpy-confidence-panel,
 .lesson-annotator-content .numpy-mark-read-panel,
 .lesson-annotator-content .numpy-theory-actions,

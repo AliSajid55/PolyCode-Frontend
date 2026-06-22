@@ -4,7 +4,6 @@ import { useAuth } from "../../../auth/context/AuthContext";
 // Sandboxed LocalStorage keys for C# Progress tracking
 const LOCAL_KEY = "csharp_progress";
 const LOCAL_CODE_KEY = "csharp_saved_code";
-const LOCAL_NOTES_KEY = "csharp_notes";
 const LOCAL_BOOKMARKS_KEY = "csharp_bookmarks";
 const LOCAL_LAST_KEY = "csharp_last_lesson";
 
@@ -26,21 +25,14 @@ export default function useCsharpProgress() {
     return {
       completed: readJson(LOCAL_KEY, {}),
       savedCode: readJson(LOCAL_CODE_KEY, {}),
-      notes: readJson(LOCAL_NOTES_KEY, {}),
       bookmarks: readJson(LOCAL_BOOKMARKS_KEY, []),
     };
   }, [localVersion]);
 
   const completedMap = isAuthenticated ? localSnapshot.completed : {};
   const savedCodeMap = isAuthenticated ? localSnapshot.savedCode : {};
-  const notesMap = localSnapshot.notes;
   const bookmarks = localSnapshot.bookmarks;
   const lastLessonId = localStorage.getItem(LOCAL_LAST_KEY);
-
-  const getLessonNote = useCallback(
-    (id) => localSnapshot.notes[id] || "",
-    [localSnapshot],
-  );
 
   const completeLesson = useCallback(
     async (lesson) => {
@@ -73,16 +65,6 @@ export default function useCsharpProgress() {
     [isAuthenticated, refreshLocal],
   );
 
-  const saveNote = useCallback(
-    async (lessonId, note) => {
-      const current = readJson(LOCAL_NOTES_KEY, {});
-      current[lessonId] = note;
-      localStorage.setItem(LOCAL_NOTES_KEY, JSON.stringify(current));
-      refreshLocal();
-    },
-    [refreshLocal],
-  );
-
   const toggleBookmark = useCallback(
     async (lessonId) => {
       const current = readJson(LOCAL_BOOKMARKS_KEY, []);
@@ -104,15 +86,12 @@ export default function useCsharpProgress() {
     remoteProgress: null,
     completedMap,
     savedCodeMap,
-    notesMap,
     bookmarks,
     lastLessonId,
     completeLesson,
     rememberLesson,
     saveCode,
-    saveNote,
     toggleBookmark,
     addTime,
-    getLessonNote,
   };
 }

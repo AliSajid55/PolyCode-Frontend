@@ -87,16 +87,13 @@ export default function PointersLessonPage() {
     user,
     completedMap: progress,
     savedCodeMap,
-    getLessonNote,
     bookmarks,
     completeLesson,
     rememberLesson,
     saveCode,
-    saveNote,
     toggleBookmark,
     addTime,
   } = usePointersProgress();
-  const [noteDraft, setNoteDraft] = useState("");
   const codeSaveTimer = useRef(null);
 
   const lesson = POINTER_LESSONS.find((item) => item.id === lessonId);
@@ -136,10 +133,6 @@ export default function PointersLessonPage() {
   }, [lessonId, rememberLesson]);
 
   useEffect(() => {
-    setNoteDraft(getLessonNote(lessonId));
-  }, [lessonId, getLessonNote]);
-
-  useEffect(() => {
     if (!lessonId) return undefined;
     const id = setInterval(() => addTime(1), 60000);
     return () => clearInterval(id);
@@ -171,10 +164,6 @@ export default function PointersLessonPage() {
 
   async function handleChallengeComplete() {
     await completeLesson(lesson);
-  }
-
-  function handleSaveNote() {
-    saveNote(lessonId, noteDraft);
   }
 
   function handleCodeChange(code) {
@@ -359,21 +348,6 @@ export default function PointersLessonPage() {
                 accentColor={lesson.chapterColor}
                 challengeLabel="Ready? Take the Challenge →"
               />
-
-              <div className="oops-notes-panel">
-                <div>
-                  <span className="oops-interactive-label">Lesson Notes</span>
-                  <h3>Capture your pointer rule</h3>
-                </div>
-                <textarea
-                  value={noteDraft}
-                  onChange={(event) => setNoteDraft(event.target.value)}
-                  placeholder="Write a pointer rule, gotcha, address trace, or safety note..."
-                />
-                <button type="button" onClick={handleSaveNote}>
-                  Save Note
-                </button>
-              </div>
             </div>
           ) : (
             <CodeChallenge

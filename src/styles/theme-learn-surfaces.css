@@ -1,4 +1,4 @@
-/* Learn hub + certificate surfaces — theme-aware tokens */
+/* Learn hub + certificate surfaces — each theme has a distinct identity */
 
 .app {
   --learn-hero-bg:
@@ -27,6 +27,82 @@
   --learn-cert-btn-text: #05070f;
 }
 
+/* ── Dark (default) — lemon + cyan, PolyCode signature ── */
+.app:not(.theme-light):not(.theme-classic):not(.theme-midnight):not(.theme-ocean):not(.theme-slate)
+  .main-content.learn-content {
+  --learn-hero-bg:
+    linear-gradient(135deg, rgba(255, 229, 102, 0.1), rgba(0, 122, 204, 0.08) 52%, transparent 72%),
+    var(--bg-card, #080a14);
+  --learn-card-bg:
+    linear-gradient(165deg, rgba(18, 20, 28, 0.98) 0%, rgba(8, 10, 20, 0.98) 100%);
+  --learn-card-bg-solid: rgba(12, 14, 22, 0.96);
+  --learn-card-border: rgba(255, 229, 102, 0.16);
+  --learn-card-title: #ffffff;
+  --learn-card-muted: #a0a0b8;
+  --learn-action-bg: linear-gradient(135deg, #007acc 0%, #1a9fff 100%);
+  --learn-action-text: #ffffff;
+  --learn-pill-bg: rgba(0, 242, 255, 0.1);
+  --learn-pill-border: rgba(0, 242, 255, 0.24);
+  --learn-pill-text: #00f2ff;
+  --learn-tile-bg: rgba(5, 7, 15, 0.94);
+  --learn-tile-border: rgba(255, 229, 102, 0.14);
+  --learn-cert-btn-bg: #ffe566;
+  --learn-cert-btn-text: #03050a;
+}
+
+.app:not(.theme-light):not(.theme-classic):not(.theme-midnight):not(.theme-ocean):not(.theme-slate)
+  .main-content.learn-content
+  .oops-chapter-card,
+.app:not(.theme-light):not(.theme-classic):not(.theme-midnight):not(.theme-ocean):not(.theme-slate)
+  .main-content.learn-content
+  .oops-hero,
+.app:not(.theme-light):not(.theme-classic):not(.theme-midnight):not(.theme-ocean):not(.theme-slate)
+  .main-content.learn-content
+  .oops-resume-panel,
+.app:not(.theme-light):not(.theme-classic):not(.theme-midnight):not(.theme-ocean):not(.theme-slate)
+  .main-content.learn-content
+  .oops-tool-panel {
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 229, 102, 0.04);
+}
+
+.app:not(.theme-light):not(.theme-classic):not(.theme-midnight):not(.theme-ocean):not(.theme-slate)
+  .main-content.learn-content
+  .oops-chapter-card {
+  background: var(--learn-card-bg);
+  border-color: var(--learn-card-border);
+}
+
+.app:not(.theme-light):not(.theme-classic):not(.theme-midnight):not(.theme-ocean):not(.theme-slate)
+  .main-content.learn-content
+  .oops-chapter-card:hover {
+  border-color: rgba(255, 229, 102, 0.45);
+  box-shadow:
+    0 16px 38px rgba(255, 229, 102, 0.1),
+    inset 0 1px 0 rgba(255, 229, 102, 0.06);
+}
+
+.app:not(.theme-light):not(.theme-classic):not(.theme-midnight):not(.theme-ocean):not(.theme-slate)
+  .main-content.learn-content
+  .oops-lesson-item:hover {
+  background: rgba(255, 229, 102, 0.08);
+}
+
+.app:not(.theme-light):not(.theme-classic):not(.theme-midnight):not(.theme-ocean):not(.theme-slate)
+  .main-content.learn-content
+  .oops-lesson-item.done
+  .oops-lesson-status {
+  color: #ffe566;
+}
+
+.app:not(.theme-light):not(.theme-classic):not(.theme-midnight):not(.theme-ocean):not(.theme-slate)
+  .main-content.learn-content
+  .oops-chapter-cta {
+  box-shadow: 0 8px 20px rgba(0, 122, 204, 0.28);
+}
+
+/* ── Light — clean white + indigo ── */
 .app.theme-light {
   --learn-hero-bg:
     linear-gradient(135deg, rgba(79, 70, 229, 0.08), transparent 46%),
@@ -37,12 +113,12 @@
   --learn-card-border: rgba(15, 23, 42, 0.1);
   --learn-card-title: #0f172a;
   --learn-card-muted: #64748b;
-  --learn-action-bg: #2563eb;
+  --learn-action-bg: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
   --learn-action-text: #ffffff;
   --learn-pill-bg: rgba(37, 99, 235, 0.08);
   --learn-pill-border: rgba(37, 99, 235, 0.18);
   --learn-pill-text: #2563eb;
-  --learn-tile-bg: #ffffff;
+  --learn-tile-bg: #f8fafc;
   --learn-tile-border: rgba(15, 23, 42, 0.1);
   --learn-cert-bg:
     linear-gradient(135deg, rgba(79, 70, 229, 0.07), transparent 42%),
@@ -54,81 +130,95 @@
   --learn-cert-btn-text: #ffffff;
 }
 
-.app.theme-light .oops-hero,
-.app.theme-light .oops-resume-panel,
-.app.theme-light .oops-tool-panel,
-.app.theme-light .oops-chapter-card,
-.app.theme-light .matplotlib-path-card,
+.app.theme-light .main-content.learn-content .oops-chapter-card,
+.app.theme-light .main-content.learn-content .oops-hero,
+.app.theme-light .main-content.learn-content .oops-resume-panel,
+.app.theme-light .main-content.learn-content .oops-tool-panel,
 .app.theme-light .profile-certificate-card {
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
 }
 
-.app.theme-light .matplotlib-path-card {
-  background: #ffffff;
-  border-color: #e2e8f0;
+.app.theme-light .main-content.learn-content .oops-chapter-card:hover {
+  border-color: rgba(79, 70, 229, 0.35);
+  box-shadow: 0 14px 32px rgba(79, 70, 229, 0.12);
 }
 
-.app.theme-light .matplotlib-path-summary {
-  color: #475569;
+.app.theme-light .main-content.learn-content .oops-lesson-item:hover {
+  background: rgba(79, 70, 229, 0.06);
 }
 
-.app.theme-light .matplotlib-path-chapters li {
-  color: #64748b;
+.app.theme-light .main-content.learn-content .oops-lesson-item.done .oops-lesson-status {
+  color: #4f46e5;
 }
 
-.app.theme-light .matplotlib-path-cta {
-  color: #0f172a;
+.app.theme-light .main-content.learn-content .oops-chapter-cta {
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
 }
 
-.app.theme-light .matplotlib-prerequisites {
-  background: #f8fafc;
-  border-color: #bbf7d0;
-}
-
-.app.theme-light .matplotlib-prereq-card {
-  background: #ffffff;
-  border-color: #e2e8f0;
-}
-
-.app.theme-light .matplotlib-prereq-card strong {
-  color: #0f172a;
-}
-
-.app.theme-light .matplotlib-prereq-card p,
-.app.theme-light .matplotlib-runtime-note {
-  color: #64748b;
-}
-
-.app.theme-light .lesson-objectives,
-.app.theme-light .lesson-scenario {
-  background: #f8fafc;
-  border-color: #e2e8f0;
-}
-
-.app.theme-light .lesson-objectives strong,
-.app.theme-light .lesson-scenario strong {
-  color: #0f172a;
-}
-
-.app.theme-light .lesson-objectives li,
-.app.theme-light .lesson-scenario p {
-  color: #475569;
-}
-
-.app.theme-classic {
+/* ── Classic — retro amber terminal + phosphor green ── */
+.app.theme-classic .main-content.learn-content {
   --learn-hero-bg:
-    linear-gradient(135deg, rgba(255, 176, 0, 0.12), transparent 44%),
+    linear-gradient(135deg, rgba(255, 176, 0, 0.16), rgba(51, 255, 153, 0.04) 48%, transparent 72%),
     var(--bg-card, #141008);
-  --learn-card-bg-solid: rgba(24, 20, 12, 0.94);
-  --learn-pill-bg: rgba(51, 255, 153, 0.08);
-  --learn-pill-border: rgba(51, 255, 153, 0.2);
-  --learn-pill-text: #33ff99;
-  --learn-action-bg: #ffb000;
+  --learn-card-bg:
+    linear-gradient(165deg, rgba(30, 24, 12, 0.98) 0%, rgba(18, 14, 8, 0.98) 100%);
+  --learn-card-bg-solid: rgba(24, 20, 12, 0.96);
+  --learn-card-border: rgba(255, 176, 0, 0.26);
+  --learn-card-title: #fff8e7;
+  --learn-card-muted: #a89878;
+  --learn-action-bg: linear-gradient(135deg, #ffb000 0%, #e69500 100%);
   --learn-action-text: #1a1200;
+  --learn-pill-bg: rgba(51, 255, 153, 0.1);
+  --learn-pill-border: rgba(51, 255, 153, 0.28);
+  --learn-pill-text: #33ff99;
+  --learn-tile-bg: rgba(18, 14, 8, 0.94);
+  --learn-tile-border: rgba(255, 176, 0, 0.2);
   --learn-cert-btn-bg: #ffb000;
   --learn-cert-btn-text: #1a1200;
 }
 
+.app.theme-classic .main-content.learn-content .oops-chapter-card,
+.app.theme-classic .main-content.learn-content .oops-hero,
+.app.theme-classic .main-content.learn-content .oops-resume-panel,
+.app.theme-classic .main-content.learn-content .oops-tool-panel {
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 176, 0, 0.06);
+}
+
+.app.theme-classic .main-content.learn-content .oops-chapter-card {
+  background: var(--learn-card-bg);
+  border-color: var(--learn-card-border);
+}
+
+.app.theme-classic .main-content.learn-content .oops-chapter-card:hover {
+  border-color: rgba(255, 176, 0, 0.55);
+  box-shadow:
+    0 16px 36px rgba(255, 176, 0, 0.14),
+    inset 0 1px 0 rgba(255, 176, 0, 0.08);
+}
+
+.app.theme-classic .main-content.learn-content .oops-chapter-card.oops-chapter-done {
+  border-color: rgba(51, 255, 153, 0.35);
+}
+
+.app.theme-classic .main-content.learn-content .oops-chapter-progress-track {
+  background: rgba(255, 176, 0, 0.12);
+}
+
+.app.theme-classic .main-content.learn-content .oops-lesson-item:hover {
+  background: rgba(255, 176, 0, 0.1);
+}
+
+.app.theme-classic .main-content.learn-content .oops-lesson-item.done .oops-lesson-status {
+  color: #33ff99;
+}
+
+.app.theme-classic .main-content.learn-content .oops-chapter-cta {
+  box-shadow: 0 8px 20px rgba(255, 176, 0, 0.28);
+}
+
+/* ── Midnight — deep indigo violet glow ── */
 .app.theme-midnight .main-content.learn-content {
   --learn-hero-bg:
     linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(59, 130, 246, 0.06) 48%, transparent 72%),
@@ -175,16 +265,6 @@
   border-color: rgba(52, 211, 153, 0.35);
 }
 
-.app.theme-midnight .main-content.learn-content .oops-chapter-title {
-  color: var(--learn-card-title);
-}
-
-.app.theme-midnight .main-content.learn-content .oops-chapter-num,
-.app.theme-midnight .main-content.learn-content .oops-chapter-meta,
-.app.theme-midnight .main-content.learn-content .oops-lesson-xp {
-  color: var(--learn-card-muted);
-}
-
 .app.theme-midnight .main-content.learn-content .oops-chapter-progress-track {
   background: rgba(139, 152, 255, 0.12);
 }
@@ -198,8 +278,6 @@
 }
 
 .app.theme-midnight .main-content.learn-content .oops-chapter-cta {
-  background: var(--learn-action-bg, #7c6df0);
-  color: var(--learn-action-text, #fff);
   box-shadow: 0 8px 20px rgba(99, 102, 241, 0.28);
 }
 
@@ -208,28 +286,140 @@
   filter: brightness(1.06);
 }
 
-.app.theme-ocean {
+/* ── Ocean — aquatic teal + aqua waves ── */
+.app.theme-ocean .main-content.learn-content {
   --learn-hero-bg:
-    linear-gradient(135deg, rgba(45, 212, 191, 0.14), transparent 44%),
+    linear-gradient(135deg, rgba(45, 212, 191, 0.16), rgba(34, 211, 238, 0.08) 50%, transparent 74%),
     var(--bg-card, #071820);
-  --learn-card-bg-solid: rgba(8, 32, 40, 0.94);
-  --learn-pill-bg: rgba(34, 211, 238, 0.1);
-  --learn-pill-border: rgba(34, 211, 238, 0.22);
+  --learn-card-bg:
+    linear-gradient(165deg, rgba(10, 40, 48, 0.98) 0%, rgba(6, 24, 32, 0.98) 100%);
+  --learn-card-bg-solid: rgba(8, 32, 40, 0.96);
+  --learn-card-border: rgba(45, 212, 191, 0.28);
+  --learn-card-title: #ecfeff;
+  --learn-card-muted: #67e8f9;
+  --learn-action-bg: linear-gradient(135deg, #14b8a6 0%, #0891b2 100%);
+  --learn-action-text: #ffffff;
+  --learn-pill-bg: rgba(34, 211, 238, 0.12);
+  --learn-pill-border: rgba(34, 211, 238, 0.28);
   --learn-pill-text: #22d3ee;
-  --learn-action-bg: #0891b2;
+  --learn-tile-bg: rgba(6, 24, 32, 0.94);
+  --learn-tile-border: rgba(45, 212, 191, 0.22);
   --learn-cert-btn-bg: #0891b2;
   --learn-cert-btn-text: #ffffff;
 }
 
-.app.theme-slate {
+.app.theme-ocean .main-content.learn-content .oops-chapter-card,
+.app.theme-ocean .main-content.learn-content .oops-hero,
+.app.theme-ocean .main-content.learn-content .oops-resume-panel,
+.app.theme-ocean .main-content.learn-content .oops-tool-panel {
+  box-shadow:
+    0 14px 34px rgba(4, 16, 22, 0.48),
+    inset 0 1px 0 rgba(45, 212, 191, 0.06);
+}
+
+.app.theme-ocean .main-content.learn-content .oops-chapter-card {
+  background: var(--learn-card-bg);
+  border-color: var(--learn-card-border);
+}
+
+.app.theme-ocean .main-content.learn-content .oops-chapter-card:hover {
+  border-color: rgba(34, 211, 238, 0.5);
+  box-shadow:
+    0 18px 40px rgba(20, 184, 166, 0.2),
+    inset 0 1px 0 rgba(45, 212, 191, 0.08);
+}
+
+.app.theme-ocean .main-content.learn-content .oops-chapter-card.oops-chapter-done {
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.app.theme-ocean .main-content.learn-content .oops-chapter-progress-track {
+  background: rgba(45, 212, 191, 0.14);
+}
+
+.app.theme-ocean .main-content.learn-content .oops-lesson-item:hover {
+  background: rgba(45, 212, 191, 0.12);
+}
+
+.app.theme-ocean .main-content.learn-content .oops-lesson-item.done .oops-lesson-status {
+  color: #2dd4bf;
+}
+
+.app.theme-ocean .main-content.learn-content .oops-chapter-cta {
+  box-shadow: 0 8px 20px rgba(8, 145, 178, 0.3);
+}
+
+/* ── Slate — muted steel, professional gray ── */
+.app.theme-slate .main-content.learn-content {
   --learn-hero-bg:
-    linear-gradient(135deg, rgba(148, 163, 184, 0.12), transparent 44%),
+    linear-gradient(135deg, rgba(148, 163, 184, 0.1), rgba(100, 116, 139, 0.04) 50%, transparent 74%),
     var(--bg-card, #171a22);
-  --learn-card-bg-solid: rgba(25, 28, 36, 0.94);
+  --learn-card-bg:
+    linear-gradient(165deg, rgba(30, 34, 44, 0.98) 0%, rgba(21, 24, 32, 0.98) 100%);
+  --learn-card-bg-solid: rgba(25, 28, 36, 0.96);
+  --learn-card-border: rgba(148, 163, 184, 0.24);
+  --learn-card-title: #f8fafc;
+  --learn-card-muted: #94a3b8;
+  --learn-action-bg: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  --learn-action-text: #f8fafc;
   --learn-pill-bg: rgba(148, 163, 184, 0.1);
-  --learn-pill-border: rgba(148, 163, 184, 0.22);
+  --learn-pill-border: rgba(203, 213, 225, 0.24);
   --learn-pill-text: #cbd5e1;
-  --learn-action-bg: #475569;
+  --learn-tile-bg: rgba(21, 24, 32, 0.94);
+  --learn-tile-border: rgba(148, 163, 184, 0.18);
   --learn-cert-btn-bg: #e2e8f0;
   --learn-cert-btn-text: #0f172a;
+}
+
+.app.theme-slate .main-content.learn-content .oops-chapter-card,
+.app.theme-slate .main-content.learn-content .oops-hero,
+.app.theme-slate .main-content.learn-content .oops-resume-panel,
+.app.theme-slate .main-content.learn-content .oops-tool-panel {
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.app.theme-slate .main-content.learn-content .oops-chapter-card {
+  background: var(--learn-card-bg);
+  border-color: var(--learn-card-border);
+}
+
+.app.theme-slate .main-content.learn-content .oops-chapter-card:hover {
+  border-color: rgba(203, 213, 225, 0.42);
+  box-shadow:
+    0 16px 36px rgba(100, 116, 139, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.app.theme-slate .main-content.learn-content .oops-chapter-card.oops-chapter-done {
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+.app.theme-slate .main-content.learn-content .oops-chapter-progress-track {
+  background: rgba(148, 163, 184, 0.14);
+}
+
+.app.theme-slate .main-content.learn-content .oops-lesson-item:hover {
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.app.theme-slate .main-content.learn-content .oops-lesson-item.done .oops-lesson-status {
+  color: #cbd5e1;
+}
+
+.app.theme-slate .main-content.learn-content .oops-chapter-cta {
+  box-shadow: 0 8px 18px rgba(71, 85, 105, 0.28);
+}
+
+/* Shared CTA hover for themed learn surfaces */
+.app.theme-classic .main-content.learn-content .oops-chapter-cta:hover,
+.app.theme-ocean .main-content.learn-content .oops-chapter-cta:hover,
+.app.theme-slate .main-content.learn-content .oops-chapter-cta:hover,
+.app:not(.theme-light):not(.theme-classic):not(.theme-midnight):not(.theme-ocean):not(.theme-slate)
+  .main-content.learn-content
+  .oops-chapter-cta:hover,
+.app.theme-light .main-content.learn-content .oops-chapter-cta:hover {
+  opacity: 1;
+  filter: brightness(1.05);
 }
