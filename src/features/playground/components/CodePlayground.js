@@ -46,9 +46,20 @@ import {
 } from "../lib/playgroundFileTree";
 import {
   definePolycodeMonacoTheme,
+  definePolycodeMonacoLightTheme,
+  definePolycodePlaygroundThemes,
   getVSCodeEditorOptions,
-  POLYCODE_VSCODE_THEME,
+  POLYCODE_PLAYGROUND_DARK_THEME,
+  POLYCODE_PLAYGROUND_LIGHT_THEME,
 } from "../../../shared/utils/monacoTheme";
+import { isLightTheme } from "../../../shared/theme/themes";
+import { useDocumentThemeId } from "../hooks/useDocumentThemeId";
+import {
+  dismissRecentEntry,
+  filterDismissedRecentEntries,
+  loadDismissedRecentKeys,
+  recentEntryKey,
+} from "../lib/playgroundRecentDismiss";
 import "./CodePlayground.css";
 
 const LANG_GROUPS = [
@@ -229,6 +240,10 @@ export default function CodePlayground({
   initialLanguage = "javascript",
 }) {
   const { token } = useAuth();
+  const documentThemeId = useDocumentThemeId();
+  const editorTheme = isLightTheme(documentThemeId)
+    ? POLYCODE_PLAYGROUND_LIGHT_THEME
+    : POLYCODE_PLAYGROUND_DARK_THEME;
   const normalizedInitialLanguage = normalizeLanguage(initialLanguage);
   const [language, setLanguage] = useState(normalizedInitialLanguage);
   const [workspaces, setWorkspaces] = useState(() =>
@@ -246,6 +261,9 @@ export default function CodePlayground({
   const [runHistory, setRunHistory] = useState([]);
   const [runHistoryLoading, setRunHistoryLoading] = useState(false);
   const [historyScope, setHistoryScope] = useState("all");
+  const [dismissedRecentKeys, setDismissedRecentKeys] = useState(() =>
+    loadDismissedRecentKeys(),
+  );
   const outputRef = useRef(null);
   const panesRef = useRef(null);
   const paneDragRef = useRef(null);
@@ -276,19 +294,23 @@ export default function CodePlayground({
   const activeRecentFileId = activeFile?.serverId || activeFile?.id || null;
 
   const refreshRecentFiles = useCallback(async () => {
-    if (!token) {
-      setRecentFiles([]);
-      return;
-    }
-
     const workspaceSnapshot = workspacesRef.current;
     const localRows = entriesFromWorkspaces(workspaceSnapshot);
+    const applyDismissed = (rows) =>
+      filterDismissedRecentEntries(rows, dismissedRecentKeys);
+
+    if (!token) {
+      setRecentFiles(applyDismissed(mergeRecentEntries([localRows])));
+      return;
+    }
 
     setRecentLoading(true);
     try {
       const data = await fetchPlaygroundRecentFiles(token, { limit: 40 });
       if (Array.isArray(data.files) && data.files.length) {
-        setRecentFiles(mergeRecentEntries([data.files, localRows]));
+        setRecentFiles(
+          applyDismissed(mergeRecentEntries([data.files, localRows])),
+        );
         return;
       }
 
@@ -309,14 +331,14 @@ export default function CodePlayground({
       );
 
       const merged = mergeRecentEntries([...cloudLists, localRows]);
-      setRecentFiles(merged);
+      setRecentFiles(applyDismissed(merged));
     } catch (err) {
       logPlaygroundSyncError("Could not load recent code", err);
-      setRecentFiles(mergeRecentEntries([localRows]));
+      setRecentFiles(applyDismissed(mergeRecentEntries([localRows])));
     } finally {
       setRecentLoading(false);
     }
-  }, [token, language]);
+  }, [token, language, dismissedRecentKeys]);
 
   useEffect(() => {
     refreshRecentRef.current = refreshRecentFiles;
@@ -704,6 +726,76 @@ export default function CodePlayground({
       }
     },
     [language, selectFile],
+  );
+
+  const removeFromRecent = useCallback((entry) => {
+    const next = dismissRecentEntry(entry);
+    setDismissedRecentKeys(next);
+    setRecentFiles((prev) =>
+      prev.filter((item) => recentEntryKey(item) !== recentEntryKey(entry)),
+    );
+  }, []);
+
+  const deleteRecentFile = useCallback(
+    async (entry) => {
+      if (!entry?.language || !entry?.name) return;
+      const langInfo = resolveEngine(entry.language);
+      if (
+        !window.confirm(
+          `Delete "${entry.name}" from your ${langInfo.label} workspace? This cannot be undone.`,
+        )
+      ) {
+        return;
+      }
+
+      removeFromRecent(entry);
+
+      const targetLanguage = entry.language;
+      const workspace =
+        workspacesRef.current[targetLanguage] || createWorkspace(targetLanguage);
+      const match =
+        workspace.files.find(
+          (file) =>
+            file.serverId === entry.id ||
+            file.id === entry.id ||
+            file.name === entry.name,
+        ) || null;
+
+      if (token && (match?.serverId || entry.id)) {
+        try {
+          setSyncing(true);
+          await deletePlaygroundFile(token, match?.serverId || entry.id);
+        } catch (err) {
+          logPlaygroundSyncError("Could not delete file from cloud", err);
+          setSyncing(false);
+          return;
+        } finally {
+          setSyncing(false);
+        }
+      }
+
+      updateWorkspace(targetLanguage, (current) => {
+        if (!match) return {};
+        const nextFiles = current.files.filter((file) => file.id !== match.id);
+        if (nextFiles.length === 0) {
+          const replacement = createFile(targetLanguage);
+          return {
+            files: [replacement],
+            activeFileId: replacement.id,
+          };
+        }
+        return {
+          files: nextFiles,
+          activeFileId:
+            current.activeFileId === match.id
+              ? nextFiles[0]?.id
+              : current.activeFileId,
+        };
+      });
+
+      refreshRecentRef.current?.();
+    },
+    [token, removeFromRecent, updateWorkspace],
   );
 
   useEffect(() => {
@@ -1240,6 +1332,8 @@ export default function CodePlayground({
           activeRecentFileId={activeRecentFileId}
           activeLanguage={language}
           onOpenRecentFile={openRecentFile}
+          onRemoveRecentFile={removeFromRecent}
+          onDeleteRecentFile={deleteRecentFile}
         />
 
         <div
@@ -1304,10 +1398,14 @@ export default function CodePlayground({
               height="100%"
               language={editorLanguage}
               value={code}
-              beforeMount={definePolycodeMonacoTheme}
+              beforeMount={(monaco) => {
+                definePolycodeMonacoTheme(monaco);
+                definePolycodeMonacoLightTheme(monaco);
+                definePolycodePlaygroundThemes(monaco);
+              }}
               onChange={(v) => updateActiveFileContent(v || "")}
-              theme={POLYCODE_VSCODE_THEME}
-              key={`editor-${language}-${activeFile?.id}-${editorLanguage}`}
+              theme={editorTheme}
+              key={`editor-${language}-${activeFile?.id}-${editorLanguage}-${editorTheme}`}
               options={{
                 ...getVSCodeEditorOptions({ fontSize, wordWrap }),
                 fontSize,

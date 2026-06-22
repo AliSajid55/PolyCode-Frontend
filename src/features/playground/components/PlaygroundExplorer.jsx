@@ -17,6 +17,62 @@ function formatRelativeTime(value) {
   });
 }
 
+function RecentFileRow({
+  entry,
+  fileActive,
+  onOpenRecentFile,
+  onRemoveRecentFile,
+  onDeleteRecentFile,
+}) {
+  const langInfo = resolveEngine(entry.language);
+
+  return (
+    <div
+      className={`pg-recent-row${fileActive ? " pg-recent-row--active" : ""}`}
+    >
+      <button
+        type="button"
+        className="pg-recent-file"
+        onClick={() => onOpenRecentFile?.(entry)}
+        title={`Open ${entry.name} · ${langInfo.label}`}
+      >
+        <span className="pg-recent-lang" aria-hidden>
+          {langInfo.icon}
+        </span>
+        <span className="pg-recent-meta">
+          <span className="pg-recent-name">{entry.name}</span>
+          <span className="pg-recent-sub">
+            {langInfo.label}
+            {formatRelativeTime(entry.updatedAt)
+              ? ` · ${formatRelativeTime(entry.updatedAt)}`
+              : " · saved"}
+          </span>
+        </span>
+      </button>
+      <div className="pg-recent-actions">
+        <button
+          type="button"
+          className="pg-recent-action"
+          onClick={() => onRemoveRecentFile?.(entry)}
+          title="Remove from Recent Code"
+          aria-label={`Remove ${entry.name} from recent`}
+        >
+          ×
+        </button>
+        <button
+          type="button"
+          className="pg-recent-action pg-recent-action--danger"
+          onClick={() => onDeleteRecentFile?.(entry)}
+          title="Delete file permanently"
+          aria-label={`Delete ${entry.name}`}
+        >
+          ⌫
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function TreeNode({
   node,
   depth,
@@ -108,6 +164,8 @@ export default function PlaygroundExplorer({
   activeRecentFileId = null,
   activeLanguage = "",
   onOpenRecentFile,
+  onRemoveRecentFile,
+  onDeleteRecentFile,
 }) {
   if (!explorerOpen) {
     return (
@@ -188,50 +246,40 @@ export default function PlaygroundExplorer({
         )}
       </div>
 
-      {signedIn ? (
-        <>
-          <div className="pg-explorer-section-head">Recent code</div>
-          <div className="pg-explorer-recent">
-            {recentLoading ? (
-              <p className="pg-explorer-empty">Loading from account…</p>
-            ) : recentFiles.length === 0 ? (
-              <p className="pg-explorer-empty">
-                Saved files from your account will appear here.
-              </p>
-            ) : (
-              recentFiles.map((entry) => {
-                const langInfo = resolveEngine(entry.language);
+      <div className="pg-explorer-section-head">
+        <span>Recent code</span>
+        {recentFiles.length > 0 ? (
+          <span className="pg-explorer-section-count">{recentFiles.length}</span>
+        ) : null}
+      </div>
+      <div className="pg-explorer-recent">
+        {recentLoading ? (
+          <p className="pg-explorer-empty">Loading recent files…</p>
+        ) : recentFiles.length === 0 ? (
+          <p className="pg-explorer-empty">
+            {signedIn
+              ? "Run or edit files — they appear here. Remove any entry with ×."
+              : "Your edited files appear here. Remove any entry with ×."}
+          </p>
+        ) : (
+          recentFiles.map((entry) => {
                 const fileActive =
                   entry.id === activeRecentFileId &&
                   entry.language === activeLanguage;
 
                 return (
-                  <button
+                  <RecentFileRow
                     key={`${entry.language}-${entry.id}`}
-                    type="button"
-                    className={`pg-recent-file${fileActive ? " pg-recent-file--active" : ""}`}
-                    onClick={() => onOpenRecentFile?.(entry)}
-                    title={`${entry.name} · ${langInfo.label}`}
-                  >
-                    <span className="pg-recent-lang" aria-hidden>
-                      {langInfo.icon}
-                    </span>
-                    <span className="pg-recent-meta">
-                      <span className="pg-recent-name">{entry.name}</span>
-                      <span className="pg-recent-sub">
-                        {langInfo.label}
-                        {formatRelativeTime(entry.updatedAt)
-                          ? ` · ${formatRelativeTime(entry.updatedAt)}`
-                          : " · saved"}
-                      </span>
-                    </span>
-                  </button>
+                    entry={entry}
+                    fileActive={fileActive}
+                    onOpenRecentFile={onOpenRecentFile}
+                    onRemoveRecentFile={onRemoveRecentFile}
+                    onDeleteRecentFile={onDeleteRecentFile}
+                  />
                 );
               })
             )}
-          </div>
-        </>
-      ) : null}
+      </div>
     </aside>
   );
 }

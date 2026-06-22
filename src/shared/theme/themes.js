@@ -36,9 +36,9 @@ export const THEMES = [
     label: "Midnight",
     description: "Deep indigo glow",
     icon: "🌌",
-    swatch: "#1a2240",
-    bg: "#0a0e1a",
-    bgLanding: "#0a0e1a",
+    swatch: "#6366f1",
+    bg: "#060912",
+    bgLanding: "#060912",
     appClass: "theme-midnight",
   },
   {

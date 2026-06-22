@@ -218,26 +218,36 @@
   box-shadow: 0 8px 20px rgba(255, 176, 0, 0.28);
 }
 
-/* ── Midnight — deep indigo violet glow ── */
+/* ── Midnight — deep indigo with luminous violet cards ── */
 .app.theme-midnight .main-content.learn-content {
   --learn-hero-bg:
-    linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(59, 130, 246, 0.06) 48%, transparent 72%),
-    var(--bg-card, #151b32);
+    linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(129, 140, 248, 0.08) 45%, transparent 72%),
+    radial-gradient(ellipse at 85% 15%, rgba(167, 139, 250, 0.12), transparent 55%),
+    var(--bg-card, #0a0f1f);
+  --learn-hero-border: rgba(129, 140, 248, 0.32);
   --learn-card-bg:
-    linear-gradient(165deg, rgba(34, 42, 76, 0.98) 0%, rgba(22, 30, 54, 0.98) 100%);
-  --learn-card-bg-solid: rgba(26, 34, 64, 0.96);
-  --learn-card-border: rgba(139, 152, 255, 0.28);
-  --learn-card-title: #f0f4ff;
+    linear-gradient(165deg, rgba(22, 28, 52, 0.98) 0%, rgba(12, 17, 36, 0.98) 55%, rgba(10, 14, 30, 0.99) 100%);
+  --learn-card-bg-solid: rgba(16, 22, 42, 0.97);
+  --learn-card-border: rgba(129, 140, 248, 0.34);
+  --learn-card-title: #f8faff;
   --learn-card-muted: #9aa8dc;
-  --learn-action-bg: linear-gradient(135deg, #7c6df0 0%, #6366f1 100%);
+  --learn-action-bg: linear-gradient(135deg, #818cf8 0%, #6366f1 48%, #4f46e5 100%);
   --learn-action-text: #ffffff;
-  --learn-pill-bg: rgba(139, 92, 246, 0.14);
-  --learn-pill-border: rgba(167, 139, 250, 0.32);
-  --learn-pill-text: #c4b5fd;
-  --learn-tile-bg: rgba(22, 30, 54, 0.92);
-  --learn-tile-border: rgba(139, 152, 255, 0.22);
-  --learn-cert-btn-bg: #7c6df0;
+  --learn-pill-bg: rgba(99, 102, 241, 0.16);
+  --learn-pill-border: rgba(165, 180, 252, 0.36);
+  --learn-pill-text: #c7d2fe;
+  --learn-tile-bg: rgba(12, 17, 36, 0.94);
+  --learn-tile-border: rgba(129, 140, 248, 0.26);
+  --learn-cert-btn-bg: #6366f1;
   --learn-cert-btn-text: #ffffff;
+}
+
+.app.theme-midnight .main-content.learn-content .oops-hero::before {
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.14) 0%,
+    transparent 70%
+  );
 }
 
 .app.theme-midnight .main-content.learn-content .oops-chapter-card,
@@ -245,45 +255,128 @@
 .app.theme-midnight .main-content.learn-content .oops-resume-panel,
 .app.theme-midnight .main-content.learn-content .oops-tool-panel {
   box-shadow:
-    0 14px 36px rgba(8, 12, 28, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    0 16px 40px rgba(4, 8, 22, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .app.theme-midnight .main-content.learn-content .oops-chapter-card {
+  position: relative;
+  overflow: hidden;
   background: var(--learn-card-bg);
   border-color: var(--learn-card-border);
 }
 
+.app.theme-midnight .main-content.learn-content .oops-chapter-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ch-color, #818cf8) 55%, #c4b5fd),
+    transparent
+  );
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.app.theme-midnight .main-content.learn-content .oops-chapter-card::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  right: -20%;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--ch-color, #818cf8) 18%, transparent) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
 .app.theme-midnight .main-content.learn-content .oops-chapter-card:hover {
-  border-color: rgba(167, 139, 250, 0.55);
+  border-color: color-mix(in srgb, var(--ch-color, #818cf8) 72%, #e0e7ff 8%);
+  transform: translateY(-3px);
   box-shadow:
-    0 18px 42px rgba(99, 102, 241, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    0 22px 50px rgba(67, 56, 202, 0.28),
+    0 0 0 1px rgba(129, 140, 248, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
 }
 
 .app.theme-midnight .main-content.learn-content .oops-chapter-card.oops-chapter-done {
-  border-color: rgba(52, 211, 153, 0.35);
+  border-color: rgba(52, 211, 153, 0.42);
+  box-shadow:
+    0 16px 40px rgba(4, 8, 22, 0.5),
+    inset 0 0 0 1px rgba(52, 211, 153, 0.12);
+}
+
+.app.theme-midnight .main-content.learn-content .oops-chapter-num,
+.app.theme-midnight .main-content.learn-content .oops-chapter-meta {
+  color: var(--learn-card-muted);
+}
+
+.app.theme-midnight .main-content.learn-content .oops-chapter-title {
+  color: var(--learn-card-title);
 }
 
 .app.theme-midnight .main-content.learn-content .oops-chapter-progress-track {
-  background: rgba(139, 152, 255, 0.12);
+  background: rgba(129, 140, 248, 0.14);
+}
+
+.app.theme-midnight .main-content.learn-content .oops-lesson-item {
+  background: rgba(129, 140, 248, 0.05);
+  border: 1px solid rgba(129, 140, 248, 0.08);
 }
 
 .app.theme-midnight .main-content.learn-content .oops-lesson-item:hover {
-  background: rgba(139, 92, 246, 0.12);
+  background: rgba(99, 102, 241, 0.14);
+  border-color: rgba(129, 140, 248, 0.22);
 }
 
 .app.theme-midnight .main-content.learn-content .oops-lesson-item.done .oops-lesson-status {
-  color: #a78bfa;
+  color: #a5b4fc;
+}
+
+.app.theme-midnight .main-content.learn-content .oops-lesson-xp {
+  color: #7c8ab8;
+}
+
+.app.theme-midnight .main-content.learn-content .oops-done-badge {
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.16);
+}
+
+.app.theme-midnight .main-content.learn-content .oops-path-step {
+  background: var(--learn-tile-bg);
+  border-color: var(--learn-tile-border);
+}
+
+.app.theme-midnight .main-content.learn-content .oops-path-step.active,
+.app.theme-midnight .main-content.learn-content .oops-path-step.done {
+  border-color: color-mix(in srgb, var(--ch-color, #818cf8) 65%, #c4b5fd);
+  background: color-mix(
+    in srgb,
+    var(--ch-color, #818cf8) 12%,
+    var(--learn-tile-bg)
+  );
 }
 
 .app.theme-midnight .main-content.learn-content .oops-chapter-cta {
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 10px 24px rgba(79, 70, 229, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 .app.theme-midnight .main-content.learn-content .oops-chapter-cta:hover {
   opacity: 1;
-  filter: brightness(1.06);
+  filter: brightness(1.08);
+  box-shadow:
+    0 14px 28px rgba(79, 70, 229, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 /* ── Ocean — aquatic teal + aqua waves ── */
