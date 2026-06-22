@@ -14,6 +14,7 @@ import Sidebar from "./features/navigation/components/Sidebar";
 import { PlaygroundProvider } from "./features/playground/context/PlaygroundContext";
 import { AuthProvider, useAuth } from "./features/auth/context/AuthContext";
 import SelectionPins from "./shared/components/SelectionPins";
+import LastRouteTracker from "./shared/navigation/LastRouteTracker";
 import { LearnNavProvider } from "./features/learn/shared/LearnNavContext";
 import GlobalAssistant from "./features/assistant/components/GlobalAssistant";
 import { AssistantProvider } from "./features/assistant/context/AssistantContext";
@@ -1049,6 +1050,7 @@ function App() {
           <AssistantProvider>
             <SelectionPins />
             <ScrollToTop />
+            <LastRouteTracker />
             <AppRoutes />
             <GlobalAssistant />
           </AssistantProvider>
