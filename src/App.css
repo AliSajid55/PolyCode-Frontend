@@ -8091,6 +8091,12 @@ body {
   color: var(--txt-1, #c0c8e0);
 }
 
+/* Legacy lesson notes UI — feature removed */
+.numpy-notes-panel,
+.oops-notes-panel {
+  display: none !important;
+}
+
 .numpy-intro-theory {
   max-width: 780px;
   margin: 0 auto;
