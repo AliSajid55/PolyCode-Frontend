@@ -8,6 +8,7 @@ import {
   Table2,
   Terminal,
   Presentation,
+  BrainCircuit,
 } from "lucide-react";
 
 export function languageKey(value = "") {
@@ -128,6 +129,15 @@ export const languageCourses = {
       accent: "#239120",
       icon: Presentation,
     },
+    {
+      title: "AI/ML · py",
+      tag: "Data Course",
+      icon: BrainCircuit,
+      description:
+        "Foundations of AI/ML: Machine Learning, Deep Learning, Neural Networks, Model Evaluation, and Deployment workflows with Python.",
+      href: "/learn/ai_ml-py",
+      accent: "#dfbe00",
+    },
   ],
   javascript: [
     {
@@ -242,6 +252,7 @@ export const learnNavByLanguage = {
     { label: "NumPy", to: "/learn/numpy-py" },
     { label: "Pandas", to: "/learn/pandas-py" },
     { label: "Matplotlib", to: "/learn/matplotlib-py" },
+    { label: "AI/ML", to: "/learn/ai_ml-py" },
   ],
   javascript: [{ label: "JS Basics", to: "/learn/js-fundamentals" }],
   php: [{ label: "PHP Basics", to: "/learn/php-fundamentals" }],
@@ -260,7 +271,8 @@ export function inferLanguageFromLearnPath(pathname = "") {
   if (
     pathname.startsWith("/learn/numpy-py") ||
     pathname.startsWith("/learn/pandas-py") ||
-    pathname.startsWith("/learn/matplotlib-py")
+    pathname.startsWith("/learn/matplotlib-py") ||
+    pathname.startsWith("/learn/ai_ml-py")
   ) {
     return "python";
   }
