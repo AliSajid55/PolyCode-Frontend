@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import ProfileAvatar from "./ProfileAvatar";
-import ThemeSettingsMenu from "../../../shared/theme/ThemeSettingsMenu";
 import {
   getDisplayBio,
   getDisplayName,
@@ -12,15 +11,16 @@ export default function ProfileHero({
   user,
   isAuthenticated,
   canEdit = false,
-  totalStreak,
+  totalStreak = 0,
+  totalCompleted = 0,
+  totalLessons = 0,
+  totalPct = 0,
   editOpen,
   onToggleEdit,
   isFollowing = false,
   followSaving = false,
   onToggleFollow,
   onLoadConnections,
-  theme = "dark",
-  onThemeChange,
 }) {
   const [activeList, setActiveList] = useState(null);
   const [connectionUsers, setConnectionUsers] = useState([]);
@@ -155,24 +155,27 @@ export default function ProfileHero({
           )}
         </div>
 
-        <div className="profile-hero-side">
-          <div className="profile-total-progress">
-            <span>Current Streak</span>
-            <strong>{totalStreak} days</strong>
-          </div>
-          {typeof onThemeChange === "function" ? (
-            <div className="profile-appearance">
-              <span className="profile-appearance-label">Appearance</span>
-              <ThemeSettingsMenu
-                theme={theme}
-                onThemeChange={onThemeChange}
-                buttonClassName="profile-theme-btn"
-                panelClassName="profile-theme-panel theme-settings-panel"
-                align="left"
-              />
+        {canEdit ? (
+          <div className="profile-hero-side">
+            <div className="profile-hero-metrics">
+              <div className="profile-hero-metric">
+                <span>Current streak</span>
+                <strong>
+                  {totalStreak}{" "}
+                  {totalStreak === 1 ? "day" : "days"}
+                </strong>
+              </div>
+              <div className="profile-hero-metric">
+                <span>Lessons done</span>
+                <strong>
+                  {totalCompleted}/{totalLessons}
+                </strong>
+              </div>
+              <div className="profile-hero-metric">
+                <span>Overall progress</span>
+                <strong>{totalPct}%</strong>
+              </div>
             </div>
-          ) : null}
-          {canEdit && (
             <button
               type="button"
               className="profile-hero-edit-btn"
@@ -181,8 +184,8 @@ export default function ProfileHero({
             >
               {editOpen ? "Close edit" : "Edit profile"}
             </button>
-          )}
-        </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );

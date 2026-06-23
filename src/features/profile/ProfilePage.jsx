@@ -245,7 +245,7 @@ function getCompletedTrackCertificate(track) {
   };
 }
 
-export default function ProfilePage({ theme = "dark", onThemeChange }) {
+export default function ProfilePage() {
   const { username } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -522,14 +522,15 @@ export default function ProfilePage({ theme = "dark", onThemeChange }) {
         isAuthenticated={isAuthenticated}
         canEdit={isAuthenticated && isOwnProfile}
         totalStreak={totalStreak}
+        totalCompleted={totalCompleted}
+        totalLessons={totalLessons}
+        totalPct={totalPct}
         editOpen={editOpen}
         onToggleEdit={() => setEditOpen((open) => !open)}
         isFollowing={isFollowing}
         followSaving={followSaving}
         onToggleFollow={handleToggleFollow}
         onLoadConnections={loadProfileConnections}
-        theme={theme}
-        onThemeChange={onThemeChange}
       />
 
       {followError && (

@@ -119,6 +119,7 @@
 }
 
 .main-content.learn-content:has(.profile-page) .profile-total-progress strong,
+.main-content.learn-content:has(.profile-page) .profile-hero-metric strong,
 .main-content.learn-content:has(.profile-page) .profile-activity-head strong {
   color: var(--profile-accent);
 }
@@ -128,9 +129,13 @@
 .main-content.learn-content:has(.profile-page) .profile-track-card,
 .main-content.learn-content:has(.profile-page) .profile-edit-card,
 .main-content.learn-content:has(.profile-page) .profile-total-progress,
-.main-content.learn-content:has(.profile-page) .profile-appearance {
+.main-content.learn-content:has(.profile-page) .profile-hero-metrics {
   background: var(--profile-surface-bg);
   border-color: var(--profile-surface-border);
+}
+
+.main-content.learn-content:has(.profile-page) .profile-hero-metric {
+  border-bottom-color: var(--profile-surface-border);
 }
 
 .main-content.learn-content:has(.profile-page) .profile-activity-cell,
@@ -186,66 +191,4 @@
 
 .main-content.learn-content:has(.profile-page) .profile-edit-lang-chip input {
   accent-color: var(--profile-accent);
-}
-
-/* In-page theme picker */
-.profile-appearance {
-  padding: 12px 14px;
-  border: 1px solid var(--profile-surface-border, var(--border));
-  border-radius: 10px;
-  background: var(--profile-surface-bg, var(--ink-2));
-}
-
-.profile-appearance-label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--txt-3, #60607a);
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.profile-theme-btn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  padding: 9px 11px;
-  border: 1px solid var(--profile-accent-border, var(--border));
-  border-radius: 8px;
-  background: var(--profile-accent-dim, rgba(255, 255, 255, 0.04));
-  color: var(--txt-0);
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    border-color 0.15s,
-    background 0.15s;
-}
-
-.profile-theme-btn:hover {
-  border-color: var(--profile-accent);
-  background: color-mix(in srgb, var(--profile-accent) 14%, transparent);
-}
-
-.profile-theme-btn .theme-settings-btn-label {
-  color: var(--profile-accent);
-}
-
-.profile-theme-panel {
-  right: auto;
-  left: 0;
-  min-width: 240px;
-}
-
-.app.theme-light .profile-theme-btn {
-  background: #f8fafc;
-  color: #0f172a;
-}
-
-.app.theme-light .profile-theme-btn .theme-settings-btn-label {
-  color: #4f46e5;
 }

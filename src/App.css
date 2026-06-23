@@ -5716,7 +5716,32 @@ body {
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
-  min-width: 130px;
+  min-width: 168px;
+}
+
+.profile-hero-metrics {
+  display: grid;
+  border: 1px solid var(--border, #1e2433);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+  overflow: hidden;
+}
+
+.profile-hero-metric {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border, #1e2433);
+}
+
+.profile-hero-metric:last-child {
+  border-bottom: none;
+}
+
+.profile-hero-metric strong {
+  display: block;
+  color: var(--profile-accent, var(--acid, #ffe566));
+  font-size: 1.2rem;
+  line-height: 1.2;
+  margin-top: 4px;
 }
 
 .profile-total-progress {
@@ -5728,19 +5753,28 @@ body {
 }
 
 .profile-hero-edit-btn {
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid rgba(184, 255, 0, 0.35);
-  background: rgba(184, 255, 0, 0.12);
-  color: var(--acid, #ffe566);
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--profile-accent-border, rgba(184, 255, 0, 0.35));
+  background: var(--profile-accent-dim, rgba(184, 255, 0, 0.12));
+  color: var(--profile-accent, var(--acid, #ffe566));
   font: inherit;
   font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
+  text-align: center;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease;
 }
 
 .profile-hero-edit-btn:hover {
-  background: rgba(184, 255, 0, 0.2);
+  border-color: var(--profile-accent, var(--acid, #ffe566));
+  background: color-mix(
+    in srgb,
+    var(--profile-accent, var(--acid, #ffe566)) 18%,
+    transparent
+  );
 }
 
 .profile-edit-card--below-hero {
@@ -5782,6 +5816,7 @@ body {
 }
 
 .profile-total-progress span,
+.profile-hero-metric span,
 .profile-overview-grid span,
 .profile-activity-head span,
 .profile-track-head span,
