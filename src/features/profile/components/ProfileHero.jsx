@@ -138,7 +138,9 @@ export default function ProfileHero({
                       to={`/@${connectionUser.username}`}
                       className="profile-connection-user"
                     >
-                      <ProfileAvatar user={connectionUser} size="sm" />
+                      <div className="profile-connection-avatar">
+                        <ProfileAvatar user={connectionUser} size="sm" />
+                      </div>
                       <span>
                         <strong>
                           {getDisplayName(connectionUser)}
