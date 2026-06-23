@@ -4,6 +4,7 @@
 
 import { applyLessonVideoLinks } from "../../shared/applyLessonVideoLinks";
 import { NUMPY_VIDEO_LINKS } from "./numpyVideoLinks";
+import { NUMPY_LESSON_OUTCOMES } from "./numpyLessonOutcomes";
 
 export const NUMPY_CHAPTERS = [
   {
@@ -4533,6 +4534,7 @@ export const NUMPY_LESSONS = applyLessonVideoLinks(
   NUMPY_CHAPTERS.flatMap((ch) =>
     ch.lessons.map((l) => ({
       ...l,
+      outcomes: l.outcomes ?? NUMPY_LESSON_OUTCOMES[l.id] ?? [],
       chapterId: ch.id,
       chapterTitle: ch.title,
       chapterColor: ch.color,

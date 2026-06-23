@@ -4,6 +4,7 @@
 /* ── Tokens ── */
 :root {
   --nav-h: 70px;
+  --footer-h: 3.25rem;
   --side-w: 280px;
   --radius: 12px;
   --radius-sm: 8px;
@@ -195,9 +196,10 @@ body {
 /* ── Global Footer ───────────────────────────── */
 .app-footer {
   position: relative;
-  z-index: 2;
+  z-index: 1200;
   width: 100%;
   margin-top: auto;
+  flex-shrink: 0;
   padding: 0 clamp(1rem, 4vw, 2rem);
   border-top: 1px solid var(--border);
   background: var(--surface-0, #060a10);
@@ -206,7 +208,7 @@ body {
 
 .app-footer-inner {
   width: min(72rem, 100%);
-  min-height: 3.25rem;
+  min-height: var(--footer-h);
   margin: 0 auto;
   padding: 0.75rem 0;
   display: flex;
@@ -493,8 +495,24 @@ body {
 ══════════════════════════════════════════════ */
 .layout {
   display: flex;
+  align-items: stretch;
   margin-top: var(--nav-h);
-  min-height: calc(100vh - var(--nav-h));
+  min-height: calc(100vh - var(--nav-h) - var(--footer-h));
+  position: relative;
+}
+
+.layout::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--side-w);
+  height: 100%;
+  background: rgba(3, 5, 10, 0.9);
+  backdrop-filter: blur(24px) saturate(160%);
+  border-right: 1px solid var(--border);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* ══════════════════════════════════════════════
@@ -503,17 +521,16 @@ body {
 .sidebar {
   width: var(--side-w);
   flex-shrink: 0;
-  position: fixed;
+  position: sticky;
   top: var(--nav-h);
-  left: 0;
-  height: calc(100vh - var(--nav-h));
-  background: rgba(3, 5, 10, 0.9);
-  backdrop-filter: blur(24px) saturate(160%);
-  border-right: 1px solid var(--border);
+  align-self: flex-start;
+  height: calc(100vh - var(--nav-h) - var(--footer-h));
+  max-height: calc(100vh - var(--nav-h) - var(--footer-h));
+  background: transparent;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 24px 0 40px;
-  z-index: 1100;
+  z-index: 1;
   transition:
     transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 0.3s ease;
@@ -887,12 +904,11 @@ body {
    MAIN CONTENT
 ══════════════════════════════════════════════ */
 .main-content {
-  margin-left: var(--side-w);
   flex: 1;
   padding: 80px 60px;
   max-width: 1400px;
   min-width: 0;
-  transition: margin-left 0.3s ease;
+  transition: flex 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-close {
@@ -2487,12 +2503,6 @@ body {
   display: none;
 }
 
-/* Adjust main content based on sidebar */
-.main-content {
-  margin-left: var(--side-w);
-  transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 /* Mobile docs sidebar — see responsive.css + @media (max-width: 900px) block below */
 
 @media (max-width: 600px) {
@@ -3536,6 +3546,12 @@ body {
   border-right: 1px solid var(--border);
 }
 
+.app.theme-light .layout::before {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-right: 1px solid var(--border);
+}
+
 .app.theme-light .hero h1 {
   color: #0f172a;
 }
@@ -3993,6 +4009,11 @@ body {
   margin-left: 0;
   width: 100%;
   max-width: none;
+  padding: calc(var(--nav-h) + 16px) clamp(1rem, 4vw, 2.5rem) 48px;
+}
+
+.main-content.learn-content:has(.oops-lesson-page) {
+  padding: 0;
 }
 
 .oops-hero {
@@ -4564,14 +4585,14 @@ body {
 .oops-chapter-cta {
   width: 100%;
   padding: 10px;
-  background: var(--vscode-blue, #007acc);
-  color: #fff;
+  background: var(--learn-action-bg, var(--vscode-blue, #007acc));
+  color: var(--learn-action-text, #fff);
   font-weight: 700;
   font-size: 0.82rem;
   border: none;
   border-radius: 7px;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, filter 0.15s;
 }
 
 .oops-chapter-cta:hover {
@@ -4582,8 +4603,10 @@ body {
 
 .oops-lesson-page {
   display: flex;
-  min-height: calc(100vh - var(--nav-h, 70px));
-  align-items: flex-start;
+  box-sizing: border-box;
+  min-height: calc(100vh - var(--footer-h, 3.25rem));
+  padding-top: var(--nav-h, 70px);
+  align-items: stretch;
 }
 
 .oops-lesson-main {
@@ -7032,49 +7055,6 @@ body {
   border-top: 1px solid var(--border, #1e2433);
 }
 
-.oops-notes-panel {
-  display: grid;
-  gap: 10px;
-  margin: 24px 0 0;
-  padding: 16px;
-  border: 1px solid var(--border, #1e2433);
-  border-radius: 10px;
-  background: var(--ink-2, #0d1117);
-}
-
-.oops-notes-panel h3 {
-  margin: 6px 0 0;
-  color: var(--txt-0, #f0f0ff);
-  font-size: 1rem;
-}
-
-.oops-notes-panel textarea {
-  min-height: 110px;
-  resize: vertical;
-  border: 1px solid var(--border, #1e2433);
-  border-radius: 8px;
-  padding: 12px;
-  background: var(--ink, #03050a);
-  color: var(--txt-1, #c0c8e0);
-  font: inherit;
-  outline: none;
-}
-
-.oops-notes-panel textarea:focus {
-  border-color: var(--acid, #ffe566);
-}
-
-.oops-notes-panel button {
-  justify-self: end;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  background: var(--acid, #ffe566);
-  color: var(--ink, #03050a);
-  font-weight: 800;
-  cursor: pointer;
-}
-
 .oops-confidence-panel {
   display: grid;
   grid-template-columns: minmax(220px, 0.8fr) 1fr;
@@ -7170,10 +7150,13 @@ body {
 }
 
 @media (min-width: 901px) {
-  .oops-sidebar {
+  .oops-sidebar-sticky {
     position: sticky;
     top: var(--nav-h, 70px);
-    height: calc(100vh - var(--nav-h, 70px));
+    max-height: calc(100vh - var(--nav-h, 70px) - var(--footer-h, 3.25rem));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 }
 
@@ -7326,6 +7309,42 @@ body {
   font-size: 0.82rem;
   line-height: 1.6;
   white-space: pre-wrap;
+}
+
+.oops-output-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.oops-plot-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.oops-plot-frame {
+  margin: 0;
+  padding: 0.5rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.oops-plot-frame img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.app.theme-light .oops-plot-frame {
+  background: #f8fafc;
+  border-color: #e2e8f0;
 }
 
 .oops-output-running .oops-output-body {
@@ -7551,12 +7570,20 @@ body {
 .oops-sidebar {
   width: 260px;
   flex-shrink: 0;
+  align-self: stretch;
+  min-height: calc(100vh - var(--nav-h, 70px) - var(--footer-h, 3.25rem));
   border-right: 1px solid var(--border, #1e2433);
   background: var(--ink-2, #0d1117);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   transition: width 0.2s ease;
+}
+
+.oops-sidebar-sticky {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .oops-sidebar-collapsed {
@@ -7570,6 +7597,8 @@ body {
   padding: 12px 14px;
   border-bottom: 1px solid var(--border, #1e2433);
   gap: 8px;
+  flex-shrink: 0;
+  background: var(--ink-2, #0d1117);
 }
 
 .oops-sidebar-title {
@@ -7603,6 +7632,7 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 8px 0;
+  min-height: 0;
 }
 
 .oops-sidebar-chapter-btn {
@@ -7773,6 +7803,300 @@ body {
   );
 }
 
+.matplotlib-hub .matplotlib-hero {
+  background:
+    linear-gradient(135deg, rgba(35, 145, 32, 0.2), transparent 48%),
+    linear-gradient(180deg, rgba(74, 222, 128, 0.08), transparent 60%),
+    var(--vscode-panel, #252526);
+}
+
+.matplotlib-hub .oops-hero-accent {
+  color: #4ade80;
+}
+
+.matplotlib-hub .matplotlib-hero::before {
+  background: radial-gradient(
+    circle,
+    rgba(35, 145, 32, 0.14) 0%,
+    transparent 70%
+  );
+}
+
+.matplotlib-learn-path {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0 0 2rem;
+}
+
+.matplotlib-path-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 0.25rem 0.35rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.matplotlib-path-label span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4ade80;
+}
+
+.matplotlib-path-label small {
+  font-size: 0.75rem;
+  color: var(--txt-3, #6e7891);
+}
+
+.matplotlib-path-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.875rem;
+}
+
+.matplotlib-path-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem 1.05rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--stage-color) 12%, transparent), transparent 55%),
+    rgba(255, 255, 255, 0.025);
+}
+
+.matplotlib-path-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.matplotlib-path-level {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--stage-color);
+}
+
+.matplotlib-path-pct {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--txt-2, #9aa3bc);
+}
+
+.matplotlib-path-summary {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--txt-1, #c0c8e0);
+}
+
+.matplotlib-path-chapters {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.matplotlib-path-chapters li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  color: var(--txt-2, #9aa3bc);
+}
+
+.matplotlib-path-cta {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--stage-color) 35%, transparent);
+  background: color-mix(in srgb, var(--stage-color) 10%, transparent);
+  color: var(--txt-0, #f0f0ff);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.matplotlib-path-cta:hover {
+  background: color-mix(in srgb, var(--stage-color) 18%, transparent);
+  border-color: color-mix(in srgb, var(--stage-color) 50%, transparent);
+}
+
+@media (max-width: 1100px) {
+  .matplotlib-path-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .matplotlib-path-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.matplotlib-prerequisites {
+  margin: 0 0 2rem;
+  padding: 1.25rem 1.35rem;
+  border-radius: 14px;
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  background:
+    linear-gradient(135deg, rgba(35, 145, 32, 0.1), transparent 55%),
+    rgba(255, 255, 255, 0.02);
+}
+
+.matplotlib-prerequisites-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.matplotlib-prerequisites-head span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4ade80;
+}
+
+.matplotlib-prerequisites-head small {
+  font-size: 0.75rem;
+  color: var(--txt-3, #6e7891);
+}
+
+.matplotlib-prerequisites-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.matplotlib-prereq-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.matplotlib-prereq-card:hover {
+  border-color: rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.06);
+}
+
+.matplotlib-prereq-card strong {
+  font-size: 0.875rem;
+  color: var(--txt-0, #f0f0ff);
+}
+
+.matplotlib-prereq-card p {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--txt-2, #9aa3bc);
+}
+
+.matplotlib-prereq-cheat {
+  border-color: rgba(74, 222, 128, 0.25);
+  background: rgba(74, 222, 128, 0.05);
+}
+
+.matplotlib-runtime-note {
+  margin: 1rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--txt-2, #9aa3bc);
+}
+
+.matplotlib-runtime-note code {
+  font-size: 0.78rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: rgba(74, 222, 128, 0.12);
+  color: #86efac;
+}
+
+@media (max-width: 900px) {
+  .matplotlib-prerequisites-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .matplotlib-prerequisites-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lesson-objectives,
+.lesson-scenario {
+  display: flex;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--lesson-accent, #4f46e5) 35%, transparent);
+  background: color-mix(in srgb, var(--lesson-accent, #4f46e5) 8%, transparent);
+}
+
+.lesson-scenario {
+  border-color: rgba(0, 212, 255, 0.28);
+  background: rgba(0, 212, 255, 0.06);
+}
+
+.lesson-objectives-icon,
+.lesson-scenario-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.lesson-objectives strong,
+.lesson-scenario strong {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  color: var(--txt-0, #f0f0ff);
+}
+
+.lesson-objectives ul {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.lesson-objectives li,
+.lesson-scenario p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--txt-1, #c0c8e0);
+}
+
+/* Legacy lesson notes UI — feature removed */
+.numpy-notes-panel,
+.oops-notes-panel {
+  display: none !important;
+}
+
 .numpy-intro-theory {
   max-width: 780px;
   margin: 0 auto;
@@ -7786,6 +8110,61 @@ body {
   background:
     linear-gradient(135deg, rgba(79, 70, 229, 0.14), transparent 55%),
     rgba(255, 255, 255, 0.02);
+}
+
+.numpy-lesson-outcomes {
+  margin: 0 0 28px;
+  padding: 20px 22px;
+  border-radius: 10px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  background: color-mix(in srgb, var(--vscode-panel, #12141c) 88%, transparent);
+}
+
+.numpy-outcomes-heading {
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--txt-2, #a0a0b8);
+}
+
+.numpy-outcomes-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.numpy-outcomes-list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: var(--txt-1, #e0e0e8);
+}
+
+.numpy-outcomes-list li::before {
+  content: "✓";
+  flex-shrink: 0;
+  margin-top: 0.1em;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--numpy-accent, #818cf8);
+  background: none;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.numpy-learn-path {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .numpy-chapter-badge {
@@ -7813,27 +8192,19 @@ body {
   margin: 0;
 }
 
-.numpy-learn-path {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
 .numpy-path-label {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 4px 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  align-items: center;
+  padding: 0 2px 10px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
 }
 
 .numpy-path-label span {
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--acid, #ffe566);
+  color: var(--txt-3, #60607a);
 }
 
 .numpy-path-label small {
@@ -8391,7 +8762,6 @@ body {
   color: var(--txt-1, #c0c8e0);
 }
 
-.numpy-notes-panel,
 .numpy-confidence-panel {
   margin-top: 28px;
   padding: 20px;
@@ -8400,42 +8770,10 @@ body {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.numpy-notes-panel h3,
 .numpy-confidence-panel h3 {
   margin: 0 0 8px;
   font-size: 1rem;
   color: var(--txt-0, #f0f0ff);
-}
-
-.numpy-notes-hint {
-  margin: 0 0 12px;
-  font-size: 0.88rem;
-  color: var(--txt-2, #6e7891);
-}
-
-.numpy-notes-panel textarea {
-  width: 100%;
-  min-height: 88px;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.25);
-  color: var(--txt-1, #c0c8e0);
-  font-family: inherit;
-  font-size: 0.92rem;
-  resize: vertical;
-  box-sizing: border-box;
-}
-
-.numpy-notes-save {
-  margin-top: 10px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: none;
-  background: rgba(79, 70, 229, 0.85);
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .numpy-confidence-options {
@@ -8932,8 +9270,7 @@ body {
   z-index: 1;
 }
 
-.lesson-annotator-content .numpy-notes-panel,
-.lesson-annotator-content .oops-notes-panel,
+.lesson-annotator-content .numpy-lesson-outcomes,
 .lesson-annotator-content .numpy-confidence-panel,
 .lesson-annotator-content .numpy-mark-read-panel,
 .lesson-annotator-content .numpy-theory-actions,

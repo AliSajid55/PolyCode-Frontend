@@ -1,4 +1,5 @@
 import { STARTERS } from "../constants/playgroundStarters";
+import { joinPath, normalizePath } from "./playgroundFileTree";
 
 const LOCAL_FILES_KEY = "polycode_playground_files_v1";
 
@@ -95,6 +96,9 @@ export function createWorkspace(language, seedCode) {
   });
   return {
     files: [file],
+    folders: [],
+    expandedFolders: { "": true },
+    selectedFolder: "",
     activeFileId: file.id,
     output: [],
     previewHTML: null,
@@ -129,6 +133,21 @@ export function nextUntitledName(language, files = []) {
   return candidate;
 }
 
+export function nextFileNameInFolder(language, files = [], folder = "") {
+  const base = defaultMainFileName(language).replace(/\.\w+$/, "");
+  const ext = defaultMainFileName(language).split(".").pop();
+  let index = 1;
+  let candidate = `${base}.${ext}`;
+  const names = new Set(files.map((file) => normalizePath(file.name)));
+
+  while (names.has(joinPath(folder, candidate))) {
+    index += 1;
+    candidate = `${base}-${index}.${ext}`;
+  }
+
+  return joinPath(folder, candidate);
+}
+
 export function loadLocalWorkspaces() {
   try {
     const raw = localStorage.getItem(LOCAL_FILES_KEY);
@@ -144,6 +163,9 @@ export function saveLocalWorkspaces(workspaces) {
     Object.entries(workspaces).forEach(([lang, workspace]) => {
       payload[lang] = {
         files: workspace.files,
+        folders: workspace.folders || [],
+        expandedFolders: workspace.expandedFolders || { "": true },
+        selectedFolder: workspace.selectedFolder || "",
         activeFileId: workspace.activeFileId,
       };
     });
@@ -161,7 +183,58 @@ export function mergeLocalWorkspace(language, seedCode) {
   return {
     ...createWorkspace(language),
     files: stored.files,
+    folders: stored.folders || [],
+    expandedFolders: stored.expandedFolders || { "": true },
+    selectedFolder: stored.selectedFolder || "",
     activeFileId: stored.activeFileId || stored.files[0]?.id,
     cloudLoaded: false,
   };
+}
+
+/** Normalize cloud/local files into sidebar “recent code” rows. */
+export function entriesFromCloudFiles(language, files = []) {
+  return files.map((file) => ({
+    id: file.id,
+    language: file.language || language,
+    name: file.name,
+    updatedAt: file.updatedAt || null,
+  }));
+}
+
+export function entriesFromWorkspaces(workspaces = {}) {
+  const rows = [];
+  Object.entries(workspaces).forEach(([lang, workspace]) => {
+    (workspace?.files || []).forEach((file) => {
+      rows.push({
+        id: file.serverId || file.id,
+        language: lang,
+        name: file.name,
+        updatedAt: file.updatedAt || null,
+      });
+    });
+  });
+  return rows;
+}
+
+export function mergeRecentEntries(lists, limit = 40) {
+  const byKey = new Map();
+
+  lists.flat().forEach((entry) => {
+    if (!entry?.id || !entry?.language || !entry?.name) return;
+    const key = `${entry.language}:${entry.id}`;
+    const prev = byKey.get(key);
+    const prevTime = prev?.updatedAt ? new Date(prev.updatedAt).getTime() : 0;
+    const nextTime = entry.updatedAt ? new Date(entry.updatedAt).getTime() : 0;
+    if (!prev || nextTime >= prevTime) {
+      byKey.set(key, entry);
+    }
+  });
+
+  return [...byKey.values()]
+    .sort((a, b) => {
+      const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      return tb - ta;
+    })
+    .slice(0, limit);
 }

@@ -14,6 +14,7 @@ import {
 } from "../../shared/runPython";
 import ChallengeCompleteCelebration from "../../shared/ChallengeCompleteCelebration";
 import { useChallengeCelebration } from "../../shared/useChallengeCelebration";
+import PythonRunOutput from "../../shared/PythonRunOutput";
 
 function normalizeWhitespace(value = "") {
   return value.replace(/\s+/g, "");
@@ -190,9 +191,12 @@ export default function PythonCodeChallenge({
         status: allPassed ? "pass" : "fail",
         stdout:
           stdout ||
-          (runtime === "server"
-            ? "Program ran on server (no printed output)."
-            : "Program ran in browser (no printed output)."),
+          (runResult.plotImages?.length
+            ? `Rendered ${runResult.plotImages.length} chart${runResult.plotImages.length > 1 ? "s" : ""}.`
+            : runtime === "server"
+              ? "Program ran on server (no printed output)."
+              : "Program ran in browser (no printed output)."),
+        plotImages: runResult.plotImages || [],
         expected: expectedOutput,
       });
 
@@ -369,9 +373,17 @@ export default function PythonCodeChallenge({
             <span>Output</span>
             <small>{output ? "after last run" : "waiting for run"}</small>
           </div>
-          <pre className="oops-output-body">
-            {output?.stdout || "Run your code to see output here."}
-          </pre>
+          <PythonRunOutput
+            stdout={output?.stdout}
+            plotImages={output?.plotImages}
+            emptyHint="Run your code to see output here."
+          />
+          {output?.expected && (
+            <div className="oops-expected-output">
+              <span>Expected</span>
+              <code>{output.expected}</code>
+            </div>
+          )}
         </div>
       </div>
 

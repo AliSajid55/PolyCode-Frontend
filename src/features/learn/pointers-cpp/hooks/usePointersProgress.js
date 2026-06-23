@@ -3,7 +3,6 @@ import { useAuth } from "../../../auth/context/AuthContext";
 
 const LOCAL_KEY = "pointers_cpp_progress";
 const LOCAL_CODE_KEY = "pointers_cpp_saved_code";
-const LOCAL_NOTES_KEY = "pointers_cpp_notes";
 const LOCAL_BOOKMARKS_KEY = "pointers_cpp_bookmarks";
 const LOCAL_LAST_KEY = "pointers_cpp_last_lesson";
 
@@ -25,21 +24,14 @@ export default function usePointersProgress() {
     return {
       completed: readJson(LOCAL_KEY, {}),
       savedCode: readJson(LOCAL_CODE_KEY, {}),
-      notes: readJson(LOCAL_NOTES_KEY, {}),
       bookmarks: readJson(LOCAL_BOOKMARKS_KEY, []),
     };
   }, [localVersion]);
 
   const completedMap = localSnapshot.completed;
   const savedCodeMap = localSnapshot.savedCode;
-  const notesMap = localSnapshot.notes;
   const bookmarks = localSnapshot.bookmarks;
   const lastLessonId = localStorage.getItem(LOCAL_LAST_KEY);
-
-  const getLessonNote = useCallback(
-    (id) => localSnapshot.notes[id] || "",
-    [localSnapshot],
-  );
 
   const completeLesson = useCallback(
     async (lesson) => {
@@ -70,16 +62,6 @@ export default function usePointersProgress() {
     [refreshLocal],
   );
 
-  const saveNote = useCallback(
-    async (lessonId, note) => {
-      const current = readJson(LOCAL_NOTES_KEY, {});
-      current[lessonId] = note;
-      localStorage.setItem(LOCAL_NOTES_KEY, JSON.stringify(current));
-      refreshLocal();
-    },
-    [refreshLocal],
-  );
-
   const toggleBookmark = useCallback(
     async (lessonId) => {
       const current = readJson(LOCAL_BOOKMARKS_KEY, []);
@@ -100,15 +82,12 @@ export default function usePointersProgress() {
     remoteProgress: null,
     completedMap,
     savedCodeMap,
-    notesMap,
     bookmarks,
     lastLessonId,
     completeLesson,
     rememberLesson,
     saveCode,
-    saveNote,
     toggleBookmark,
     addTime,
-    getLessonNote,
   };
 }

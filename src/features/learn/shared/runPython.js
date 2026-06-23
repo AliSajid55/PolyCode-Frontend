@@ -1,5 +1,9 @@
 import { executeCode } from "../../playground/services/BrowserExecutor";
 import { getApiBase } from "../../../config/apiBase";
+import {
+  mergePythonRunResult,
+  codeUsesMatplotlib,
+} from "./pythonPlotOutput";
 
 async function runPythonOnServer(source) {
   const endpoints = ["/challenges/run-python", "/documents/run-python"];
@@ -24,7 +28,7 @@ async function runPythonOnServer(source) {
         );
         continue;
       }
-      return payload;
+      return mergePythonRunResult(payload);
     } catch (error) {
       lastError = error;
     } finally {
@@ -36,12 +40,17 @@ async function runPythonOnServer(source) {
 }
 
 async function runPythonInBrowser(source) {
-  return executeCode(source, "python");
+  return mergePythonRunResult(await executeCode(source, "python"));
 }
 
-export async function runPythonCode(source) {
+async function runPythonWithServerFirst(source) {
   try {
-    return { result: await runPythonOnServer(source), runtime: "server" };
+    const result = await runPythonOnServer(source);
+    const runtimeError = getPythonRuntimeError(result);
+    if (runtimeError) {
+      throw new Error(runtimeError);
+    }
+    return { result, runtime: "server" };
   } catch (serverError) {
     try {
       return { result: await runPythonInBrowser(source), runtime: "browser" };
@@ -53,6 +62,34 @@ export async function runPythonCode(source) {
       );
     }
   }
+}
+
+async function runPythonWithBrowserFirst(source) {
+  try {
+    return { result: await runPythonInBrowser(source), runtime: "browser" };
+  } catch (browserError) {
+    try {
+      const result = await runPythonOnServer(source);
+      const runtimeError = getPythonRuntimeError(result);
+      if (runtimeError) {
+        throw new Error(runtimeError);
+      }
+      return { result, runtime: "server" };
+    } catch (serverError) {
+      throw new Error(
+        browserError.message ||
+          serverError.message ||
+          "Could not run Python. Matplotlib needs the in-browser runtime (Pyodide) or matplotlib installed on the server.",
+      );
+    }
+  }
+}
+
+export async function runPythonCode(source) {
+  if (codeUsesMatplotlib(source)) {
+    return runPythonWithBrowserFirst(source);
+  }
+  return runPythonWithServerFirst(source);
 }
 
 export function formatPythonOutput(result = {}) {

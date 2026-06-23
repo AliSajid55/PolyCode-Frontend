@@ -1,10 +1,26 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { Sparkles } from "lucide-react";
+import { useAuth } from "../../auth/context/AuthContext";
+import { resolveResumePath } from "../../../shared/navigation/lastRoute";
 
 export default function Hero() {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const reduceMotion = useReducedMotion();
+  const isLoggedIn = !loading && Boolean(user);
+
+  function handlePrimaryAction() {
+    if (isLoggedIn) {
+      const fallback = localStorage.getItem("selectedLanguage")
+        ? "/hub"
+        : "/select-language";
+      navigate(resolveResumePath(fallback));
+      return;
+    }
+    navigate("/login");
+  }
 
   return (
     <section className="landing-hero" id="top">
@@ -30,9 +46,13 @@ export default function Hero() {
             mentoring, and built-in security analysis in one platform.
           </p>
           <div className="landing-hero-actions">
-            <Link to="/login" className="landing-btn-primary">
-              Get Started
-            </Link>
+            <button
+              type="button"
+              className="landing-btn-primary"
+              onClick={handlePrimaryAction}
+            >
+              {isLoggedIn ? "Resume" : "Get Started"}
+            </button>
           </div>
         </motion.div>
 
@@ -42,11 +62,15 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
         >
-          <img
-            className="landing-hero-image"
-            src="/images/herooooo.png"
-            alt="PolyCode platform — Learn, Code, Secure with PolyMentor, courses, and PolyGuard"
-          />
+          <div className="landing-hero-image-glow" aria-hidden />
+          <div className="landing-hero-image-aura" aria-hidden />
+          <div className="landing-hero-image-frame">
+            <img
+              className="landing-hero-image"
+              src="/images/herooooo.png"
+              alt="PolyCode platform — Learn, Code, Secure with PolyMentor, courses, and PolyGuard"
+            />
+          </div>
         </motion.div>
       </div>
     </section>

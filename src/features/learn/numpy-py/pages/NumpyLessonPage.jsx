@@ -76,15 +76,12 @@ export default function NumpyLessonPage() {
     isAuthenticated,
     completedMap: progress,
     savedCodeMap,
-    getLessonNote,
     bookmarks,
     completeLesson,
     rememberLesson,
     saveCode,
-    saveNote,
     toggleBookmark,
   } = useNumpyProgress();
-  const [noteDraft, setNoteDraft] = useState("");
   const codeSaveTimer = useRef(null);
 
   const lesson = NUMPY_LESSONS.find((item) => item.id === lessonId);
@@ -123,10 +120,6 @@ export default function NumpyLessonPage() {
     if (lessonId) rememberLesson(lessonId);
   }, [lessonId, rememberLesson]);
 
-  useEffect(() => {
-    setNoteDraft(getLessonNote(lessonId));
-  }, [lessonId, getLessonNote]);
-
   useEffect(
     () => () => {
       window.clearTimeout(codeSaveTimer.current);
@@ -157,10 +150,6 @@ export default function NumpyLessonPage() {
 
   async function handleChallengeComplete() {
     await completeLesson(lesson);
-  }
-
-  function handleSaveNote() {
-    saveNote(lessonId, noteDraft);
   }
 
   function handleCodeChange(code) {
@@ -253,9 +242,6 @@ export default function NumpyLessonPage() {
             useFriendlyTheory ? (
               <NumpyIntroTheory
                 lesson={lesson}
-                noteDraft={noteDraft}
-                onNoteChange={setNoteDraft}
-                onSaveNote={handleSaveNote}
                 confidence={confidence}
                 onConfidenceChange={handleConfidenceChange}
                 markedAsRead={markedAsRead}
@@ -345,21 +331,6 @@ export default function NumpyLessonPage() {
                   runnableCodeLangs={["python"]}
                 />
               ))}
-
-              <div className="oops-notes-panel">
-                <div>
-                  <span className="oops-interactive-label">Lesson Notes</span>
-                  <h3>Your notes</h3>
-                </div>
-                <textarea
-                  value={noteDraft}
-                  onChange={(e) => setNoteDraft(e.target.value)}
-                  placeholder="Write a NumPy rule or gotcha..."
-                />
-                <button type="button" onClick={handleSaveNote}>
-                  Save Note
-                </button>
-              </div>
 
               <div className="oops-confidence-panel">
                 <div>

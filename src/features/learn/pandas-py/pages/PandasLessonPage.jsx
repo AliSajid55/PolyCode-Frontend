@@ -37,15 +37,12 @@ export default function PandasLessonPage() {
     isAuthenticated,
     completedMap: progress,
     savedCodeMap,
-    getLessonNote,
     bookmarks,
     completeLesson,
     rememberLesson,
     saveCode,
-    saveNote,
     toggleBookmark,
   } = usePandasProgress();
-  const [noteDraft, setNoteDraft] = useState("");
   const codeSaveTimer = useRef(null);
 
   const lesson = PANDAS_LESSONS.find((item) => item.id === lessonId);
@@ -69,10 +66,6 @@ export default function PandasLessonPage() {
   useEffect(() => {
     if (lessonId) rememberLesson(lessonId);
   }, [lessonId, rememberLesson]);
-
-  useEffect(() => {
-    setNoteDraft(getLessonNote(lessonId));
-  }, [lessonId, getLessonNote]);
 
   useEffect(
     () => () => {
@@ -102,10 +95,6 @@ export default function PandasLessonPage() {
 
   async function handleChallengeComplete() {
     await completeLesson(lesson);
-  }
-
-  function handleSaveNote() {
-    saveNote(lessonId, noteDraft);
   }
 
   function handleCodeChange(code) {
@@ -199,9 +188,6 @@ export default function PandasLessonPage() {
           {tab === "theory" ? (
             <NumpyIntroTheory
               lesson={lesson}
-              noteDraft={noteDraft}
-              onNoteChange={setNoteDraft}
-              onSaveNote={handleSaveNote}
               confidence={confidence}
               onConfidenceChange={handleConfidenceChange}
               markedAsRead={markedAsRead}

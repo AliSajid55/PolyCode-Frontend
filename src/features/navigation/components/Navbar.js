@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth/context/AuthContext";
 import { getLearnNavLinks } from "../../language/courseCatalog";
 import ProfileAvatar from "../../profile/components/ProfileAvatar";
@@ -127,8 +127,11 @@ export default function Navbar({
         >
           Home
         </button>
-        <Link to="/hub" className={isActive("/hub")}>
-          Docs hub
+        <Link
+          to="/playground"
+          className={`navbar-playground-link ${isActive("/playground")}`}
+        >
+          Playground
         </Link>
         <Link to="/search" className={isActive("/search")}>
           Search
@@ -138,14 +141,6 @@ export default function Navbar({
             {item.label}
           </Link>
         ))}
-        <NavLink
-          to="/playground"
-          className={({ isActive: a }) =>
-            `navbar-playground-link ${a ? "active" : ""}`
-          }
-        >
-          ▶ Playground
-        </NavLink>
       </div>
 
       <div className="navbar-actions">

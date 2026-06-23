@@ -38,16 +38,12 @@ export default function CsharpLessonPage() {
     isAuthenticated,
     completedMap: progress,
     savedCodeMap,
-    getLessonNote,
     bookmarks,
     completeLesson,
     rememberLesson,
     saveCode,
-    saveNote,
     toggleBookmark,
   } = useCsharpProgress();
-  
-  const [noteDraft, setNoteDraft] = useState("");
   const codeSaveTimer = useRef(null);
 
   const lesson = CSHARP_LESSONS.find((item) => item.id === lessonId);
@@ -74,10 +70,6 @@ export default function CsharpLessonPage() {
   useEffect(() => {
     if (lessonId) rememberLesson(lessonId);
   }, [lessonId, rememberLesson]);
-
-  useEffect(() => {
-    setNoteDraft(getLessonNote(lessonId));
-  }, [lessonId, getLessonNote]);
 
   useEffect(
     () => () => {
@@ -107,10 +99,6 @@ export default function CsharpLessonPage() {
 
   async function handleChallengeComplete() {
     await completeLesson(lesson);
-  }
-
-  function handleSaveNote() {
-    saveNote(lessonId, noteDraft);
   }
 
   function handleCodeChange(code) {
@@ -204,9 +192,6 @@ export default function CsharpLessonPage() {
           {tab === "theory" ? (
             <NumpyIntroTheory
               lesson={lesson}
-              noteDraft={noteDraft}
-              onNoteChange={setNoteDraft}
-              onSaveNote={handleSaveNote}
               confidence={confidence}
               onConfidenceChange={handleConfidenceChange}
               markedAsRead={markedAsRead}

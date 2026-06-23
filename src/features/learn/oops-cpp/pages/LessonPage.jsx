@@ -90,16 +90,13 @@ export default function LessonPage() {
     remoteProgress,
     completedMap: progress,
     savedCodeMap,
-    getLessonNote,
     bookmarks,
     completeLesson,
     rememberLesson,
     saveCode,
-    saveNote,
     toggleBookmark,
     addTime,
   } = useOopsProgress();
-  const [noteDraft, setNoteDraft] = useState("");
   const codeSaveTimer = useRef(null);
 
   const lesson = ALL_LESSONS.find((l) => l.id === lessonId);
@@ -137,10 +134,6 @@ export default function LessonPage() {
   useEffect(() => {
     if (lessonId) rememberLesson(lessonId);
   }, [lessonId, rememberLesson]);
-
-  useEffect(() => {
-    setNoteDraft(getLessonNote(lessonId));
-  }, [lessonId, getLessonNote]);
 
   useEffect(() => {
     if (!lessonId) return undefined;
@@ -184,10 +177,6 @@ export default function LessonPage() {
 
   async function handleChallengeComplete() {
     await completeLesson(lesson);
-  }
-
-  function handleSaveNote() {
-    saveNote(lessonId, noteDraft);
   }
 
   function handleCodeChange(code) {
@@ -379,21 +368,6 @@ export default function LessonPage() {
                 accentColor={lesson.chapterColor}
                 challengeLabel="Ready? Take the Challenge →"
               />
-
-              <div className="oops-notes-panel">
-                <div>
-                  <span className="oops-interactive-label">Lesson Notes</span>
-                  <h3>Capture your mental model</h3>
-                </div>
-                <textarea
-                  value={noteDraft}
-                  onChange={(e) => setNoteDraft(e.target.value)}
-                  placeholder="Write a short note, gotcha, or example you want to remember..."
-                />
-                <button type="button" onClick={handleSaveNote}>
-                  Save Note
-                </button>
-              </div>
             </div>
           ) : (
             <CodeChallenge

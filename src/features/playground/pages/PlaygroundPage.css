@@ -9,132 +9,89 @@
 
 .playground-page-header {
   flex-shrink: 0;
-  padding: 16px 24px 14px;
-  background: linear-gradient(to bottom, rgba(167, 139, 250, 0.04) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 20px 28px 16px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--accent, #a78bfa) 6%, transparent) 0%,
+    transparent 100%
+  );
+  border-bottom: 1px solid color-mix(in srgb, var(--border, rgba(255, 255, 255, 0.08)) 80%, transparent);
 }
 
 .pph-top {
   display: flex;
   align-items: baseline;
-  gap: 14px;
+  gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 .playground-page-header h1 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.35rem;
   font-weight: 800;
-  color: #e2d9fb;
+  color: var(--txt-0, #e2d9fb);
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   letter-spacing: -0.02em;
 }
 
 .pph-icon {
-  color: #a78bfa;
+  color: var(--accent, #a78bfa);
+  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--accent, #a78bfa) 40%, transparent));
 }
 
 .pph-sub {
   margin: 0;
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.28);
-}
-
-.pph-current {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.52);
-  background: rgba(167, 139, 250, 0.08);
-  border: 1px solid rgba(167, 139, 250, 0.22);
-  border-radius: 10px;
-  padding: 7px 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.pph-current strong {
-  color: #c4b5fd;
-  text-transform: capitalize;
-}
-
-.pph-pills {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-
-.pph-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.pph-section {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.pph-section-title {
-  width: 92px;
-  flex-shrink: 0;
-  padding-top: 6px;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.34);
-}
-
-.pph-pill {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  text-decoration: none;
-  transition: all 0.15s;
-  cursor: pointer;
-}
-
-.pph-pill:hover {
-  color: #fff;
-  background: rgba(167, 139, 250, 0.1);
-  border-color: rgba(167, 139, 250, 0.28);
-}
-
-.pph-pill.active {
-  color: #a78bfa;
-  background: rgba(167, 139, 250, 0.14);
-  border-color: rgba(167, 139, 250, 0.38);
-}
-
-.pph-note {
-  font-size: 0.55rem;
-  opacity: 0.45;
-  font-weight: 400;
-  padding-left: 4px;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.82rem;
+  color: var(--txt-2, rgba(255, 255, 255, 0.45));
+  line-height: 1.5;
 }
 
 .playground-page-body {
   flex: 1;
   overflow: auto;
-  padding: 14px 24px 18px;
+  padding: 16px 28px 24px;
   min-height: 0;
 }
 
 .playground-page-body .playground-root {
   height: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+html[data-theme="light"] .playground-page-header h1 {
+  color: #312e81;
+}
+
+html[data-theme="light"] .pph-sub {
+  color: #64748b;
+}
+
+html[data-theme="midnight"] .playground-page-header {
+  background: linear-gradient(
+    to bottom,
+    rgba(99, 102, 241, 0.1) 0%,
+    transparent 100%
+  );
+}
+
+html[data-theme="midnight"] .playground-page-header h1 {
+  color: #e4e9ff;
+}
+
+html[data-theme="midnight"] .pph-icon {
+  color: #818cf8;
+}
+
+html[data-theme="classic"] .pph-icon {
+  color: #ffb000;
+}
+
+html[data-theme="ocean"] .pph-icon {
+  color: #2dd4bf;
 }
 
 @media (max-width: 768px) {
@@ -144,26 +101,16 @@
   }
 
   .playground-page-body {
-    padding: 10px;
+    padding: 12px;
     overflow: visible;
   }
 
   .playground-page-body .playground-root {
     height: auto;
-    min-height: min(560px, 70vh);
+    min-height: min(600px, 72vh);
   }
 
   .playground-page-header {
-    padding: 12px 14px;
-  }
-
-  .pph-section {
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .pph-section-title {
-    width: auto;
-    padding-top: 0;
+    padding: 14px 16px;
   }
 }

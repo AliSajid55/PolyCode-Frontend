@@ -9,6 +9,33 @@ import useMatplotlibProgress from "../hooks/usematplotlibProgress";
 import CourseCertificate from "../../shared/CourseCertificate";
 const BASE_PATH = "/learn/matplotlib-py";
 
+const LEARNING_PATH = [
+  {
+    level: "Beginner",
+    chapters: ["foundations", "core-chart-types"],
+    color: "#2563eb",
+    summary: "Imports, first plots, chart types, and when to use each one.",
+  },
+  {
+    level: "Intermediate",
+    chapters: ["readable-charts", "layouts-composition", "real-world-data"],
+    color: "#7c3aed",
+    summary: "Labels, styling, subplots, and plotting NumPy/Pandas data.",
+  },
+  {
+    level: "Advanced",
+    chapters: ["advanced-visuals", "pro-workflows"],
+    color: "#dc2626",
+    summary: "Annotations, colormaps, exports, Seaborn, and batch workflows.",
+  },
+  {
+    level: "Pro",
+    chapters: ["publication-mastery"],
+    color: "#9333ea",
+    summary: "Publication checklist, capstone dashboard, and cheat sheet reference.",
+  },
+];
+
 function lessonPlainText(lesson) {
   return lesson.theory
     .filter((block) => block.type === "text" || block.type === "callout")
@@ -73,15 +100,16 @@ export default function MatplotlibHub() {
         >
           ← Python courses
         </Link>
-        <div className="oops-hero-badge">MATPLOTLIB · PYTHON TRACK</div>
+        <div className="oops-hero-badge">MATPLOTLIB · BEGINNER → PRO</div>
         <h1 className="oops-hero-title">
           Matplotlib
           <br />
           <span className="oops-hero-accent">for Python</span>
         </h1>
         <p className="oops-hero-sub">
-          Master plotting, charts, and customizing beautiful data visualizations
-          from scratch with hands-on Python challenges.
+          A structured path from your first line plot to publication-ready
+          dashboards — 8 chapters, 25 lessons, and hands-on challenges that
+          teach what to plot, why it matters, and how to make it clear.
         </p>
 
         <div className="oops-hero-grid">
@@ -141,6 +169,39 @@ export default function MatplotlibHub() {
           </div>
         </div>
       </div>
+
+      <section className="matplotlib-prerequisites" aria-label="Before you start">
+        <div className="matplotlib-prerequisites-head">
+          <span>Before you start</span>
+          <small>Recommended background · not required for lesson 1</small>
+        </div>
+        <div className="matplotlib-prerequisites-grid">
+          <Link to="/language/Python" className="matplotlib-prereq-card">
+            <strong>Python basics</strong>
+            <p>Variables, lists, and functions — enough to read lesson code.</p>
+          </Link>
+          <Link to="/learn/numpy-py" className="matplotlib-prereq-card">
+            <strong>NumPy</strong>
+            <p>Arrays and vector math — used in real-world plotting lessons.</p>
+          </Link>
+          <Link to="/learn/pandas-py" className="matplotlib-prereq-card">
+            <strong>Pandas</strong>
+            <p>DataFrames and time series — helpful from chapter 5 onward.</p>
+          </Link>
+          <Link
+            to={`${BASE_PATH}/lesson/plt-13`}
+            className="matplotlib-prereq-card matplotlib-prereq-cheat"
+          >
+            <strong>Cheat sheet</strong>
+            <p>Chart picker + API reference — bookmark lesson 25 anytime.</p>
+          </Link>
+        </div>
+        <p className="matplotlib-runtime-note">
+          Plot examples run in your browser (Pyodide). The first run loads
+          Matplotlib and may take a few seconds — charts appear in the Output
+          panel after <code>plt.show()</code>, not in the text console.
+        </p>
+      </section>
 
       <div className="oops-guide-tools">
         <div className="oops-tool-panel oops-tool-panel-main">
@@ -255,6 +316,66 @@ export default function MatplotlibHub() {
           <strong>{bookmarks.length}</strong>
         </div>
       </div>
+
+      <section className="matplotlib-learn-path" aria-label="Learning path">
+        <div className="matplotlib-path-label">
+          <span>Your path · Beginner to Pro</span>
+          <small>{MATPLOTLIB_CHAPTERS.length} chapters · {MATPLOTLIB_LESSONS.length} lessons</small>
+        </div>
+        <div className="matplotlib-path-grid">
+          {LEARNING_PATH.map((stage) => {
+            const stageChapters = MATPLOTLIB_CHAPTERS.filter((ch) =>
+              stage.chapters.includes(ch.id),
+            );
+            const stageLessons = stageChapters.flatMap((ch) => ch.lessons);
+            const stageDone = stageLessons.filter((l) => progress[l.id]).length;
+            const stagePct =
+              stageLessons.length > 0
+                ? Math.round((stageDone / stageLessons.length) * 100)
+                : 0;
+
+            return (
+              <article
+                key={stage.level}
+                className="matplotlib-path-card"
+                style={{ "--stage-color": stage.color }}
+              >
+                <header className="matplotlib-path-card-head">
+                  <span className="matplotlib-path-level">{stage.level}</span>
+                  <span className="matplotlib-path-pct">{stagePct}%</span>
+                </header>
+                <p className="matplotlib-path-summary">{stage.summary}</p>
+                <ul className="matplotlib-path-chapters">
+                  {stageChapters.map((ch) => (
+                    <li key={ch.id}>
+                      <span aria-hidden>{ch.icon}</span>
+                      {ch.title}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  className="matplotlib-path-cta"
+                  onClick={() => {
+                    const firstOpen =
+                      stageLessons.find((l) => !progress[l.id]) ||
+                      stageLessons[0];
+                    if (firstOpen) {
+                      navigate(`${BASE_PATH}/lesson/${firstOpen.id}`);
+                    }
+                  }}
+                >
+                  {stageDone === stageLessons.length && stageLessons.length > 0
+                    ? "Review stage →"
+                    : stageDone > 0
+                      ? "Continue stage →"
+                      : "Start stage →"}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="oops-path-overview">
         {MATPLOTLIB_CHAPTERS.map((chapter, index) => {

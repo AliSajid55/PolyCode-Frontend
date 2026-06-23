@@ -547,7 +547,6 @@
 .app.theme-light .profile-track-card,
 .app.theme-light .oops-problem-panel,
 .app.theme-light .oops-brief-card,
-.app.theme-light .oops-notes-panel,
 .app.theme-light .oops-confidence-panel,
 .app.theme-light .oops-quiz-card,
 .app.theme-light .oops-callout,
@@ -583,7 +582,6 @@
 .app.theme-light .oops-lesson-heading,
 .app.theme-light .oops-problem-title,
 .app.theme-light .oops-brief-card h3,
-.app.theme-light .oops-notes-panel h3,
 .app.theme-light .oops-confidence-panel h3,
 .app.theme-light .oops-quiz-card h4 {
   color: #0f172a;

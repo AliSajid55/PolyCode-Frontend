@@ -11,7 +11,7 @@ console.log("Sum:", sum);
 const user = { name: "Dev", lang: "JS" };
 console.log("User:", JSON.stringify(user));`,
 
-  typescript: `// TypeScript — transpiled via Babel
+  typescript: `// TypeScript — transpiled in your browser, then executed
 interface User {
   name: string;
   score: number;

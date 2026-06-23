@@ -7,20 +7,32 @@ function authHeaders(token) {
   };
 }
 
+function parseErrorBody(text, status) {
+  if (!text) return `Request failed (${status})`;
+  try {
+    const data = JSON.parse(text);
+    return data.error || data.message || `Request failed (${status})`;
+  } catch {
+    const preMatch = text.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+    if (preMatch) return preMatch[1].trim();
+    if (/<!DOCTYPE|<html/i.test(text)) {
+      return `Request failed (${status})`;
+    }
+    return text.length > 160 ? `${text.slice(0, 160)}…` : text;
+  }
+}
+
 async function readResponse(res, fallbackMessage) {
   const text = await res.text();
-  let data = {};
-  if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = { error: text };
-    }
-  }
   if (!res.ok) {
-    throw new Error(data.error || data.message || fallbackMessage);
+    throw new Error(parseErrorBody(text, res.status) || fallbackMessage);
   }
-  return data;
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(fallbackMessage);
+  }
 }
 
 export async function fetchPlaygroundFiles(token, language) {
@@ -55,6 +67,26 @@ export async function deletePlaygroundFile(token, fileId) {
   return readResponse(res, "Could not delete file");
 }
 
+export async function fetchPlaygroundRecentFiles(token, { limit = 40 } = {}) {
+  const url = `${getApiBase()}/playground/recent/files?limit=${encodeURIComponent(limit)}`;
+  const res = await fetch(url, { headers: authHeaders(token) });
+  if (res.status === 404) {
+    return { files: null, unavailable: true };
+  }
+  return readResponse(res, "Could not load recent code");
+}
+
+export async function fetchPlaygroundRuns(token, { language, fileId, limit = 20 } = {}) {
+  const params = new URLSearchParams();
+  if (language) params.set("language", language);
+  if (fileId) params.set("fileId", fileId);
+  params.set("limit", String(limit));
+  const res = await fetch(`${getApiBase()}/playground/runs?${params}`, {
+    headers: authHeaders(token),
+  });
+  return readResponse(res, "Could not load run history");
+}
+
 export async function savePlaygroundRun(token, payload) {
   const res = await fetch(`${getApiBase()}/playground/runs`, {
     method: "POST",
@@ -62,4 +94,48 @@ export async function savePlaygroundRun(token, payload) {
     body: JSON.stringify(payload),
   });
   return readResponse(res, "Could not save run output");
+}
+
+export async function deletePlaygroundRun(token, runId) {
+  const res = await fetch(
+    `${getApiBase()}/playground/runs/${encodeURIComponent(runId)}`,
+    {
+      method: "DELETE",
+      headers: authHeaders(token),
+    },
+  );
+  return readResponse(res, "Could not delete run");
+}
+
+export async function clearPlaygroundRuns(token, { language, fileId } = {}) {
+  const params = new URLSearchParams();
+  if (language) params.set("language", language);
+  if (fileId) params.set("fileId", fileId);
+  const query = params.toString();
+  const res = await fetch(
+    `${getApiBase()}/playground/runs${query ? `?${query}` : ""}`,
+    {
+      method: "DELETE",
+      headers: authHeaders(token),
+    },
+  );
+  return readResponse(res, "Could not clear run history");
+}
+
+export async function savePlaygroundWorkspace(token, payload) {
+  const res = await fetch(`${getApiBase()}/playground/workspace`, {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify(payload),
+  });
+  return readResponse(res, "Could not save workspace");
+}
+
+export async function importPlaygroundWorkspace(token, payload) {
+  const res = await fetch(`${getApiBase()}/playground/workspace/import`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(payload),
+  });
+  return readResponse(res, "Could not import workspace");
 }

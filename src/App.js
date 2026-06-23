@@ -14,6 +14,7 @@ import Sidebar from "./features/navigation/components/Sidebar";
 import { PlaygroundProvider } from "./features/playground/context/PlaygroundContext";
 import { AuthProvider, useAuth } from "./features/auth/context/AuthContext";
 import SelectionPins from "./shared/components/SelectionPins";
+import LastRouteTracker from "./shared/navigation/LastRouteTracker";
 import { LearnNavProvider } from "./features/learn/shared/LearnNavContext";
 import GlobalAssistant from "./features/assistant/components/GlobalAssistant";
 import { AssistantProvider } from "./features/assistant/context/AssistantContext";
@@ -159,7 +160,15 @@ const PhpFundamentalsHub = lazyWithChunkRetry(
   () => import("./features/learn/php-fundamentals/pages/phpFundamentalsHub"),
 );
 const PhpFundamentalsLessonPage = lazyWithChunkRetry(
-  () => import("./features/learn/php-fundamentals/pages/phpFundamentalsLessonPage"),
+  () =>
+    import("./features/learn/php-fundamentals/pages/phpFundamentalsLessonPage"),
+);
+const RubyFundamentalsHub = lazyWithChunkRetry(
+  () => import("./features/learn/ruby-fundamentals/pages/rubyFundamentalsHub"),
+);
+const RubyFundamentalsLessonPage = lazyWithChunkRetry(
+  () =>
+    import("./features/learn/ruby-fundamentals/pages/rubyFundamentalsLessonPage"),
 );
 
 const PageFallback = () => (
@@ -287,10 +296,7 @@ function MainApp({
                 path="/search"
                 element={<SearchPage selectedLanguage={selectedLanguage} />}
               />
-              <Route
-                path="/playground"
-                element={<PlaygroundPage />}
-              />
+              <Route path="/playground" element={<PlaygroundPage />} />
 
               <Route
                 path="/daily-challenge"
@@ -509,8 +515,7 @@ function AppRoutes() {
       handleLanguageSelect("JavaScript", { stay: true });
     } else if (path.startsWith("/learn/c-sharp-fundamentals")) {
       handleLanguageSelect("C#", { stay: true });
-    }
-      else if (path.startsWith("/learn/php-fundamentals")) { // 👈 ADD THIS
+    } else if (path.startsWith("/learn/php-fundamentals")) {
       handleLanguageSelect("PHP", { stay: true });
     } else if (
       path.startsWith("/learn/cpp-fundamentals") ||
@@ -518,6 +523,8 @@ function AppRoutes() {
       path.startsWith("/learn/pointers-cpp")
     ) {
       handleLanguageSelect("C++", { stay: true });
+    } else if (path.startsWith("/learn/ruby-fundamentals")) {
+      handleLanguageSelect("Ruby", { stay: true });
     }
   }, [location.pathname, handleLanguageSelect]);
 
@@ -571,7 +578,10 @@ function AppRoutes() {
         <Route
           path="/select-language"
           element={
-            <StackPickerShell savedTheme={theme} onThemeChange={handleThemeChange}>
+            <StackPickerShell
+              savedTheme={theme}
+              onThemeChange={handleThemeChange}
+            >
               <LandingPage
                 onLanguageSelect={handleLanguageSelect}
                 continueLanguage={selectedLanguage}
@@ -1035,6 +1045,51 @@ function AppRoutes() {
             </ThemedShell>
           }
         />
+         <Route
+          path="/learn/ruby-fundamentals"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onThemeChange={handleThemeChange}
+                onGoToStackPicker={goToStackPicker}
+                selectedLanguage={selectedLanguage}
+              >
+                <RubyFundamentalsHub />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+        <Route
+          path="/learn/ruby-fundamentals/lesson/:lessonId"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onThemeChange={handleThemeChange}
+                onGoToStackPicker={goToStackPicker}
+                selectedLanguage={selectedLanguage}
+              >
+                <RubyFundamentalsLessonPage />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
+        <Route
+          path="/learn/ruby-fundamentals/:lessonId"
+          element={
+            <ThemedShell theme={theme}>
+              <LearnShell
+                theme={theme}
+                onThemeChange={handleThemeChange}
+                onGoToStackPicker={goToStackPicker}
+                selectedLanguage={selectedLanguage}
+              >
+                <RubyFundamentalsLessonPage />
+              </LearnShell>
+            </ThemedShell>
+          }
+        />
       </Routes>
     </Suspense>
   );
@@ -1048,6 +1103,7 @@ function App() {
           <AssistantProvider>
             <SelectionPins />
             <ScrollToTop />
+            <LastRouteTracker />
             <AppRoutes />
             <GlobalAssistant />
           </AssistantProvider>

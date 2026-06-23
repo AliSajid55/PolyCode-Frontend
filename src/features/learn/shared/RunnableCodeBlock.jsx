@@ -22,6 +22,7 @@ import {
   getPythonRuntimeError,
   runPythonCode,
 } from "./runPython";
+import PythonRunOutput from "./PythonRunOutput";
 import {
   formatCsharpOutput,
   getCsharpRuntimeError,
@@ -127,11 +128,17 @@ export default function RunnableCodeBlock({
 
       const stdout =
         formatTheoryOutput(result, lang) ||
-        (runtime === "server"
-          ? "Ran on server (no printed output)."
-          : "Ran in browser (no printed output).");
+        (result.plotImages?.length
+          ? `Rendered ${result.plotImages.length} chart${result.plotImages.length > 1 ? "s" : ""}.`
+          : runtime === "server"
+            ? "Ran on server (no printed output)."
+            : "Ran in browser (no printed output).");
 
-      setOutput({ status: "pass", stdout });
+      setOutput({
+        status: "pass",
+        stdout,
+        plotImages: result.plotImages || [],
+      });
     } catch (error) {
       setOutput({
         status: "fail",
@@ -243,9 +250,11 @@ export default function RunnableCodeBlock({
             )}
           </div>
         </div>
-        <pre className="oops-output-body">
-          {output?.stdout || "Output will appear here after you run the code."}
-        </pre>
+        <PythonRunOutput
+          stdout={output?.stdout}
+          plotImages={output?.plotImages}
+          emptyHint="Output will appear here after you run the code."
+        />
       </div>
     </div>
   );

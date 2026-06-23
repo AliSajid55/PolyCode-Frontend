@@ -42,33 +42,34 @@ export default function OopsSidebar({
         menuOpen ? "oops-sidebar-mobile-open" : ""
       }`}
     >
-      <div className="oops-sidebar-header">
-        {!collapsed && brandLogo ? (
-          <div className="oops-sidebar-brand">{brandLogo}</div>
-        ) : (
-          !collapsed && <span className="oops-sidebar-title">{title}</span>
-        )}
-        <button
-          type="button"
-          className="oops-sidebar-close-mobile"
-          onClick={closeMenu}
-          aria-label="Close lesson menu"
-        >
-          ×
-        </button>
-        <button
-          type="button"
-          className="oops-sidebar-toggle"
-          onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? "›" : "‹"}
-        </button>
-      </div>
+      <div className="oops-sidebar-sticky">
+        <div className="oops-sidebar-header">
+          {!collapsed && brandLogo ? (
+            <div className="oops-sidebar-brand">{brandLogo}</div>
+          ) : (
+            !collapsed && <span className="oops-sidebar-title">{title}</span>
+          )}
+          <button
+            type="button"
+            className="oops-sidebar-close-mobile"
+            onClick={closeMenu}
+            aria-label="Close lesson menu"
+          >
+            ×
+          </button>
+          <button
+            type="button"
+            className="oops-sidebar-toggle"
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? "›" : "‹"}
+          </button>
+        </div>
 
-      {!collapsed && (
-        <nav className="oops-sidebar-nav">
+        {!collapsed && (
+          <nav className="oops-sidebar-nav">
           {chapters.map((ch) => {
             const isOpen = expanded.has(ch.id);
             const doneLessons = ch.lessons.filter((l) => progress[l.id]).length;
@@ -117,8 +118,9 @@ export default function OopsSidebar({
               </div>
             );
           })}
-        </nav>
-      )}
+          </nav>
+        )}
+      </div>
     </aside>
   );
 }

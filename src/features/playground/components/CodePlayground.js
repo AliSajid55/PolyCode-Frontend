@@ -1,28 +1,56 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Editor from "@monaco-editor/react";
 import { useAuth } from "../../auth/context/AuthContext";
 import { executeCode, resolveEngine } from "../services/BrowserExecutor";
+import PlaygroundExplorer from "./PlaygroundExplorer";
 import {
   createPlaygroundFile,
   fetchPlaygroundFiles,
   deletePlaygroundFile,
   updatePlaygroundFile,
   savePlaygroundRun,
+  savePlaygroundWorkspace,
+  importPlaygroundWorkspace,
+  fetchPlaygroundRuns,
+  deletePlaygroundRun,
+  clearPlaygroundRuns,
 } from "../services/playgroundApi";
+import {
+  buildRunFileKey,
+  appendLocalRunHistory,
+  clearLocalRunHistory,
+  loadLocalRunHistory,
+  makeLocalRunId,
+  removeLocalRunHistory,
+} from "../lib/playgroundRunHistory";
 import {
   createFile,
   createWorkspace,
+  defaultMainFileName,
+  defaultStarterContent,
   getActiveFile,
   mergeLocalWorkspace,
   monacoLanguageForFile,
-  nextUntitledName,
+  nextFileNameInFolder,
   saveLocalWorkspaces,
 } from "../lib/playgroundFiles";
 import {
+  buildFileTree,
+  basename,
+  dirname,
+  joinPath,
+  normalizePath,
+} from "../lib/playgroundFileTree";
+import {
   definePolycodeMonacoTheme,
+  definePolycodeMonacoLightTheme,
+  definePolycodePlaygroundThemes,
   getVSCodeEditorOptions,
-  POLYCODE_VSCODE_THEME,
+  POLYCODE_PLAYGROUND_DARK_THEME,
+  POLYCODE_PLAYGROUND_LIGHT_THEME,
 } from "../../../shared/utils/monacoTheme";
+import { isLightTheme } from "../../../shared/theme/themes";
+import { useDocumentThemeId } from "../hooks/useDocumentThemeId";
 import "./CodePlayground.css";
 
 const LANG_GROUPS = [
@@ -67,12 +95,22 @@ const LANG_GROUPS = [
   },
 ];
 
+const EXPLORER_OPEN_KEY = "polycode_playground_explorer_open";
+
 const ALL_LANGUAGES = LANG_GROUPS.flatMap((group) => group.langs);
 const DEFAULT_LANGUAGE = "javascript";
 const CONSOLE_RATIO_KEY = "polycode_playground_console_ratio";
 const DEFAULT_CONSOLE_RATIO = 0.38;
 const MIN_CONSOLE_PX = 100;
 const MIN_EDITOR_PX = 160;
+
+function loadExplorerOpen() {
+  try {
+    return localStorage.getItem(EXPLORER_OPEN_KEY) !== "false";
+  } catch {
+    return true;
+  }
+}
 
 function loadConsoleRatio() {
   try {
@@ -95,6 +133,31 @@ function clampConsoleRatio(ratio, panesHeight) {
 
 function normalizeLanguage(lang) {
   return ALL_LANGUAGES.includes(lang) ? lang : DEFAULT_LANGUAGE;
+}
+
+function logPlaygroundSyncError(action, err) {
+  const message = err instanceof Error ? err.message : String(err);
+  console.warn(`[Playground] ${action}:`, message);
+}
+
+function formatRunTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function runPreviewText(run) {
+  const line = run?.output?.find(
+    (entry) => entry.type === "stdout" || entry.type === "stderr",
+  );
+  const text = line?.text || run?.output?.[0]?.text || "(no output)";
+  return text.length > 72 ? `${text.slice(0, 72)}…` : text;
 }
 
 function buildInitialWorkspaces(initialLanguage, initialCode) {
@@ -126,35 +189,136 @@ function mapCloudFiles(files) {
   }));
 }
 
+function applyCloudWorkspace(cloudWorkspace, mappedFiles) {
+  const activeId =
+    mappedFiles.find((file) => file.id === cloudWorkspace?.activeFileId)?.id ||
+    mappedFiles[0]?.id;
+
+  return {
+    files: mappedFiles,
+    folders: cloudWorkspace?.folders || [],
+    expandedFolders: cloudWorkspace?.expandedFolders || { "": true },
+    selectedFolder: cloudWorkspace?.selectedFolder || "",
+    activeFileId: activeId,
+    cloudLoaded: true,
+  };
+}
+
+function shouldImportLocalToCloud(language, localWorkspace, cloudFiles) {
+  if (!localWorkspace?.files?.length || !cloudFiles?.length) return false;
+  if (cloudFiles.length > 1) return false;
+
+  if (localWorkspace.files.length > 1) return true;
+  if ((localWorkspace.folders?.length ?? 0) > 0) return true;
+
+  const mainName = defaultMainFileName(language);
+  const localMain =
+    localWorkspace.files.find((file) => file.name === mainName) ||
+    localWorkspace.files[0];
+  const cloudMain = cloudFiles[0];
+  const starter = defaultStarterContent(language);
+
+  if (!localMain || !cloudMain) return false;
+  if (localMain.content !== starter && localMain.content !== (cloudMain.content ?? "")) {
+    return true;
+  }
+
+  return false;
+}
+
 export default function CodePlayground({
   initialCode,
   initialLanguage = "javascript",
 }) {
   const { token } = useAuth();
+  const documentThemeId = useDocumentThemeId();
+  const editorTheme = isLightTheme(documentThemeId)
+    ? POLYCODE_PLAYGROUND_LIGHT_THEME
+    : POLYCODE_PLAYGROUND_DARK_THEME;
   const normalizedInitialLanguage = normalizeLanguage(initialLanguage);
   const [language, setLanguage] = useState(normalizedInitialLanguage);
   const [workspaces, setWorkspaces] = useState(() =>
     buildInitialWorkspaces(normalizedInitialLanguage, initialCode),
   );
   const [runningLanguage, setRunningLanguage] = useState(null);
-  const [fontSize, setFontSize] = useState(14);
+  const [fontSize, setFontSize] = useState(15);
   const [wordWrap, setWordWrap] = useState(false);
   const [consoleRatio, setConsoleRatio] = useState(loadConsoleRatio);
   const [isResizingPanes, setIsResizingPanes] = useState(false);
-  const [syncError, setSyncError] = useState(null);
   const [syncing, setSyncing] = useState(false);
+  const [explorerOpen, setExplorerOpen] = useState(loadExplorerOpen);
+  const [runHistory, setRunHistory] = useState([]);
+  const [runHistoryLoading, setRunHistoryLoading] = useState(false);
+  const [historyScope, setHistoryScope] = useState("all");
   const outputRef = useRef(null);
   const panesRef = useRef(null);
   const paneDragRef = useRef(null);
   const consoleRatioRef = useRef(consoleRatio);
   const workspacesRef = useRef(workspaces);
   const saveTimerRef = useRef(null);
+  const workspaceSaveTimerRef = useRef(null);
+  const prevTokenRef = useRef(token);
+  const visitedLanguagesRef = useRef(new Set([normalizedInitialLanguage]));
 
   const currentWorkspace = workspaces[language] || createWorkspace(language);
   const activeFile = getActiveFile(currentWorkspace);
   const code = activeFile?.content || "";
   const { files, output, previewHTML, activeTab } = currentWorkspace;
+  const folders = useMemo(
+    () => currentWorkspace.folders || [],
+    [currentWorkspace.folders],
+  );
+  const expandedFolders = currentWorkspace.expandedFolders || { "": true };
+  const selectedFolder = currentWorkspace.selectedFolder || "";
+  const fileTree = useMemo(
+    () => buildFileTree(files, folders),
+    [files, folders],
+  );
   const currentIsRunning = runningLanguage === language;
+
+  const refreshRunHistory = useCallback(async () => {
+    const workspace = workspacesRef.current[language];
+    const file = getActiveFile(workspace);
+    const fileKey = buildRunFileKey(file);
+    const fileId = file?.serverId || null;
+    const scopeFileOnly = historyScope === "file";
+
+    setRunHistoryLoading(true);
+    try {
+      if (token) {
+        const data = await fetchPlaygroundRuns(token, {
+          language,
+          fileId: scopeFileOnly && fileId ? fileId : undefined,
+          limit: 40,
+        });
+        setRunHistory(Array.isArray(data.runs) ? data.runs : []);
+        return;
+      }
+
+      setRunHistory(
+        loadLocalRunHistory({
+          language,
+          fileKey: scopeFileOnly ? fileKey : undefined,
+          limit: 40,
+        }),
+      );
+    } catch (err) {
+      logPlaygroundSyncError("Could not load run history", err);
+      setRunHistory(
+        loadLocalRunHistory({
+          language,
+          fileKey: scopeFileOnly ? fileKey : undefined,
+          limit: 40,
+        }),
+      );
+    } finally {
+      setRunHistoryLoading(false);
+    }
+  }, [token, language, historyScope]);
+
+  useEffect(() => {
+    refreshRunHistory();
+  }, [token, language, activeFile?.id, historyScope, refreshRunHistory]);
 
   useEffect(() => {
     workspacesRef.current = workspaces;
@@ -175,9 +339,22 @@ export default function CodePlayground({
   }, [isResizingPanes]);
 
   useEffect(() => {
-    if (token) return;
     saveLocalWorkspaces(workspaces);
-  }, [workspaces, token]);
+  }, [workspaces]);
+
+  useEffect(() => {
+    const prev = prevTokenRef.current;
+    prevTokenRef.current = token;
+    if (Boolean(prev) === Boolean(token)) return;
+
+    setWorkspaces((prevWs) => {
+      const next = {};
+      for (const [lang, ws] of Object.entries(prevWs)) {
+        next[lang] = { ...ws, cloudLoaded: false };
+      }
+      return next;
+    });
+  }, [token]);
 
   useEffect(() => {
     if (!token) return undefined;
@@ -188,26 +365,53 @@ export default function CodePlayground({
 
     async function loadCloudFiles() {
       setSyncing(true);
-      setSyncError(null);
       try {
-        const data = await fetchPlaygroundFiles(token, language);
+        const localWs =
+          workspacesRef.current[language] || mergeLocalWorkspace(language);
+        let data = await fetchPlaygroundFiles(token, language);
+
+        if (shouldImportLocalToCloud(language, localWs, data.files)) {
+          data = await importPlaygroundWorkspace(token, {
+            language,
+            files: localWs.files.map((file) => ({
+              id: file.id,
+              name: file.name,
+              content: file.content,
+            })),
+            workspace: {
+              folders: localWs.folders || [],
+              expandedFolders: localWs.expandedFolders || { "": true },
+              selectedFolder: localWs.selectedFolder || "",
+              activeFileId: localWs.activeFileId,
+            },
+          });
+        }
+
         if (cancelled || !data.files?.length) return;
 
         const mapped = mapCloudFiles(data.files);
+        const cloudPatch = applyCloudWorkspace(data.workspace, mapped);
+
         setWorkspaces((prev) => ({
           ...prev,
           [language]: {
             ...(prev[language] || createWorkspace(language)),
-            files: mapped,
-            activeFileId: mapped[0].id,
-            cloudLoaded: true,
+            ...cloudPatch,
+            output: prev[language]?.output || [],
+            previewHTML: prev[language]?.previewHTML ?? null,
+            activeTab: prev[language]?.activeTab || "output",
           },
         }));
       } catch (err) {
         if (!cancelled) {
-          setSyncError(
-            err instanceof Error ? err.message : "Could not load files from Drive.",
-          );
+          logPlaygroundSyncError("Could not load files from cloud", err);
+          setWorkspaces((prev) => ({
+            ...prev,
+            [language]: {
+              ...(prev[language] || createWorkspace(language)),
+              cloudLoaded: true,
+            },
+          }));
         }
       } finally {
         if (!cancelled) setSyncing(false);
@@ -230,7 +434,6 @@ export default function CodePlayground({
     if (!dirtyFiles.length) return;
 
     setSyncing(true);
-    setSyncError(null);
 
     try {
       for (const file of dirtyFiles) {
@@ -292,11 +495,57 @@ export default function CodePlayground({
         });
       }
     } catch (err) {
-      setSyncError(err instanceof Error ? err.message : "Could not save to Google Drive.");
+      logPlaygroundSyncError("Could not save to cloud", err);
     } finally {
       setSyncing(false);
     }
   }, [token, language]);
+
+  const persistWorkspaceMetadata = useCallback(async () => {
+    if (!token) return;
+
+    const workspace = workspacesRef.current[language];
+    if (!workspace?.cloudLoaded) return;
+
+    try {
+      await savePlaygroundWorkspace(token, {
+        language,
+        folders: workspace.folders || [],
+        expandedFolders: workspace.expandedFolders || { "": true },
+        selectedFolder: workspace.selectedFolder || "",
+        activeFileId: workspace.activeFileId,
+      });
+    } catch (err) {
+      logPlaygroundSyncError("Could not save workspace layout", err);
+    }
+  }, [token, language]);
+
+  useEffect(() => {
+    if (!token || !currentWorkspace.cloudLoaded) return undefined;
+
+    if (workspaceSaveTimerRef.current) {
+      window.clearTimeout(workspaceSaveTimerRef.current);
+    }
+
+    workspaceSaveTimerRef.current = window.setTimeout(() => {
+      persistWorkspaceMetadata();
+    }, 900);
+
+    return () => {
+      if (workspaceSaveTimerRef.current) {
+        window.clearTimeout(workspaceSaveTimerRef.current);
+      }
+    };
+  }, [
+    token,
+    language,
+    currentWorkspace.cloudLoaded,
+    currentWorkspace.folders,
+    currentWorkspace.expandedFolders,
+    currentWorkspace.selectedFolder,
+    currentWorkspace.activeFileId,
+    persistWorkspaceMetadata,
+  ]);
 
   useEffect(() => {
     if (!token) return undefined;
@@ -358,60 +607,254 @@ export default function CodePlayground({
 
   const selectFile = useCallback(
     (fileId) => {
-      updateWorkspace(language, { activeFileId: fileId });
+      const workspace = workspacesRef.current[language];
+      const file = workspace?.files?.find((entry) => entry.id === fileId);
+      updateWorkspace(language, {
+        activeFileId: fileId,
+        selectedFolder: file ? normalizePath(dirname(file.name)) : selectedFolder,
+      });
+    },
+    [language, selectedFolder, updateWorkspace],
+  );
+
+  const applyRunHistory = useCallback(
+    (run) => {
+      if (!run) return;
+      updateWorkspace(language, {
+        output: run.output || [],
+        previewHTML: run.previewHTML || null,
+        activeTab: run.previewHTML ? "preview" : "output",
+      });
     },
     [language, updateWorkspace],
   );
 
-  const addFile = useCallback(async () => {
-    const workspace = workspacesRef.current[language] || createWorkspace(language);
-    const name = nextUntitledName(language, workspace.files);
-    const localFile = createFile(language, { name });
+  const restoreRunCode = useCallback(
+    (run) => {
+      if (!run?.code) return;
+      updateActiveFileContent(run.code);
+      updateWorkspace(language, { activeTab: "output" });
+    },
+    [language, updateWorkspace, updateActiveFileContent],
+  );
 
-    if (token) {
-      try {
-        setSyncing(true);
-        const created = await createPlaygroundFile(token, {
-          language,
-          name,
-          content: localFile.content,
-        });
-        const serverId = created.file?.id;
-        const cloudFile = createFile(language, {
-          name: created.file?.name || name,
-          content: created.file?.content || localFile.content,
-          serverId,
-        });
-        updateWorkspace(language, (current) => ({
-          files: [...current.files, cloudFile],
-          activeFileId: cloudFile.id,
-        }));
-      } catch (err) {
-        setSyncError(err instanceof Error ? err.message : "Could not create file.");
-      } finally {
-        setSyncing(false);
+  const deleteRunHistoryItem = useCallback(
+    async (run) => {
+      if (!run?.id) return;
+      const isLocal = String(run.id).startsWith("local-");
+
+      if (token && !isLocal) {
+        try {
+          await deletePlaygroundRun(token, run.id);
+        } catch (err) {
+          logPlaygroundSyncError("Could not delete run", err);
+          return;
+        }
+      } else {
+        removeLocalRunHistory(run.id);
       }
+
+      setRunHistory((prev) => prev.filter((entry) => entry.id !== run.id));
+    },
+    [token],
+  );
+
+  const clearAllRunHistory = useCallback(async () => {
+    const workspace = workspacesRef.current[language];
+    const file = getActiveFile(workspace);
+    const fileId = file?.serverId || null;
+    const fileKey = buildRunFileKey(file);
+    const scopeFileOnly = historyScope === "file";
+
+    if (
+      !window.confirm(
+        scopeFileOnly
+          ? "Clear run history for this file?"
+          : `Clear all ${resolveEngine(language).label} run history?`,
+      )
+    ) {
       return;
     }
 
-    updateWorkspace(language, (current) => ({
-      files: [...current.files, localFile],
-      activeFileId: localFile.id,
-    }));
-  }, [language, token, updateWorkspace]);
+    if (token) {
+      try {
+        await clearPlaygroundRuns(token, {
+          language,
+          fileId: scopeFileOnly && fileId ? fileId : undefined,
+        });
+      } catch (err) {
+        logPlaygroundSyncError("Could not clear run history", err);
+        return;
+      }
+    }
 
-  const closeFile = useCallback(
+    clearLocalRunHistory({
+      language,
+      fileKey: scopeFileOnly ? fileKey : undefined,
+    });
+    setRunHistory([]);
+  }, [token, language, historyScope]);
+
+  const addFile = useCallback(
+    async (folderPath) => {
+      const workspace =
+        workspacesRef.current[language] || createWorkspace(language);
+      const targetFolder = normalizePath(
+        folderPath ?? workspace.selectedFolder ?? "",
+      );
+      const defaultPath = nextFileNameInFolder(
+        language,
+        workspace.files,
+        targetFolder,
+      );
+      const input = window.prompt(
+        "Enter file name",
+        basename(defaultPath) || defaultMainFileName(language),
+      );
+      if (input === null) return;
+
+      const trimmed = input.trim();
+      if (!trimmed) return;
+
+      const name = joinPath(targetFolder, trimmed);
+      const exists = workspace.files.some(
+        (file) => normalizePath(file.name) === normalizePath(name),
+      );
+      if (exists) {
+        window.alert("A file with that name already exists.");
+        return;
+      }
+
+      const localFile = createFile(language, { name });
+
+      if (token) {
+        try {
+          setSyncing(true);
+          const created = await createPlaygroundFile(token, {
+            language,
+            name,
+            content: localFile.content,
+          });
+          const serverId = created.file?.id;
+          const cloudFile = createFile(language, {
+            name: created.file?.name || name,
+            content: created.file?.content || localFile.content,
+            serverId,
+          });
+          updateWorkspace(language, (current) => ({
+            files: [...current.files, cloudFile],
+            activeFileId: cloudFile.id,
+            selectedFolder: targetFolder,
+            expandedFolders: {
+              ...(current.expandedFolders || {}),
+              [targetFolder]: true,
+              ...(targetFolder ? { [dirname(targetFolder)]: true } : {}),
+              "": true,
+            },
+          }));
+        } catch (err) {
+          logPlaygroundSyncError("Could not create file in cloud", err);
+        } finally {
+          setSyncing(false);
+        }
+        return;
+      }
+
+      updateWorkspace(language, (current) => ({
+        files: [...current.files, localFile],
+        activeFileId: localFile.id,
+        selectedFolder: targetFolder,
+        expandedFolders: {
+          ...(current.expandedFolders || {}),
+          [targetFolder]: true,
+          "": true,
+        },
+      }));
+    },
+    [language, token, updateWorkspace],
+  );
+
+  const addFolder = useCallback(
+    (parentPath) => {
+      const workspace =
+        workspacesRef.current[language] || createWorkspace(language);
+      const parent = normalizePath(parentPath ?? workspace.selectedFolder ?? "");
+      const label = window.prompt("New folder name", "src");
+      if (!label?.trim()) return;
+
+      const folderName = normalizePath(label.trim()).split("/").pop();
+      if (!folderName) return;
+
+      const fullPath = joinPath(parent, folderName);
+      updateWorkspace(language, (current) => {
+        const nextFolders = new Set(current.folders || []);
+        nextFolders.add(fullPath);
+        return {
+          folders: [...nextFolders],
+          selectedFolder: fullPath,
+          expandedFolders: {
+            ...(current.expandedFolders || {}),
+            [parent]: true,
+            [fullPath]: true,
+          },
+        };
+      });
+    },
+    [language, updateWorkspace],
+  );
+
+  const toggleExplorer = useCallback(() => {
+    setExplorerOpen((open) => {
+      const next = !open;
+      try {
+        localStorage.setItem(EXPLORER_OPEN_KEY, String(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleFolder = useCallback(
+    (folderPath) => {
+      const path = normalizePath(folderPath);
+      updateWorkspace(language, (current) => {
+        const expanded = { ...(current.expandedFolders || {}) };
+        const isOpen = expanded[path] !== false;
+        expanded[path] = isOpen ? false : true;
+        return { expandedFolders: expanded };
+      });
+    },
+    [language, updateWorkspace],
+  );
+
+  const selectFolder = useCallback(
+    (folderPath) => {
+      updateWorkspace(language, { selectedFolder: normalizePath(folderPath) });
+    },
+    [language, updateWorkspace],
+  );
+
+  const deleteFile = useCallback(
     async (fileId) => {
       const workspace = workspacesRef.current[language];
       const target = workspace?.files?.find((file) => file.id === fileId);
-      if (!target || workspace.files.length <= 1) return;
+      if (!target) return;
+
+      if (
+        !window.confirm(
+          `Delete "${target.name}"? This cannot be undone.`,
+        )
+      ) {
+        return;
+      }
 
       if (token && target.serverId) {
         try {
           setSyncing(true);
           await deletePlaygroundFile(token, target.serverId);
         } catch (err) {
-          setSyncError(err instanceof Error ? err.message : "Could not delete file.");
+          logPlaygroundSyncError("Could not delete file from cloud", err);
           setSyncing(false);
           return;
         } finally {
@@ -421,13 +864,19 @@ export default function CodePlayground({
 
       updateWorkspace(language, (current) => {
         const nextFiles = current.files.filter((file) => file.id !== fileId);
-        const nextActive =
-          current.activeFileId === fileId
-            ? nextFiles[0]?.id
-            : current.activeFileId;
+        if (nextFiles.length === 0) {
+          const replacement = createFile(language);
+          return {
+            files: [replacement],
+            activeFileId: replacement.id,
+          };
+        }
         return {
           files: nextFiles,
-          activeFileId: nextActive,
+          activeFileId:
+            current.activeFileId === fileId
+              ? nextFiles[0]?.id
+              : current.activeFileId,
         };
       });
     },
@@ -514,6 +963,7 @@ export default function CodePlayground({
   }, [initialLanguage, initialCode]);
 
   const handleLangChange = (lang) => {
+    visitedLanguagesRef.current.add(lang);
     setLanguage(lang);
   };
 
@@ -566,17 +1016,39 @@ export default function CodePlayground({
         activeTab: activeTabAfter,
       });
 
+      const durationMs = Math.round(performance.now() - t0);
+
       if (token) {
         savePlaygroundRun(token, {
           language: currentLanguage,
           fileId: file?.serverId || null,
           fileName: file?.name || "",
+          code: currentCode,
           output: resultOutput,
           previewHTML: resultPreview,
-          durationMs: Math.round(performance.now() - t0),
-        }).catch(() => {
-          /* non-blocking */
+          durationMs,
+        })
+          .then(() => {
+            refreshRunHistory();
+          })
+          .catch(() => {
+            /* non-blocking */
+          });
+      } else {
+        const localRun = appendLocalRunHistory({
+          id: makeLocalRunId(),
+          language: currentLanguage,
+          fileKey: buildRunFileKey(file),
+          fileName: file?.name || "",
+          code: currentCode,
+          output: resultOutput,
+          previewHTML: resultPreview,
+          durationMs,
+          createdAt: new Date().toISOString(),
         });
+        setRunHistory((prev) =>
+          [localRun, ...prev.filter((r) => r.id !== localRun.id)].slice(0, 40),
+        );
       }
     } catch (e) {
       resultOutput = [{ type: "stderr", text: e.message }];
@@ -588,7 +1060,7 @@ export default function CodePlayground({
     } finally {
       setRunningLanguage(null);
     }
-  }, [language, runningLanguage, token, updateWorkspace]);
+  }, [language, runningLanguage, token, updateWorkspace, refreshRunHistory]);
 
   const handleEditorKeyDown = useCallback(
     (e) => {
@@ -629,17 +1101,17 @@ export default function CodePlayground({
         <div className="pg-toolbar-center">
           {token ? (
             <span className={`pg-sync-badge${syncing ? " pg-sync-badge--busy" : ""}`}>
-              {syncing ? "Saving to Drive…" : "Files saved to Google Drive"}
+              {syncing ? "Saving…" : "Files saved to your account"}
             </span>
           ) : (
             <span className="pg-sync-badge pg-sync-badge--local">
-              Sign in to save files to Google Drive
+              Files saved in this browser — sign in to sync
             </span>
           )}
           {isServerBased ? (
-            <span className="pg-server-badge">✓ Runs in local simulation</span>
+            <span className="pg-server-badge">✓ Print simulation (no compiler)</span>
           ) : (
-            <span className="pg-browser-badge">✓ Runs in browser</span>
+            <span className="pg-browser-badge">✓ Browser runtime (JS / Pyodide)</span>
           )}
         </div>
 
@@ -687,13 +1159,29 @@ export default function CodePlayground({
         </div>
       </div>
 
-      {syncError ? <div className="pg-sync-error">{syncError}</div> : null}
+      <div className="pg-workspace">
+        <PlaygroundExplorer
+          tree={fileTree}
+          expandedFolders={expandedFolders}
+          activeFileId={activeFile?.id}
+          selectedFolder={selectedFolder}
+          explorerOpen={explorerOpen}
+          signedIn={Boolean(token)}
+          fileCount={files.length}
+          onToggleExplorer={toggleExplorer}
+          onToggleFolder={toggleFolder}
+          onSelectFolder={selectFolder}
+          onSelectFile={selectFile}
+          onNewFile={addFile}
+          onNewFolder={addFolder}
+          onDeleteFile={deleteFile}
+        />
 
-      <div
-        ref={panesRef}
-        className={`pg-panes${isResizingPanes ? " pg-panes--resizing" : ""}`}
-        onKeyDown={handleEditorKeyDown}
-      >
+        <div
+          ref={panesRef}
+          className={`pg-panes${isResizingPanes ? " pg-panes--resizing" : ""}`}
+          onKeyDown={handleEditorKeyDown}
+        >
         <div
           className="pg-editor-pane"
           style={{ flex: `1 1 ${(1 - consoleRatio) * 100}%` }}
@@ -718,8 +1206,9 @@ export default function CodePlayground({
                   <button
                     type="button"
                     className="pg-file-tab-close"
-                    onClick={() => closeFile(file.id)}
-                    aria-label={`Close ${file.name}`}
+                    onClick={() => deleteFile(file.id)}
+                    aria-label={`Delete ${file.name}`}
+                    title={`Delete ${file.name}`}
                   >
                     ×
                   </button>
@@ -729,7 +1218,7 @@ export default function CodePlayground({
             <button
               type="button"
               className="pg-file-tab-add"
-              onClick={addFile}
+              onClick={() => addFile(selectedFolder)}
               aria-label="New file"
               title="New file"
             >
@@ -751,10 +1240,14 @@ export default function CodePlayground({
               height="100%"
               language={editorLanguage}
               value={code}
-              beforeMount={definePolycodeMonacoTheme}
+              beforeMount={(monaco) => {
+                definePolycodeMonacoTheme(monaco);
+                definePolycodeMonacoLightTheme(monaco);
+                definePolycodePlaygroundThemes(monaco);
+              }}
               onChange={(v) => updateActiveFileContent(v || "")}
-              theme={POLYCODE_VSCODE_THEME}
-              key={`editor-${language}-${activeFile?.id}-${editorLanguage}`}
+              theme={editorTheme}
+              key={`editor-${language}-${activeFile?.id}-${editorLanguage}-${editorTheme}`}
               options={{
                 ...getVSCodeEditorOptions({ fontSize, wordWrap }),
                 fontSize,
@@ -794,6 +1287,18 @@ export default function CodePlayground({
               >
                 ⬡ Console
               </button>
+              <button
+                type="button"
+                className={`pg-tab ${activeTab === "history" ? "active" : ""}`}
+                onClick={() =>
+                  updateWorkspace(language, { activeTab: "history" })
+                }
+              >
+                History
+                {runHistory.length ? (
+                  <span className="pg-tab-count">{runHistory.length}</span>
+                ) : null}
+              </button>
               {hasPreview && (
                 <button
                   type="button"
@@ -809,15 +1314,19 @@ export default function CodePlayground({
             <button
               type="button"
               className="pg-clear-btn"
-              onClick={() =>
+              onClick={() => {
+                if (activeTab === "history") {
+                  clearAllRunHistory();
+                  return;
+                }
                 updateWorkspace(language, {
                   output: [],
                   previewHTML: null,
                   activeTab: "output",
-                })
-              }
+                });
+              }}
             >
-              CLEAR
+              {activeTab === "history" ? "CLEAR ALL" : "CLEAR"}
             </button>
           </div>
 
@@ -829,6 +1338,13 @@ export default function CodePlayground({
                     <span className="pg-empty-icon">▶</span>
                     <p>
                       Hit <strong>Run</strong> or press <kbd>Ctrl+Enter</kbd>
+                    </p>
+                    <p className="pg-unsupported-note">
+                      Open <strong>History</strong> to revisit past runs, restore
+                      code, or delete entries you do not need.
+                      {token
+                        ? " Runs sync to your PolyCode account."
+                        : " Runs are saved in this browser until you clear them."}
                     </p>
                     {isServerBased && (
                       <p className="pg-unsupported-note">
@@ -852,6 +1368,82 @@ export default function CodePlayground({
                 )}
               </>
             )}
+            {activeTab === "history" && (
+              <div className="pg-run-history">
+                <div className="pg-run-history-toolbar">
+                  <span className="pg-run-history-label">Saved runs</span>
+                  <div className="pg-run-history-filters">
+                    <button
+                      type="button"
+                      className={`pg-history-filter${historyScope === "all" ? " active" : ""}`}
+                      onClick={() => setHistoryScope("all")}
+                    >
+                      All {langInfo.label}
+                    </button>
+                    <button
+                      type="button"
+                      className={`pg-history-filter${historyScope === "file" ? " active" : ""}`}
+                      onClick={() => setHistoryScope("file")}
+                    >
+                      This file
+                    </button>
+                  </div>
+                </div>
+                {runHistoryLoading ? (
+                  <p className="pg-empty-state">Loading saved runs…</p>
+                ) : runHistory.length === 0 ? (
+                  <p className="pg-empty-state">
+                    No saved runs yet. Hit <strong>Run</strong> to build your
+                    console history — click a run to view output, restore code, or
+                    delete entries you do not need.
+                  </p>
+                ) : (
+                  runHistory.map((run) => (
+                    <div key={run.id} className="pg-run-history-item">
+                      <button
+                        type="button"
+                        className="pg-run-history-main"
+                        onClick={() => applyRunHistory(run)}
+                        title="View this run's output"
+                      >
+                        <span className="pg-run-history-time">
+                          {formatRunTime(run.createdAt)}
+                          {run.fileName ? ` · ${run.fileName}` : ""}
+                        </span>
+                        <span className="pg-run-history-preview">
+                          {runPreviewText(run)}
+                        </span>
+                        {run.durationMs ? (
+                          <span className="pg-run-history-meta">
+                            {(run.durationMs / 1000).toFixed(2)}s
+                          </span>
+                        ) : null}
+                      </button>
+                      <div className="pg-run-history-actions">
+                        {run.code ? (
+                          <button
+                            type="button"
+                            className="pg-run-history-action"
+                            onClick={() => restoreRunCode(run)}
+                            title="Restore code into editor"
+                          >
+                            Code
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="pg-run-history-action pg-run-history-action--danger"
+                          onClick={() => deleteRunHistoryItem(run)}
+                          title="Delete this run"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
             {activeTab === "preview" && hasPreview && (
               <iframe
                 className="pg-preview-frame"
@@ -862,6 +1454,7 @@ export default function CodePlayground({
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

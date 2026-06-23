@@ -37,15 +37,12 @@ export default function JsFundamentalsLessonPage() {
     isAuthenticated,
     completedMap: progress,
     savedCodeMap,
-    getLessonNote,
     bookmarks,
     completeLesson,
     rememberLesson,
     saveCode,
-    saveNote,
     toggleBookmark,
   } = useJsFundamentalsProgress();
-  const [noteDraft, setNoteDraft] = useState("");
   const codeSaveTimer = useRef(null);
 
   const lesson = JS_FUNDAMENTALS_LESSONS.find((item) => item.id === lessonId);
@@ -71,10 +68,6 @@ export default function JsFundamentalsLessonPage() {
   useEffect(() => {
     if (lessonId) rememberLesson(lessonId);
   }, [lessonId, rememberLesson]);
-
-  useEffect(() => {
-    setNoteDraft(getLessonNote(lessonId));
-  }, [lessonId, getLessonNote]);
 
   useEffect(
     () => () => {
@@ -104,10 +97,6 @@ export default function JsFundamentalsLessonPage() {
 
   async function handleChallengeComplete() {
     await completeLesson(lesson);
-  }
-
-  function handleSaveNote() {
-    saveNote(lessonId, noteDraft);
   }
 
   function handleCodeChange(code) {
@@ -201,9 +190,6 @@ export default function JsFundamentalsLessonPage() {
           {tab === "theory" ? (
             <NumpyIntroTheory
               lesson={lesson}
-              noteDraft={noteDraft}
-              onNoteChange={setNoteDraft}
-              onSaveNote={handleSaveNote}
               confidence={confidence}
               onConfidenceChange={handleConfidenceChange}
               markedAsRead={markedAsRead}

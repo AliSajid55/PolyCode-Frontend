@@ -11,30 +11,38 @@ import {
   MATPLOTLIB_TOTAL_XP,
 } from "../data/matplotlibCurriculum";
 import useMatplotlibProgress from "../hooks/usematplotlibProgress";
+import useLessonReadGate from "../../shared/useLessonReadGate";
+import LessonChallengeTab from "../../shared/LessonChallengeTab";
 import { useLessonAssistantContext } from "../../../assistant/hooks/useLessonAssistantContext";
 
 const BASE_PATH = "/learn/matplotlib-py";
+const READ_GATE_PREFIX = "matplotlib_py";
 
 export default function MatplotlibLessonPage() {
   const { lessonId } = useParams();
   const navigate = useNavigate();
   const [tab, setTab] = useState("theory");
   const [focusMode, setFocusMode] = useState(false);
-  const [confidence, setConfidence] = useState("");
+  const {
+    markedAsRead,
+    markAsRead,
+    confidence,
+    handleConfidenceChange,
+    createGoToChallenge,
+    challengeTabLocked,
+  } = useLessonReadGate(READ_GATE_PREFIX, lessonId);
+  const goToChallenge = createGoToChallenge(setTab);
   const {
     user,
     isAuthenticated,
     completedMap: progress,
     savedCodeMap,
-    getLessonNote,
     bookmarks,
     completeLesson,
     rememberLesson,
     saveCode,
-    saveNote,
     toggleBookmark,
   } = useMatplotlibProgress();
-  const [noteDraft, setNoteDraft] = useState("");
   const codeSaveTimer = useRef(null);
 
   const lesson = MATPLOTLIB_LESSONS.find((item) => item.id === lessonId);
@@ -60,16 +68,6 @@ export default function MatplotlibLessonPage() {
   useEffect(() => {
     if (lessonId) rememberLesson(lessonId);
   }, [lessonId, rememberLesson]);
-
-  useEffect(() => {
-    setNoteDraft(getLessonNote(lessonId));
-  }, [lessonId, getLessonNote]);
-
-  useEffect(() => {
-    setConfidence(
-      localStorage.getItem(`matplotlib_py_confidence_${lessonId}`) || "",
-    );
-  }, [lessonId]);
 
   useEffect(
     () => () => {
@@ -100,20 +98,11 @@ export default function MatplotlibLessonPage() {
     await completeLesson(lesson);
   }
 
-  function handleSaveNote() {
-    saveNote(lessonId, noteDraft);
-  }
-
   function handleCodeChange(code) {
     window.clearTimeout(codeSaveTimer.current);
     codeSaveTimer.current = window.setTimeout(() => {
       saveCode(lessonId, code).catch(() => {});
     }, 700);
-  }
-
-  function handleConfidenceChange(value) {
-    setConfidence(value);
-    localStorage.setItem(`matplotlib_py_confidence_${lessonId}`, value);
   }
 
   return (
@@ -184,13 +173,12 @@ export default function MatplotlibLessonPage() {
           >
             Theory
           </button>
-          <button
-            type="button"
-            className={`oops-tab ${tab === "challenge" ? "active" : ""}`}
-            onClick={() => setTab("challenge")}
-          >
-            Challenge <span className="oops-tab-xp">+{lesson.xp} XP</span>
-          </button>
+          <LessonChallengeTab
+            active={tab === "challenge"}
+            locked={challengeTabLocked}
+            xp={lesson.xp}
+            onClick={goToChallenge}
+          />
         </div>
 
         <LessonContentShell
@@ -201,12 +189,11 @@ export default function MatplotlibLessonPage() {
           {tab === "theory" ? (
             <NumpyIntroTheory
               lesson={lesson}
-              noteDraft={noteDraft}
-              onNoteChange={setNoteDraft}
-              onSaveNote={handleSaveNote}
               confidence={confidence}
               onConfidenceChange={handleConfidenceChange}
-              onGoChallenge={() => setTab("challenge")}
+              markedAsRead={markedAsRead}
+              onMarkAsRead={markAsRead}
+              onGoChallenge={goToChallenge}
             />
           ) : (
             <PythonCodeChallenge
