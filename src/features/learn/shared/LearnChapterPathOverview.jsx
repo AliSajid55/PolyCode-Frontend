@@ -20,7 +20,6 @@ export default function LearnChapterPathOverview({
             key={chapter.id}
             type="button"
             className={`oops-path-step ${active ? "active" : ""} ${complete ? "done" : ""}`}
-            style={{ "--ch-color": chapter.color }}
             onClick={() => onChapterSelect(chapter)}
           >
             <span className="oops-path-step-icon" aria-hidden>

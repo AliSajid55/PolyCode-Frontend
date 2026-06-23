@@ -20,7 +20,6 @@ export default function LearnChapterGrid({ chapters, progress, basePath, navigat
           <div
             key={chapter.id}
             className={`oops-chapter-card ${allDone ? "oops-chapter-done" : ""}`}
-            style={{ "--ch-color": chapter.color }}
           >
             <div className="oops-chapter-header">
               <span className="oops-chapter-icon-wrap" aria-hidden>

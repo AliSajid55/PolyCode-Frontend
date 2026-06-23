@@ -150,9 +150,7 @@ export default function OopsHub() {
               <button
                 key={lesson.id}
                 type="button"
-                className="oops-search-result"
-                style={{ "--ch-color": lesson.chapterColor }}
-                onClick={() => navigate(`/learn/oops-cpp/lesson/${lesson.id}`)}
+                className="oops-search-result"                onClick={() => navigate(`/learn/oops-cpp/lesson/${lesson.id}`)}
               >
                 <span>{progress[lesson.id] ? "✓" : "○"}</span>
                 <strong>{lesson.title}</strong>

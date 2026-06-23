@@ -466,9 +466,8 @@
   background: rgba(45, 212, 191, 0.1);
 }
 
-.app.theme-ocean .main-content.learn-content .oops-path-step.done span {
-  background: rgba(45, 212, 191, 0.22);
-  color: #99f6e4;
+.app.theme-ocean .main-content.learn-content .oops-path-step.done .oops-path-step-progress > span {
+  background: rgba(45, 212, 191, 0.65);
 }
 
 .app.theme-ocean .main-content.learn-content .oops-chapter-cta:hover {

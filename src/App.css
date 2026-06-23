@@ -4443,6 +4443,10 @@ body {
   gap: 10px;
 }
 
+.learn-lesson-chapter-tag {
+  color: var(--ch-color, var(--lesson-accent, var(--acid, #ffe566)));
+}
+
 .oops-path-step {
   min-height: 56px;
   border: 1px solid var(--learn-tile-border, var(--border, #1e2433));
@@ -4562,9 +4566,8 @@ body {
   );
 }
 
-.oops-path-step.done span {
+.oops-path-step.done .oops-path-step-progress > span {
   background: var(--ch-color, var(--acid, #ffe566));
-  color: var(--ink, #03050a);
 }
 
 /* Chapter cards */
@@ -5262,9 +5265,10 @@ body {
 .profile-connection-panel {
   margin-top: 14px;
   max-width: 420px;
-  border: 1px solid var(--border, #1e2433);
+  border: 1px solid var(--profile-panel-border, var(--border, #1e2433));
   border-radius: 14px;
-  background: var(--bg-card, rgba(8, 13, 22, 0.72));
+  background: var(--profile-panel-bg, var(--vscode-panel-2, #1a1e28));
+  color: var(--profile-panel-muted, var(--txt-2, #94a3b8));
   padding: 12px;
   box-shadow: var(--shadow-sm);
 }
@@ -5278,18 +5282,22 @@ body {
 }
 
 .profile-connection-panel-head strong {
-  color: var(--txt-0, #f0f0ff);
+  color: var(--profile-panel-fg, var(--txt-0, #f8fafc));
   font-size: 0.92rem;
 }
 
 .profile-connection-panel-head button {
   border: none;
   background: transparent;
-  color: var(--txt-2, #94a3b8);
+  color: var(--profile-panel-muted, var(--txt-2, #94a3b8));
   cursor: pointer;
   font: inherit;
   font-size: 0.78rem;
   font-weight: 700;
+}
+
+.profile-connection-panel-head button:hover {
+  color: var(--profile-panel-fg, var(--txt-0, #f8fafc));
 }
 
 .profile-connection-list {
@@ -5309,7 +5317,7 @@ body {
 }
 
 .profile-connection-user:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--profile-panel-hover, rgba(255, 255, 255, 0.06));
 }
 
 .profile-connection-user .profile-avatar-sm {
@@ -5322,19 +5330,19 @@ body {
 }
 
 .profile-connection-user strong {
-  color: var(--txt-0, #f8fafc);
+  color: var(--profile-panel-fg, var(--txt-0, #f8fafc));
   font-size: 0.88rem;
   line-height: 1.25;
 }
 
 .profile-connection-user small {
-  color: var(--txt-2, #94a3b8);
+  color: var(--profile-panel-muted, var(--txt-2, #94a3b8));
   font-size: 0.76rem;
 }
 
 .profile-connection-state {
   margin: 0;
-  color: var(--txt-2, #94a3b8);
+  color: var(--profile-panel-muted, var(--txt-2, #94a3b8));
   font-size: 0.84rem;
 }
 

@@ -178,3 +178,52 @@
   --vscode-blue: #007acc;
   --vscode-blue-2: #1a9fff;
 }
+
+/* ── Profile social panel (app-wide, all themes) ── */
+.app:not(.theme-light):not(.theme-classic):not(.theme-midnight):not(.theme-ocean):not(.theme-slate) {
+  --profile-panel-bg: #12141c;
+  --profile-panel-fg: #ffffff;
+  --profile-panel-muted: #a0a0b8;
+  --profile-panel-border: rgba(255, 255, 255, 0.1);
+  --profile-panel-hover: rgba(255, 255, 255, 0.06);
+}
+
+.app.theme-classic {
+  --profile-panel-bg: #1a1408;
+  --profile-panel-fg: #fff8e7;
+  --profile-panel-muted: #a89878;
+  --profile-panel-border: rgba(255, 176, 0, 0.22);
+  --profile-panel-hover: rgba(255, 176, 0, 0.1);
+}
+
+.app.theme-midnight {
+  --profile-panel-bg: #12182c;
+  --profile-panel-fg: #f8faff;
+  --profile-panel-muted: #b8c2f0;
+  --profile-panel-border: rgba(129, 140, 248, 0.28);
+  --profile-panel-hover: rgba(129, 140, 248, 0.12);
+}
+
+.app.theme-ocean {
+  --profile-panel-bg: #0c2e3c;
+  --profile-panel-fg: #ecfeff;
+  --profile-panel-muted: #67e8f9;
+  --profile-panel-border: rgba(45, 212, 191, 0.24);
+  --profile-panel-hover: rgba(45, 212, 191, 0.1);
+}
+
+.app.theme-slate {
+  --profile-panel-bg: #1a1e28;
+  --profile-panel-fg: #f8fafc;
+  --profile-panel-muted: #94a3b8;
+  --profile-panel-border: rgba(148, 163, 184, 0.22);
+  --profile-panel-hover: rgba(148, 163, 184, 0.1);
+}
+
+.app.theme-light {
+  --profile-panel-bg: #ffffff;
+  --profile-panel-fg: #0f172a;
+  --profile-panel-muted: #64748b;
+  --profile-panel-border: rgba(15, 23, 42, 0.12);
+  --profile-panel-hover: #f1f5f9;
+}

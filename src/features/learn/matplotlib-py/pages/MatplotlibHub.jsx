@@ -245,9 +245,7 @@ export default function MatplotlibHub() {
               <button
                 key={lesson.id}
                 type="button"
-                className="oops-search-result"
-                style={{ "--ch-color": lesson.chapterColor }}
-                onClick={() => navigate(`${BASE_PATH}/lesson/${lesson.id}`)}
+                className="oops-search-result"                onClick={() => navigate(`${BASE_PATH}/lesson/${lesson.id}`)}
               >
                 <span>{progress[lesson.id] ? "✓" : "○"}</span>
                 <strong>{lesson.title}</strong>
@@ -341,7 +339,6 @@ export default function MatplotlibHub() {
               <article
                 key={stage.level}
                 className="matplotlib-path-card"
-                style={{ "--stage-color": stage.color }}
               >
                 <header className="matplotlib-path-card-head">
                   <span className="matplotlib-path-level">{stage.level}</span>

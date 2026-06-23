@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import RunnableCodeBlock from "../../shared/RunnableCodeBlock";
 import LessonReadGate from "../../shared/LessonReadGate";
+import { LEARN_ACCENT } from "../../shared/learnAccent";
 
 function plainText(text = "") {
   return text.replace(/\*\*/g, "").replace(/`/g, "");
@@ -646,7 +647,7 @@ export default function NumpyIntroTheory({
   onMarkAsRead = () => {},
   onGoChallenge,
 }) {
-  const accentColor = lesson.chapterColor || "#4f46e5";
+  const accentColor = LEARN_ACCENT;
   const firstText = lesson.theory.find(
     (block) => block.type === "text" && !block.code,
   );

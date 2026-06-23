@@ -33,6 +33,7 @@ import {
 } from "./shared/theme/themes";
 import "./styles/stack-picker-dark.css";
 import "./styles/responsive.css";
+import "./styles/theme-dark.css";
 
 import LandingShell from "./features/landing/LandingShell";
 

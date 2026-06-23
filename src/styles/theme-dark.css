@@ -1,0 +1,285 @@
+/**
+ * Dark themes (default, classic, midnight, ocean, slate):
+ * unify interactive accents to yellow + black.
+ * Light theme (.theme-light) is unchanged.
+ */
+
+.app:not(.theme-light) {
+  --poly-accent: #ffe566;
+  --poly-accent-bright: #fff3a8;
+  --poly-accent-dim: rgba(255, 229, 102, 0.14);
+  --poly-accent-border: rgba(255, 229, 102, 0.32);
+  --poly-accent-text: #03050a;
+
+  --vscode-blue: #c9a800;
+  --vscode-blue-2: #ffe566;
+  --learn-action-bg: #ffe566;
+  --learn-action-text: #03050a;
+  --learn-pill-border: rgba(255, 229, 102, 0.28);
+  --learn-pill-bg: rgba(255, 229, 102, 0.1);
+  --learn-pill-text: #ffe566;
+  --profile-accent: #ffe566;
+  --lesson-accent: #ffe566;
+  --numpy-accent: #ffe566;
+  --course-accent: #ffe566;
+}
+
+/* ── Global buttons ── */
+.app:not(.theme-light) .btn-primary {
+  background: var(--poly-accent);
+  color: var(--poly-accent-text);
+}
+
+.app:not(.theme-light) .btn-primary:hover {
+  background: var(--poly-accent-bright);
+  color: var(--poly-accent-text);
+  box-shadow: 0 10px 30px var(--acid-glow, rgba(255, 229, 102, 0.25));
+}
+
+/* ── Language hub / course cards ── */
+.app:not(.theme-light) .language-primary-btn {
+  background: var(--poly-accent) !important;
+  color: var(--poly-accent-text) !important;
+}
+
+.app:not(.theme-light) .language-hero-kicker,
+.app:not(.theme-light) .language-section-head span,
+.app:not(.theme-light) .language-course-card > span,
+.app:not(.theme-light) .language-course-card strong {
+  color: var(--poly-accent) !important;
+}
+
+.app:not(.theme-light) .language-course-card {
+  --course-accent: var(--poly-accent) !important;
+}
+
+.app:not(.theme-light) .language-course-icon {
+  color: var(--poly-accent);
+  background: var(--poly-accent-dim);
+  border-color: var(--poly-accent-border);
+}
+
+/* ── Learn / OOPs UI ── */
+.app:not(.theme-light) .oops-auth-gate-btn-primary,
+.app:not(.theme-light) .oops-run-btn,
+.app:not(.theme-light) .learn-profile-view-btn,
+.app:not(.theme-light) .oops-filter-tabs button.active,
+.app:not(.theme-light) .learn-profile-btn span {
+  background: var(--poly-accent) !important;
+  color: var(--poly-accent-text) !important;
+  border-color: transparent;
+}
+
+.app:not(.theme-light) .oops-run-btn:hover,
+.app:not(.theme-light) .oops-auth-gate-btn-primary:hover,
+.app:not(.theme-light) .learn-profile-view-btn:hover {
+  background: var(--poly-accent-bright) !important;
+  color: var(--poly-accent-text) !important;
+}
+
+/* ── Landing (dark only) ── */
+.app:not(.theme-light) .polycode-landing,
+.polycode-landing:not(.polycode-landing--light) {
+  --v2-cyan: var(--poly-accent);
+  --v2-cyan-dim: var(--poly-accent-dim);
+  --v2-cyan-border: var(--poly-accent-border);
+  --stack-accent: var(--poly-accent);
+  --lang-accent: var(--poly-accent);
+}
+
+.app:not(.theme-light) .polycode-landing .cs-card,
+.polycode-landing:not(.polycode-landing--light) .cs-card {
+  --accent: var(--poly-accent) !important;
+}
+
+.polycode-landing:not(.polycode-landing--light) .landing-hero-shimmer,
+.app:not(.theme-light) .polycode-landing .landing-hero-shimmer {
+  background: linear-gradient(135deg, #ffe566 0%, #ffd028 50%, #fff3a8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.polycode-landing:not(.polycode-landing--light) .landing-btn-hero-primary,
+.app:not(.theme-light) .polycode-landing .landing-btn-hero-primary {
+  background: var(--poly-accent);
+  color: var(--poly-accent-text);
+}
+
+.polycode-landing:not(.polycode-landing--light) .landing-btn-hero-primary:hover,
+.app:not(.theme-light) .polycode-landing .landing-btn-hero-primary:hover {
+  background: var(--poly-accent-bright);
+  color: var(--poly-accent-text);
+}
+
+/* ── Learn: chapter path + cards (unified yellow/black) ── */
+.app:not(.theme-light) .main-content.learn-content {
+  --ch-color: var(--poly-accent);
+  --node-color: var(--poly-accent);
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-path-step,
+.app:not(.theme-light) .main-content.learn-content .oops-chapter-card,
+.app:not(.theme-light) .main-content.learn-content .oops-search-result {
+  --ch-color: var(--poly-accent) !important;
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-path-overview--visual {
+  gap: 12px;
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-path-step {
+  background: #080a10;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-path-step-icon {
+  background: rgba(255, 229, 102, 0.1);
+  border: 1px solid rgba(255, 229, 102, 0.28);
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-path-step-icon .learn-chapter-icon,
+.app:not(.theme-light) .main-content.learn-content .learn-chapter-icon {
+  color: var(--poly-accent) !important;
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-path-step-num {
+  color: rgba(255, 229, 102, 0.8);
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-path-step-progress {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-path-step-progress > span {
+  background: var(--poly-accent);
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-path-step.active,
+.app:not(.theme-light) .main-content.learn-content .oops-path-step.done {
+  border-color: rgba(255, 229, 102, 0.42);
+  background: rgba(255, 229, 102, 0.06);
+  box-shadow: 0 0 0 1px rgba(255, 229, 102, 0.1);
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-chapter-card {
+  background: #080a10;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-chapter-card::before,
+.app:not(.theme-light) .main-content.learn-content .oops-chapter-card::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 229, 102, 0.35),
+    transparent
+  ) !important;
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-chapter-icon-wrap {
+  background: rgba(255, 229, 102, 0.1);
+  border-color: rgba(255, 229, 102, 0.28);
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-chapter-progress-fill {
+  background: var(--poly-accent);
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-diagram-node,
+.app:not(.theme-light) .main-content.learn-content .numpy-flow-node {
+  --node-color: var(--poly-accent) !important;
+}
+
+.app:not(.theme-light) .main-content.learn-content .numpy-inline-code {
+  background: rgba(255, 229, 102, 0.14);
+  color: #ffe566;
+}
+
+.app:not(.theme-light) .main-content.learn-content .numpy-lesson-hero {
+  border-color: rgba(255, 229, 102, 0.32);
+  background:
+    linear-gradient(135deg, rgba(255, 229, 102, 0.1), transparent 55%),
+    rgba(255, 255, 255, 0.02);
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-sidebar-chapter-btn,
+.app:not(.theme-light) .main-content.learn-content .oops-sidebar-lesson-btn.current {
+  --ch-color: var(--poly-accent);
+}
+
+/* Win over theme-midnight / theme-ocean learn-surface rules */
+.app.theme-midnight:not(.theme-light) .main-content.learn-content .oops-path-step.active,
+.app.theme-midnight:not(.theme-light) .main-content.learn-content .oops-path-step.done,
+.app.theme-ocean:not(.theme-light) .main-content.learn-content .oops-path-step.active,
+.app.theme-ocean:not(.theme-light) .main-content.learn-content .oops-path-step.done {
+  border-color: rgba(255, 229, 102, 0.42) !important;
+  background: rgba(255, 229, 102, 0.06) !important;
+}
+
+.app.theme-midnight:not(.theme-light) .main-content.learn-content .oops-chapter-card:hover {
+  border-color: rgba(255, 229, 102, 0.35) !important;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 229, 102, 0.12) !important;
+}
+
+.app.theme-midnight:not(.theme-light) .main-content.learn-content .oops-chapter-card::after {
+  background: radial-gradient(
+    circle,
+    rgba(255, 229, 102, 0.12) 0%,
+    transparent 70%
+  ) !important;
+}
+
+.app.theme-midnight:not(.theme-light) .main-content.learn-content .oops-lesson-item:hover,
+.app.theme-ocean:not(.theme-light) .main-content.learn-content .oops-lesson-item:hover {
+  background: rgba(255, 229, 102, 0.08) !important;
+  border-color: rgba(255, 229, 102, 0.2) !important;
+}
+
+.app.theme-midnight:not(.theme-light) .main-content.learn-content .oops-chapter-cta,
+.app.theme-ocean:not(.theme-light) .main-content.learn-content .oops-chapter-cta {
+  background: var(--poly-accent) !important;
+  color: var(--poly-accent-text) !important;
+  border-color: transparent !important;
+  box-shadow: 0 10px 24px rgba(255, 229, 102, 0.2) !important;
+}
+
+.app:not(.theme-light) .main-content.learn-content .oops-path-step-body {
+  background: transparent;
+}
+
+.app:not(.theme-light) .learn-lesson-chapter-tag {
+  color: var(--poly-accent) !important;
+}
+
+/* Docs, categories, language hub */
+.app:not(.theme-light) .premium-doc-card,
+.app:not(.theme-light) .cat-card {
+  --accent-color: var(--poly-accent) !important;
+  --cat-color: var(--poly-accent) !important;
+}
+
+.app:not(.theme-light) .language-landing {
+  --language-color: var(--poly-accent) !important;
+}
+
+.app:not(.theme-light) .matplotlib-path-card {
+  --stage-color: var(--poly-accent) !important;
+}
+
+.app:not(.theme-light) .main-content.learn-content .numpy-matrix-label[style],
+.app:not(.theme-light) .main-content.learn-content .numpy-matrix-operator[style],
+.app:not(.theme-light) .main-content.learn-content .numpy-vt-row-total-head[style],
+.app:not(.theme-light) .main-content.learn-content .numpy-vt-legend-item[style],
+.app:not(.theme-light) .main-content.learn-content .numpy-diagram-item[style] {
+  color: var(--poly-accent) !important;
+}
+
+.app:not(.theme-light) .main-content.learn-content [style*="--node-color"] {
+  --node-color: var(--poly-accent) !important;
+}

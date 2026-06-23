@@ -641,13 +641,13 @@
 .app.theme-light .oops-problem-desc,
 .app.theme-light .oops-brief-card p,
 .app.theme-light .oops-brief-card li {
-  color: #64748b;
+  color: var(--profile-panel-muted, #64748b);
 }
 
 .app.theme-light .profile-hero-stat strong,
 .app.theme-light .profile-connection-panel-head strong,
 .app.theme-light .profile-connection-user strong {
-  color: #0f172a;
+  color: var(--profile-panel-fg, #0f172a);
 }
 
 .app.theme-light .profile-hero-stat span {
@@ -664,17 +664,22 @@
 }
 
 .app.theme-light .profile-connection-panel {
-  background: #ffffff;
-  border-color: rgba(15, 23, 42, 0.12);
+  --profile-panel-bg: #ffffff;
+  --profile-panel-fg: #0f172a;
+  --profile-panel-muted: #64748b;
+  --profile-panel-border: rgba(15, 23, 42, 0.12);
+  --profile-panel-hover: #f1f5f9;
+  background: var(--profile-panel-bg);
+  border-color: var(--profile-panel-border);
   box-shadow: var(--shadow-sm);
 }
 
 .app.theme-light .profile-connection-panel-head button:hover {
-  color: #0f172a;
+  color: var(--profile-panel-fg);
 }
 
 .app.theme-light .profile-connection-user:hover {
-  background: #f1f5f9;
+  background: var(--profile-panel-hover);
 }
 
 .app.theme-light .profile-hero-social {

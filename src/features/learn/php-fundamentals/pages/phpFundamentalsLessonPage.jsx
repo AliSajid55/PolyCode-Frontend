@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { LEARN_ACCENT } from "../../shared/learnAccent";
 import { useNavigate, useParams } from "react-router-dom";
 import NumpyIntroTheory from "../../numpy-py/components/NumpyIntroTheory"; // Keeping original shared import
 import OopsSidebar from "../../oops-cpp/components/OopsSidebar"; // Keeping original shared import
@@ -126,7 +127,7 @@ export default function PhpFundamentalsLessonPage() {
             ← PHP Fundamentals
           </button>
           <div className="oops-lesson-breadcrumb">
-            <span style={{ color: lesson.chapterColor }}>
+            <span className="learn-lesson-chapter-tag">
               {lesson.chapterTitle}
             </span>
             <span className="oops-bc-sep">›</span>
@@ -199,7 +200,7 @@ export default function PhpFundamentalsLessonPage() {
           ) : (
             <PhpFundamentalsCodeChallenge
               challenge={lesson.challenge}
-              accentColor={lesson.chapterColor}
+              accentColor={LEARN_ACCENT}
               isCompleted={isCompleted}
               onComplete={handleChallengeComplete}
               initialCode={savedCodeMap[lessonId]}

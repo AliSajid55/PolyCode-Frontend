@@ -81,7 +81,6 @@ export default function OopsSidebar({
               <div key={ch.id} className="oops-sidebar-chapter">
                 <button
                   className={`oops-sidebar-chapter-btn ${allDone ? "done" : ""}`}
-                  style={{ "--ch-color": ch.color }}
                   onClick={() => toggleChapter(ch.id)}
                 >
                   <span className="oops-sb-icon">
@@ -103,7 +102,6 @@ export default function OopsSidebar({
                         <li key={l.id}>
                           <button
                             className={`oops-sidebar-lesson-btn ${isDone ? "done" : ""} ${isCurrent ? "current" : ""}`}
-                            style={{ "--ch-color": ch.color }}
                             onClick={() => goToLesson(l.id)}
                           >
                             <span className="oops-sb-check">

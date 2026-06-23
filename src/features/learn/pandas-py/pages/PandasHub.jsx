@@ -178,9 +178,7 @@ export default function PandasHub() {
               <button
                 key={lesson.id}
                 type="button"
-                className="oops-search-result"
-                style={{ "--ch-color": lesson.chapterColor }}
-                onClick={() => navigate(`${BASE_PATH}/lesson/${lesson.id}`)}
+                className="oops-search-result"                onClick={() => navigate(`${BASE_PATH}/lesson/${lesson.id}`)}
               >
                 <span>{progress[lesson.id] ? "✓" : "○"}</span>
                 <strong>{lesson.title}</strong>

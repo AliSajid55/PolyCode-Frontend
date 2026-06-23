@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { LEARN_ACCENT } from "../../shared/learnAccent";
 import { useNavigate, useParams } from "react-router-dom";
 import ConceptCard from "../../oops-cpp/components/ConceptCard";
 import NumpyIntroTheory from "../components/NumpyIntroTheory";
@@ -179,7 +180,7 @@ export default function NumpyLessonPage() {
             ← NumPy · Python
           </button>
           <div className="oops-lesson-breadcrumb">
-            <span style={{ color: lesson.chapterColor }}>{lesson.chapterTitle}</span>
+            <span className="learn-lesson-chapter-tag">{lesson.chapterTitle}</span>
             <span className="oops-bc-sep">›</span>
             <span>{lesson.title}</span>
           </div>
@@ -327,7 +328,7 @@ export default function NumpyLessonPage() {
                 <ConceptCard
                   key={index}
                   block={block}
-                  accentColor={lesson.chapterColor}
+                  accentColor={LEARN_ACCENT}
                   runnableCodeLangs={["python"]}
                 />
               ))}
@@ -369,7 +370,7 @@ export default function NumpyLessonPage() {
           ) : (
             <PythonCodeChallenge
               challenge={lesson.challenge}
-              accentColor={lesson.chapterColor}
+              accentColor={LEARN_ACCENT}
               isCompleted={isCompleted}
               onComplete={handleChallengeComplete}
               initialCode={savedCodeMap[lessonId]}

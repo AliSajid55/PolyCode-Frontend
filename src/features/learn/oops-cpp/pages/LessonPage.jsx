@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
+import { LEARN_ACCENT } from "../../shared/learnAccent";
 import { useParams, useNavigate } from "react-router-dom";
 import { ALL_LESSONS, TOTAL_XP } from "../data/oopsCurriculum";
 import ConceptCard from "../components/ConceptCard";
@@ -202,7 +203,7 @@ export default function LessonPage() {
             ← OOP C++
           </button>
           <div className="oops-lesson-breadcrumb">
-            <span style={{ color: `var(--ch-color, ${lesson.chapterColor})` }}>
+            <span className="learn-lesson-chapter-tag">
               {lesson.chapterTitle}
             </span>
             <span className="oops-bc-sep">›</span>
@@ -354,7 +355,7 @@ export default function LessonPage() {
                 <ConceptCard
                   key={i}
                   block={block}
-                  accentColor={lesson.chapterColor}
+                  accentColor={LEARN_ACCENT}
                   runnableCodeLangs={["cpp", "c++"]}
                 />
               ))}
@@ -365,14 +366,14 @@ export default function LessonPage() {
                 confidence={confidence}
                 onConfidenceChange={handleConfidenceChange}
                 onGoChallenge={goToChallenge}
-                accentColor={lesson.chapterColor}
+                accentColor={LEARN_ACCENT}
                 challengeLabel="Ready? Take the Challenge →"
               />
             </div>
           ) : (
             <CodeChallenge
               challenge={lesson.challenge}
-              accentColor={lesson.chapterColor}
+              accentColor={LEARN_ACCENT}
               isCompleted={isCompleted}
               onComplete={handleChallengeComplete}
               initialCode={savedCodeMap[lessonId]}
